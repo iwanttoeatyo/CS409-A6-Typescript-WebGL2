@@ -85,7 +85,7 @@ function initBuffers() {
     
     
     let vertices = [
-        -1.5, -0.5, 0.0,
+        -0.5, -0.5, 0.0,
         0.5, -0.5, 0.0,
         0.0,  0.5, 0.0
     ];
@@ -144,6 +144,5 @@ function getShader(gl: WebGL2RenderingContext, src, type) {
         alert(gl.getShaderInfoLog(shader));
         return null;
     }
-
     return shader;
 }
