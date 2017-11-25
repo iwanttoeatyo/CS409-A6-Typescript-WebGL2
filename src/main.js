@@ -6,11 +6,12 @@ let vert = require('basic.vert');
 let canvas;
 let gl;
 let shader_prog;
-let triangleVertexPositionBuffer;
+let VBO;
 let mMatrix = gl_matrix_1.mat4.create();
 let vMatrix = gl_matrix_1.mat4.create();
 let pMatrix = gl_matrix_1.mat4.create();
-let vao;
+let VAO;
+let EBO;
 let pos;
 let model;
 let view;
@@ -55,17 +56,28 @@ function initShaders() {
     projection = gl.getUniformLocation(shader_prog, "projection");
 }
 function initBuffers() {
-    triangleVertexPositionBuffer = gl.createBuffer();
-    vao = gl.createVertexArray();
-    gl.bindVertexArray(vao);
-    gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
     let vertices = [
-        -0.5, -0.5, 0.0,
+        0.5, 0.5, 0.0,
         0.5, -0.5, 0.0,
-        0.0, 0.5, 0.0
+        -0.5, -0.5, 0.0,
+        -0.5, 0.5, 0.0 // top left 
     ];
+    let indices = [
+        0, 1, 3,
+        1, 2, 3 // second triangle
+    ];
+    VAO = gl.createVertexArray();
+    VBO = gl.createBuffer();
+    EBO = gl.createBuffer();
+    gl.bindVertexArray(VAO);
+    gl.bindBuffer(gl.ARRAY_BUFFER, VBO);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, EBO);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(indices), gl.STATIC_DRAW);
     gl.enableVertexAttribArray(pos);
+    gl.vertexAttribPointer(pos, 3, gl.FLOAT, false, 0, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, null);
+    gl.bindVertexArray(null);
 }
 function drawScene() {
     gl.viewport(0, 0, canvas.width, canvas.height);
@@ -83,10 +95,13 @@ function drawScene() {
     gl_matrix_1.vec3.set(translation, 0, 0, -1.0);
     gl_matrix_1.mat4.translate(mMatrix, mMatrix, translation);
     //Pass triangle position to vertex shader
-    gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
-    gl.vertexAttribPointer(pos, 3, gl.FLOAT, false, 0, 0);
+    // gl.bindBuffer(gl.ARRAY_BUFFER, VBO);
+    //gl.vertexAttribPointer(pos, 3, gl.FLOAT, false, 3, 0);
+    gl.useProgram(shader_prog);
+    gl.bindVertexArray(VAO);
     //Draw triangle
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
+    gl.drawElements(gl.LINE_LOOP, 6, gl.UNSIGNED_INT, 0);
+    // gl.drawArrays(gl.TRIANGLES, 0, 6);
 }
 function getShader(gl, src, type) {
     let shader;
