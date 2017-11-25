@@ -1,23 +1,23 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-var gl_matrix_1 = require("gl-matrix");
-var frag = require('basic.frag');
-var vert = require('basic.vert');
-var canvas;
-var gl;
-var shader_prog;
-var triangleVertexPositionBuffer;
-var mMatrix = gl_matrix_1.mat4.create();
-var vMatrix = gl_matrix_1.mat4.create();
-var pMatrix = gl_matrix_1.mat4.create();
-var vao;
-var pos;
-var model;
-var view;
-var projection;
-var cPos = gl_matrix_1.vec3.fromValues(0, 0, 3.0);
-var cUp = gl_matrix_1.vec3.fromValues(0, 1, 0);
-var cFront = gl_matrix_1.vec3.fromValues(0, 0, -1);
+const gl_matrix_1 = require("gl-matrix");
+let frag = require('basic.frag');
+let vert = require('basic.vert');
+let canvas;
+let gl;
+let shader_prog;
+let triangleVertexPositionBuffer;
+let mMatrix = gl_matrix_1.mat4.create();
+let vMatrix = gl_matrix_1.mat4.create();
+let pMatrix = gl_matrix_1.mat4.create();
+let vao;
+let pos;
+let model;
+let view;
+let projection;
+let cPos = gl_matrix_1.vec3.fromValues(0, 0, 3.0);
+let cUp = gl_matrix_1.vec3.fromValues(0, 1, 0);
+let cFront = gl_matrix_1.vec3.fromValues(0, 0, -1);
 (function loadWebGL() {
     canvas = document.getElementById("canvas");
     initGL();
@@ -39,8 +39,8 @@ function initGL() {
     }
 }
 function initShaders() {
-    var fragmentShader = getShader(gl, frag, gl.FRAGMENT_SHADER);
-    var vertexShader = getShader(gl, vert, gl.VERTEX_SHADER);
+    let fragmentShader = getShader(gl, frag, gl.FRAGMENT_SHADER);
+    let vertexShader = getShader(gl, vert, gl.VERTEX_SHADER);
     shader_prog = gl.createProgram();
     gl.attachShader(shader_prog, vertexShader);
     gl.attachShader(shader_prog, fragmentShader);
@@ -59,8 +59,8 @@ function initBuffers() {
     vao = gl.createVertexArray();
     gl.bindVertexArray(vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, triangleVertexPositionBuffer);
-    var vertices = [
-        -1.5, -0.5, 0.0,
+    let vertices = [
+        -0.5, -0.5, 0.0,
         0.5, -0.5, 0.0,
         0.0, 0.5, 0.0
     ];
@@ -71,7 +71,7 @@ function drawScene() {
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     gl_matrix_1.mat4.perspective(pMatrix, 70, canvas.width / canvas.height, 0.1, 100.0);
-    var cForward = gl_matrix_1.vec3.create();
+    let cForward = gl_matrix_1.vec3.create();
     cForward = gl_matrix_1.vec3.add(cForward, cPos, cFront);
     gl_matrix_1.mat4.lookAt(vMatrix, cPos, cForward, cUp);
     //move view and projection matrix to vertex shader
@@ -79,7 +79,7 @@ function drawScene() {
     gl.uniformMatrix4fv(projection, false, pMatrix);
     gl_matrix_1.mat4.identity(mMatrix);
     //Move our Triangle
-    var translation = gl_matrix_1.vec3.create();
+    let translation = gl_matrix_1.vec3.create();
     gl_matrix_1.vec3.set(translation, 0, 0, -1.0);
     gl_matrix_1.mat4.translate(mMatrix, mMatrix, translation);
     //Pass triangle position to vertex shader
@@ -89,7 +89,7 @@ function drawScene() {
     gl.drawArrays(gl.TRIANGLES, 0, 3);
 }
 function getShader(gl, src, type) {
-    var shader;
+    let shader;
     shader = gl.createShader(type);
     gl.shaderSource(shader, src.default);
     gl.compileShader(shader);
@@ -99,3 +99,4 @@ function getShader(gl, src, type) {
     }
     return shader;
 }
+//# sourceMappingURL=main.js.map
