@@ -1,4 +1,4 @@
-import {mat4, vec3, vec4} from "gl-matrix";
+import {glMatrix, mat4, vec3, vec4} from "gl-matrix";
 import {Shader} from "./shader";
 
 let basicFrag = require("basic.frag");
@@ -19,9 +19,10 @@ let VAO: WebGLVertexArrayObject;
 let EBO: WebGLBuffer;
 let texture1: WebGLTexture;
 let texture2: WebGLTexture;
-let keys:boolean[] = [];
+let keys: boolean[] = [];
+let cubePositions: vec3[];
 
-let mixValue:number = 0.2; 
+let mixValue: number = 0.2;
 
 let view: WebGLUniformLocation;
 let projection: WebGLUniformLocation;
@@ -44,11 +45,11 @@ let cFront: vec3 = vec3.fromValues(0, 0, -1);
     gl.clearColor(0.2, 0.3, 0.3, 1.0);
     gl.enable(gl.DEPTH_TEST);
 
-    //Wait 50ms so images can load to prevent texture warnings
-    setInterval(function(){
+    //Wait 200ms so images can load to prevent texture warnings
+    setInterval(function () {
         MainLoop.setMaxAllowedFPS(60);
-        MainLoop.setBegin(begin).setUpdate(update).setDraw(draw).setEnd(end).start(); 
-    },50);
+        MainLoop.setBegin(begin).setUpdate(update).setDraw(draw).setEnd(end).start();
+    }, 200);
 
 })();
 
@@ -69,16 +70,65 @@ function initGL() {
 
 function initBuffers() {
     let vertices = [
-            // positions        // colors         // texture coords
-            0.5, 0.5, 0.0,      1.0, 0.0, 0.0,  1.0, 1.0,   // top right
-            0.5, -0.5, 0.0,     0.0, 1.0, 0.0,  1.0, 0.0,   // bottom right
-            -0.5, -0.5, 0.0,    0.0, 0.0, 1.0,  0.0, 0.0,   // bottom left
-            -0.5, 0.5, 0.0,     1.0, 1.0, 0.0,  0.0, 1.0    // top left 
+        -0.5, -0.5, -0.5, 0.0, 0.0,
+        0.5, -0.5, -0.5, 1.0, 0.0,
+        0.5, 0.5, -0.5, 1.0, 1.0,
+        0.5, 0.5, -0.5, 1.0, 1.0,
+        -0.5, 0.5, -0.5, 0.0, 1.0,
+        -0.5, -0.5, -0.5, 0.0, 0.0,
+
+        -0.5, -0.5, 0.5, 0.0, 0.0,
+        0.5, -0.5, 0.5, 1.0, 0.0,
+        0.5, 0.5, 0.5, 1.0, 1.0,
+        0.5, 0.5, 0.5, 1.0, 1.0,
+        -0.5, 0.5, 0.5, 0.0, 1.0,
+        -0.5, -0.5, 0.5, 0.0, 0.0,
+
+        -0.5, 0.5, 0.5, 1.0, 0.0,
+        -0.5, 0.5, -0.5, 1.0, 1.0,
+        -0.5, -0.5, -0.5, 0.0, 1.0,
+        -0.5, -0.5, -0.5, 0.0, 1.0,
+        -0.5, -0.5, 0.5, 0.0, 0.0,
+        -0.5, 0.5, 0.5, 1.0, 0.0,
+
+        0.5, 0.5, 0.5, 1.0, 0.0,
+        0.5, 0.5, -0.5, 1.0, 1.0,
+        0.5, -0.5, -0.5, 0.0, 1.0,
+        0.5, -0.5, -0.5, 0.0, 1.0,
+        0.5, -0.5, 0.5, 0.0, 0.0,
+        0.5, 0.5, 0.5, 1.0, 0.0,
+
+        -0.5, -0.5, -0.5, 0.0, 1.0,
+        0.5, -0.5, -0.5, 1.0, 1.0,
+        0.5, -0.5, 0.5, 1.0, 0.0,
+        0.5, -0.5, 0.5, 1.0, 0.0,
+        -0.5, -0.5, 0.5, 0.0, 0.0,
+        -0.5, -0.5, -0.5, 0.0, 1.0,
+
+        -0.5, 0.5, -0.5, 0.0, 1.0,
+        0.5, 0.5, -0.5, 1.0, 1.0,
+        0.5, 0.5, 0.5, 1.0, 0.0,
+        0.5, 0.5, 0.5, 1.0, 0.0,
+        -0.5, 0.5, 0.5, 0.0, 0.0,
+        -0.5, 0.5, -0.5, 0.0, 1.0
     ];
 
     let indices = [
         0, 1, 3, // first triangle
         1, 2, 3  // second triangle
+    ];
+
+    cubePositions = [
+        vec3.fromValues(0.0, 0.0, 0.0),
+        vec3.fromValues(2.0, 5.0, -15.0),
+        vec3.fromValues(-1.5, -2.2, -2.5),
+        vec3.fromValues(-3.8, -2.0, -12.3),
+        vec3.fromValues(2.4, -0.4, -3.5),
+        vec3.fromValues(-1.7, 3.0, -7.5),
+        vec3.fromValues(1.3, -2.0, -2.5),
+        vec3.fromValues(1.5, 2.0, -2.5),
+        vec3.fromValues(1.5, 0.2, -1.5),
+        vec3.fromValues(-1.3, 1.0, -1.5)
     ];
 
     VAO = gl.createVertexArray();
@@ -89,18 +139,15 @@ function initBuffers() {
 
     gl.bindBuffer(gl.ARRAY_BUFFER, VBO);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-    
+
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, EBO);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(indices), gl.STATIC_DRAW);
 
     gl.enableVertexAttribArray(0);
-    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 32, 0);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
 
     gl.enableVertexAttribArray(1);
-    gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 32, 12);
-
-    gl.enableVertexAttribArray(2);
-    gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 32, 24);
+    gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
 
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
 
@@ -128,7 +175,7 @@ function initBuffers() {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    
+
     let image2 = new Image();
     image2.src = imageSrc2;
     image2.addEventListener('load', function () {
@@ -140,7 +187,7 @@ function initBuffers() {
         gl.generateMipmap(gl.TEXTURE_2D);
     });
 
-    
+
     shader.use();
     shader.setInt("texture1", 0);
     shader.setInt("texture2", 1);
@@ -151,11 +198,11 @@ function initBuffers() {
  * @param {Number} delta
  *   The amount of time since the last update, in seconds.
  */
-function update(delta){
+function update(delta) {
 }
 
 
-/** 
+/**
  * Called once per frame before update and draw
  * @param {Number} [timestamp]
  *   The current timestamp (when the frame started), in milliseconds. This
@@ -169,13 +216,13 @@ function update(delta){
  *   The total elapsed time that has not yet been simulated, in
  *   milliseconds.
  */
-function begin(timestamp, delta){
-    if(keys['40']){
+function begin(timestamp, delta) {
+    if (keys['40']) {
         mixValue += 0.05;
-        if(mixValue > 1) mixValue = 1;
-    }else if (keys[38]){
+        if (mixValue > 1) mixValue = 1;
+    } else if (keys[38]) {
         mixValue -= 0.05;
-        if(mixValue < 0) mixValue = 0;
+        if (mixValue < 0) mixValue = 0;
     }
 }
 
@@ -214,33 +261,58 @@ function draw(interpolationPercentage) {
     //gl.vertexAttribPointer(pos, 3, gl.FLOAT, false, 3, 0);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texture1);
-    
+
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, texture2);
 
-    // set the texture mix value in the shader
-    shader.setFloat("mixValue", mixValue);
-    
-    shader.use();
+    let view = mat4.create();
    
-    gl.bindVertexArray(VAO);
-    gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, 0);
+    let projection = mat4.create();
 
+   
+
+    mat4.translate(view, view, vec3.fromValues(0, 0, -3));
+
+    mat4.perspective(projection, glMatrix.toRadian(80), canvas.width / canvas.height, 0.1, 100);
+
+
+    let transform: mat4 = mat4.create();
+    mat4.translate(transform, transform, vec3.fromValues(0.5, -0.5, 0));
+    mat4.rotate(transform, transform, Date.now() / 1000, vec3.fromValues(0, 0, 1));
+
+    shader.use();
+    
+    shader.setMat4("view", view);
+    shader.setMat4("projection", projection);
+
+    gl.bindVertexArray(VAO);
+    
+    cubePositions.forEach(function(cube, index){
+        let model = mat4.create();
+        mat4.translate(model, model, cube);
+        let angle = 20 * index ;
+        if(index % 3 == 0)
+            angle = Date.now()/1000 * 25.0;
+        mat4.rotate(model,model, glMatrix.toRadian(angle), vec3.fromValues(1,0.3, 0.5));
+        shader.setMat4("model", model);
+        gl.drawArrays(gl.TRIANGLES, 0, 36);
+    });
+  
 
 }
 
-function end(fps, panic){
-    if(panic){
+function end(fps, panic) {
+    if (panic) {
         var discardedTime = Math.round(MainLoop.resetFrameDelta());
         console.warn("Main loop panicked, probably because the browser tab was put in the background. Discarding " + discardedTime + 'ms');
     }
 }
 
-window.onkeydown = function( e){
-  keys[e.keyCode] = true;
+window.onkeydown = function (e) {
+    keys[e.keyCode] = true;
 };
 
-window.onkeyup = function(e){
+window.onkeyup = function (e) {
     keys[e.keyCode] = false;
 }
 

@@ -6,7 +6,7 @@ module.exports = {
 	output: {
 		path: path.resolve(__dirname, 'dist'),
 		filename: 'bundle.js',
-		publicPath: '/'
+		publicPath: ''
 	},
 	plugins: [new HtmlWebpackPlugin({
 			title: 'CS409 A1 Typsecript WebGL2',
