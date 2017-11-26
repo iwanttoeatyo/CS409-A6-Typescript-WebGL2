@@ -1,5 +1,6 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+
 module.exports = {
 	entry: './src/main.ts',
 	output: {
@@ -31,7 +32,8 @@ module.exports = {
 			{
 				test: /\.(glsl|vs|fs|frag|vert)$/,
 				loader: 'ts-shader-loader'
-			}
+			},
+			{ test: /\.(jpe?g|gif|png|svg|woff|ttf|wav|mp3)$/, loader: "file-loader" }
 		]
 	},
 	devServer:{
