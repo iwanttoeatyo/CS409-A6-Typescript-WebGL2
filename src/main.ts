@@ -5,6 +5,7 @@ let basicFrag = require("basic.frag");
 let basicVert = require("basic.vert");
 let imageSrc = require('../assets/container.jpg');
 let imageSrc2 = require('../assets/awesomeface.png');
+let MainLoop = require('./lib/mainloop.min.js');
 
 let canvas: HTMLCanvasElement;
 let gl: WebGL2RenderingContext;
@@ -43,9 +44,11 @@ let cFront: vec3 = vec3.fromValues(0, 0, -1);
     gl.clearColor(0.2, 0.3, 0.3, 1.0);
     gl.enable(gl.DEPTH_TEST);
 
-    
-    //wait for images to load to prevent errors
-   setTimeout(function(){requestAnimationFrame(mainLoop)},50);
+    //Wait 50ms so images can load to prevent texture warnings
+    setInterval(function(){
+        MainLoop.setMaxAllowedFPS(60);
+        MainLoop.setBegin(begin).setUpdate(update).setDraw(draw).setEnd(end).start(); 
+    },50);
 
 })();
 
@@ -59,7 +62,6 @@ function initGL() {
     if (!gl) {
         alert("WebGL is not available on your browser.")
     }
-
     gl.enable(gl.SAMPLE_COVERAGE);
     gl.sampleCoverage(1, false);
 }
@@ -144,13 +146,30 @@ function initBuffers() {
     shader.setInt("texture2", 1);
 }
 
-function mainLoop(time){
-    update(time);
-    drawScene(time);
-    requestAnimationFrame(mainLoop);
+
+/**
+ * @param {Number} delta
+ *   The amount of time since the last update, in seconds.
+ */
+function update(delta){
 }
 
-function update(time){
+
+/** 
+ * Called once per frame before update and draw
+ * @param {Number} [timestamp]
+ *   The current timestamp (when the frame started), in milliseconds. This
+ *   should only be used for comparison to other timestamps because the
+ *   epoch (i.e. the "zero" time) depends on the engine running this code.
+ *   In engines that support `DOMHighResTimeStamp` (all modern browsers
+ *   except iOS Safari 8) the epoch is the time the page started loading,
+ *   specifically `performance.timing.navigationStart`. Everywhere else,
+ *   including node.js, the epoch is the Unix epoch (1970-01-01T00:00:00Z).
+ * @param {Number} [delta]
+ *   The total elapsed time that has not yet been simulated, in
+ *   milliseconds.
+ */
+function begin(timestamp, delta){
     if(keys['40']){
         mixValue += 0.05;
         if(mixValue > 1) mixValue = 1;
@@ -161,13 +180,15 @@ function update(time){
 }
 
 
-function drawScene(time) {
+/**
+ *
+ * @param {Number} interpolationPercentage
+ *   How much to interpolate between frames.
+ */
+function draw(interpolationPercentage) {
     canvas.width = window.innerHeight * (15 / 16);
     canvas.height = window.innerHeight * (15 / 16);
-    
 
-
-    time /= 1000;
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
@@ -208,6 +229,12 @@ function drawScene(time) {
 
 }
 
+function end(fps, panic){
+    if(panic){
+        var discardedTime = Math.round(MainLoop.resetFrameDelta());
+        console.warn("Main loop panicked, probably because the browser tab was put in the background. Discarding " + discardedTime + 'ms');
+    }
+}
 
 window.onkeydown = function( e){
   keys[e.keyCode] = true;
