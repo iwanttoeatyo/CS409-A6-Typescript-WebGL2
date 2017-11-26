@@ -3,6 +3,5 @@ src/**/*.js
 src/*.js
 src/*.map
 .idea/
-dist/
 node_modules/
 .git/
