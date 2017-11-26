@@ -2491,11 +2491,11 @@ let cFront = gl_matrix_1.vec3.fromValues(0, 0, -1);
     initBuffers();
     gl.clearColor(0.2, 0.3, 0.3, 1.0);
     gl.enable(gl.DEPTH_TEST);
-    //Wait 50ms so images can load to prevent texture warnings
+    //Wait 200ms so images can load to prevent texture warnings
     setInterval(function () {
         MainLoop.setMaxAllowedFPS(60);
         MainLoop.setBegin(begin).setUpdate(update).setDraw(draw).setEnd(end).start();
-    }, 50);
+    }, 200);
 })();
 function initGL() {
     try {
