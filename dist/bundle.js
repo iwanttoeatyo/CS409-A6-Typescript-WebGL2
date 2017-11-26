@@ -57,7 +57,7 @@
 /******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
 /******/
 /******/ 	// __webpack_public_path__
-/******/ 	__webpack_require__.p = "/";
+/******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
 /******/ 	return __webpack_require__(__webpack_require__.s = 4);
@@ -2462,7 +2462,9 @@ const gl_matrix_1 = __webpack_require__(5);
 const shader_1 = __webpack_require__(11);
 let basicFrag = __webpack_require__(12);
 let basicVert = __webpack_require__(13);
-let image = __webpack_require__(14);
+let imageSrc = __webpack_require__(14);
+let imageSrc2 = __webpack_require__(15);
+let MainLoop = __webpack_require__(16);
 let canvas;
 let gl;
 let shader_prog;
@@ -2472,7 +2474,11 @@ let mMatrix = gl_matrix_1.mat4.create();
 let vMatrix = gl_matrix_1.mat4.create();
 let pMatrix = gl_matrix_1.mat4.create();
 let VAO;
-let texture;
+let EBO;
+let texture1;
+let texture2;
+let keys = [];
+let mixValue = 0.2;
 let view;
 let projection;
 let cPos = gl_matrix_1.vec3.fromValues(0, 0, 3.0);
@@ -2485,7 +2491,11 @@ let cFront = gl_matrix_1.vec3.fromValues(0, 0, -1);
     initBuffers();
     gl.clearColor(0.2, 0.3, 0.3, 1.0);
     gl.enable(gl.DEPTH_TEST);
-    requestAnimationFrame(drawScene);
+    //Wait 50ms so images can load to prevent texture warnings
+    setInterval(function () {
+        MainLoop.setMaxAllowedFPS(60);
+        MainLoop.setBegin(begin).setUpdate(update).setDraw(draw).setEnd(end).start();
+    }, 50);
 })();
 function initGL() {
     try {
@@ -2502,39 +2512,105 @@ function initGL() {
 }
 function initBuffers() {
     let vertices = [
-        // positions          // colors           // texture coords
+        // positions        // colors         // texture coords
         0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0,
         0.5, -0.5, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0,
         -0.5, -0.5, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
         -0.5, 0.5, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0 // top left 
     ];
+    let indices = [
+        0, 1, 3,
+        1, 2, 3 // second triangle
+    ];
     VAO = gl.createVertexArray();
     VBO = gl.createBuffer();
+    EBO = gl.createBuffer();
     gl.bindVertexArray(VAO);
     gl.bindBuffer(gl.ARRAY_BUFFER, VBO);
     gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, EBO);
+    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(indices), gl.STATIC_DRAW);
     gl.enableVertexAttribArray(0);
-    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 30, 0);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 32, 0);
     gl.enableVertexAttribArray(1);
-    gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 30, 12);
+    gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 32, 12);
     gl.enableVertexAttribArray(2);
-    gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 30, 24);
+    gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 32, 24);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     gl.bindVertexArray(null);
-    console.log(image);
-    texture = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, texture);
+    texture1 = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture1);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, image);
-    gl.generateMipmap(gl.TEXTURE_2D);
+    let image = new Image();
+    image.src = imageSrc;
+    image.addEventListener('load', function () {
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture1);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
+        gl.generateMipmap(gl.TEXTURE_2D);
+    });
+    texture2 = gl.createTexture();
+    gl.bindTexture(gl.TEXTURE_2D, texture2);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    let image2 = new Image();
+    image2.src = imageSrc2;
+    image2.addEventListener('load', function () {
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, texture2);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image2);
+        gl.generateMipmap(gl.TEXTURE_2D);
+    });
+    shader.use();
+    shader.setInt("texture1", 0);
+    shader.setInt("texture2", 1);
 }
-function drawScene(time) {
+/**
+ * @param {Number} delta
+ *   The amount of time since the last update, in seconds.
+ */
+function update(delta) {
+}
+/**
+ * Called once per frame before update and draw
+ * @param {Number} [timestamp]
+ *   The current timestamp (when the frame started), in milliseconds. This
+ *   should only be used for comparison to other timestamps because the
+ *   epoch (i.e. the "zero" time) depends on the engine running this code.
+ *   In engines that support `DOMHighResTimeStamp` (all modern browsers
+ *   except iOS Safari 8) the epoch is the time the page started loading,
+ *   specifically `performance.timing.navigationStart`. Everywhere else,
+ *   including node.js, the epoch is the Unix epoch (1970-01-01T00:00:00Z).
+ * @param {Number} [delta]
+ *   The total elapsed time that has not yet been simulated, in
+ *   milliseconds.
+ */
+function begin(timestamp, delta) {
+    if (keys['40']) {
+        mixValue += 0.05;
+        if (mixValue > 1)
+            mixValue = 1;
+    }
+    else if (keys[38]) {
+        mixValue -= 0.05;
+        if (mixValue < 0)
+            mixValue = 0;
+    }
+}
+/**
+ *
+ * @param {Number} interpolationPercentage
+ *   How much to interpolate between frames.
+ */
+function draw(interpolationPercentage) {
     canvas.width = window.innerHeight * (15 / 16);
     canvas.height = window.innerHeight * (15 / 16);
-    time /= 1000;
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     // mat4.perspective(pMatrix, 70, canvas.width / canvas.height, 0.1, 100.0);
@@ -2552,12 +2628,28 @@ function drawScene(time) {
     //Pass triangle position to vertex shader
     // gl.bindBuffer(gl.ARRAY_BUFFER, VBO);
     //gl.vertexAttribPointer(pos, 3, gl.FLOAT, false, 3, 0);
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture1);
+    gl.activeTexture(gl.TEXTURE1);
+    gl.bindTexture(gl.TEXTURE_2D, texture2);
+    // set the texture mix value in the shader
+    shader.setFloat("mixValue", mixValue);
     shader.use();
-    gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.bindVertexArray(VAO);
     gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, 0);
-    requestAnimationFrame(drawScene);
 }
+function end(fps, panic) {
+    if (panic) {
+        var discardedTime = Math.round(MainLoop.resetFrameDelta());
+        console.warn("Main loop panicked, probably because the browser tab was put in the background. Discarding " + discardedTime + 'ms');
+    }
+}
+window.onkeydown = function (e) {
+    keys[e.keyCode] = true;
+};
+window.onkeyup = function (e) {
+    keys[e.keyCode] = false;
+};
 
 
 /***/ }),
@@ -6733,7 +6825,7 @@ function getShader(gl, path, type) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony default export */ __webpack_exports__["default"] = ("#version 300 es\r\nprecision mediump float;\r\nout vec4 FragColor;\r\n\r\nin vec3 ourColor;\r\nin vec2 TexCoord;\r\n\r\nuniform sampler2D ourTexture;\r\n\r\nvoid main()\r\n{\r\n    FragColor = texture(ourTexture, TexCoord);\r\n    //fragColor = vec4(1, 0.7, 0.5, 1); // set all 4 vector values to 1.0\r\n}");
+/* harmony default export */ __webpack_exports__["default"] = ("#version 300 es\r\nprecision mediump float;\r\nout vec4 FragColor;\r\n\r\nin vec3 ourColor;\r\nin vec2 TexCoord;\r\n\r\nuniform float mixValue;\r\n\r\nuniform sampler2D texture1;\r\nuniform sampler2D texture2;\r\n\r\nvoid main()\r\n{\r\n    FragColor =  mix(texture(texture1, TexCoord), texture(texture2, TexCoord), mixValue);\r\n    FragColor = vec4(FragColor.x * ourColor.x , FragColor.y * ourColor.y, FragColor.z * ourColor.z, FragColor.w);\r\n    //fragColor = vec4(1, 0.7, 0.5, 1); // set all 4 vector values to 1.0\r\n}");
 
 /***/ }),
 /* 13 */
@@ -6747,7 +6839,31 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
-module.exports = __webpack_require__.p + "5afa29a01ba85e060f5580fd7122d991.jpg";
+module.exports = __webpack_require__.p + "108747f590a8d24590e2b1ed2605060a.jpg";
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__.p + "734dc6c2401f125b69a950b72bf893ec.png";
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;/**
+ * mainloop.js 1.0.3-20170529
+ *
+ * @author Isaac Sukin (http://www.isaacsukin.com/)
+ * @license MIT
+ */
+
+!function(a){function b(a){if(x=q(b),!(a<e+l)){for(d+=a-e,e=a,t(a,d),a>i+h&&(f=g*j*1e3/(a-i)+(1-g)*f,i=a,j=0),j++,k=0;d>=c;)if(u(c),d-=c,++k>=240){o=!0;break}v(d/c),w(f,o),o=!1}}var c=1e3/60,d=0,e=0,f=60,g=.9,h=1e3,i=0,j=0,k=0,l=0,m=!1,n=!1,o=!1,p="object"==typeof window?window:a,q=p.requestAnimationFrame||function(){var a=Date.now(),b,d;return function(e){return b=Date.now(),d=Math.max(0,c-(b-a)),a=b+d,setTimeout(function(){e(b+d)},d)}}(),r=p.cancelAnimationFrame||clearTimeout,s=function(){},t=s,u=s,v=s,w=s,x;a.MainLoop={getSimulationTimestep:function(){return c},setSimulationTimestep:function(a){return c=a,this},getFPS:function(){return f},getMaxAllowedFPS:function(){return 1e3/l},setMaxAllowedFPS:function(a){return"undefined"==typeof a&&(a=1/0),0===a?this.stop():l=1e3/a,this},resetFrameDelta:function(){var a=d;return d=0,a},setBegin:function(a){return t=a||t,this},setUpdate:function(a){return u=a||u,this},setDraw:function(a){return v=a||v,this},setEnd:function(a){return w=a||w,this},start:function(){return n||(n=!0,x=q(function(a){v(1),m=!0,e=a,i=a,j=0,x=q(b)})),this},stop:function(){return m=!1,n=!1,r(x),this},isRunning:function(){return m}}, true?!(__WEBPACK_AMD_DEFINE_FACTORY__ = (a.MainLoop),
+				__WEBPACK_AMD_DEFINE_RESULT__ = (typeof __WEBPACK_AMD_DEFINE_FACTORY__ === 'function' ?
+				(__WEBPACK_AMD_DEFINE_FACTORY__.call(exports, __webpack_require__, exports, module)) :
+				__WEBPACK_AMD_DEFINE_FACTORY__),
+				__WEBPACK_AMD_DEFINE_RESULT__ !== undefined && (module.exports = __WEBPACK_AMD_DEFINE_RESULT__)):"object"==typeof module&&null!==module&&"object"==typeof module.exports&&(module.exports=a.MainLoop)}(this);
+//# sourceMappingURL=mainloop.min.js.map
 
 /***/ })
 /******/ ]);
