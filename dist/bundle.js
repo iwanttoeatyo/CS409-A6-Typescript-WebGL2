@@ -2478,6 +2478,7 @@ let EBO;
 let texture1;
 let texture2;
 let keys = [];
+let cubePositions;
 let mixValue = 0.2;
 let view;
 let projection;
@@ -2512,15 +2513,58 @@ function initGL() {
 }
 function initBuffers() {
     let vertices = [
-        // positions        // colors         // texture coords
-        0.5, 0.5, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0,
-        0.5, -0.5, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0,
-        -0.5, -0.5, 0.0, 0.0, 0.0, 1.0, 0.0, 0.0,
-        -0.5, 0.5, 0.0, 1.0, 1.0, 0.0, 0.0, 1.0 // top left 
+        -0.5, -0.5, -0.5, 0.0, 0.0,
+        0.5, -0.5, -0.5, 1.0, 0.0,
+        0.5, 0.5, -0.5, 1.0, 1.0,
+        0.5, 0.5, -0.5, 1.0, 1.0,
+        -0.5, 0.5, -0.5, 0.0, 1.0,
+        -0.5, -0.5, -0.5, 0.0, 0.0,
+        -0.5, -0.5, 0.5, 0.0, 0.0,
+        0.5, -0.5, 0.5, 1.0, 0.0,
+        0.5, 0.5, 0.5, 1.0, 1.0,
+        0.5, 0.5, 0.5, 1.0, 1.0,
+        -0.5, 0.5, 0.5, 0.0, 1.0,
+        -0.5, -0.5, 0.5, 0.0, 0.0,
+        -0.5, 0.5, 0.5, 1.0, 0.0,
+        -0.5, 0.5, -0.5, 1.0, 1.0,
+        -0.5, -0.5, -0.5, 0.0, 1.0,
+        -0.5, -0.5, -0.5, 0.0, 1.0,
+        -0.5, -0.5, 0.5, 0.0, 0.0,
+        -0.5, 0.5, 0.5, 1.0, 0.0,
+        0.5, 0.5, 0.5, 1.0, 0.0,
+        0.5, 0.5, -0.5, 1.0, 1.0,
+        0.5, -0.5, -0.5, 0.0, 1.0,
+        0.5, -0.5, -0.5, 0.0, 1.0,
+        0.5, -0.5, 0.5, 0.0, 0.0,
+        0.5, 0.5, 0.5, 1.0, 0.0,
+        -0.5, -0.5, -0.5, 0.0, 1.0,
+        0.5, -0.5, -0.5, 1.0, 1.0,
+        0.5, -0.5, 0.5, 1.0, 0.0,
+        0.5, -0.5, 0.5, 1.0, 0.0,
+        -0.5, -0.5, 0.5, 0.0, 0.0,
+        -0.5, -0.5, -0.5, 0.0, 1.0,
+        -0.5, 0.5, -0.5, 0.0, 1.0,
+        0.5, 0.5, -0.5, 1.0, 1.0,
+        0.5, 0.5, 0.5, 1.0, 0.0,
+        0.5, 0.5, 0.5, 1.0, 0.0,
+        -0.5, 0.5, 0.5, 0.0, 0.0,
+        -0.5, 0.5, -0.5, 0.0, 1.0
     ];
     let indices = [
         0, 1, 3,
         1, 2, 3 // second triangle
+    ];
+    cubePositions = [
+        gl_matrix_1.vec3.fromValues(0.0, 0.0, 0.0),
+        gl_matrix_1.vec3.fromValues(2.0, 5.0, -15.0),
+        gl_matrix_1.vec3.fromValues(-1.5, -2.2, -2.5),
+        gl_matrix_1.vec3.fromValues(-3.8, -2.0, -12.3),
+        gl_matrix_1.vec3.fromValues(2.4, -0.4, -3.5),
+        gl_matrix_1.vec3.fromValues(-1.7, 3.0, -7.5),
+        gl_matrix_1.vec3.fromValues(1.3, -2.0, -2.5),
+        gl_matrix_1.vec3.fromValues(1.5, 2.0, -2.5),
+        gl_matrix_1.vec3.fromValues(1.5, 0.2, -1.5),
+        gl_matrix_1.vec3.fromValues(-1.3, 1.0, -1.5)
     ];
     VAO = gl.createVertexArray();
     VBO = gl.createBuffer();
@@ -2531,11 +2575,9 @@ function initBuffers() {
     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, EBO);
     gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(indices), gl.STATIC_DRAW);
     gl.enableVertexAttribArray(0);
-    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 32, 0);
+    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
     gl.enableVertexAttribArray(1);
-    gl.vertexAttribPointer(1, 3, gl.FLOAT, false, 32, 12);
-    gl.enableVertexAttribArray(2);
-    gl.vertexAttribPointer(2, 2, gl.FLOAT, false, 32, 24);
+    gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
     gl.bindVertexArray(null);
     texture1 = gl.createTexture();
@@ -2632,11 +2674,27 @@ function draw(interpolationPercentage) {
     gl.bindTexture(gl.TEXTURE_2D, texture1);
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, texture2);
-    // set the texture mix value in the shader
-    shader.setFloat("mixValue", mixValue);
+    let view = gl_matrix_1.mat4.create();
+    let projection = gl_matrix_1.mat4.create();
+    gl_matrix_1.mat4.translate(view, view, gl_matrix_1.vec3.fromValues(0, 0, -3));
+    gl_matrix_1.mat4.perspective(projection, gl_matrix_1.glMatrix.toRadian(80), canvas.width / canvas.height, 0.1, 100);
+    let transform = gl_matrix_1.mat4.create();
+    gl_matrix_1.mat4.translate(transform, transform, gl_matrix_1.vec3.fromValues(0.5, -0.5, 0));
+    gl_matrix_1.mat4.rotate(transform, transform, Date.now() / 1000, gl_matrix_1.vec3.fromValues(0, 0, 1));
     shader.use();
+    shader.setMat4("view", view);
+    shader.setMat4("projection", projection);
     gl.bindVertexArray(VAO);
-    gl.drawElements(gl.TRIANGLES, 6, gl.UNSIGNED_INT, 0);
+    cubePositions.forEach(function (cube, index) {
+        let model = gl_matrix_1.mat4.create();
+        gl_matrix_1.mat4.translate(model, model, cube);
+        let angle = 20 * index;
+        if (index % 3 == 0)
+            angle = Date.now() / 1000 * 25.0;
+        gl_matrix_1.mat4.rotate(model, model, gl_matrix_1.glMatrix.toRadian(angle), gl_matrix_1.vec3.fromValues(1, 0.3, 0.5));
+        shader.setMat4("model", model);
+        gl.drawArrays(gl.TRIANGLES, 0, 36);
+    });
 }
 function end(fps, panic) {
     if (panic) {
@@ -6825,7 +6883,7 @@ function getShader(gl, path, type) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony default export */ __webpack_exports__["default"] = ("#version 300 es\r\nprecision mediump float;\r\nout vec4 FragColor;\r\n\r\nin vec3 ourColor;\r\nin vec2 TexCoord;\r\n\r\nuniform float mixValue;\r\n\r\nuniform sampler2D texture1;\r\nuniform sampler2D texture2;\r\n\r\nvoid main()\r\n{\r\n    FragColor =  mix(texture(texture1, TexCoord), texture(texture2, TexCoord), mixValue);\r\n    FragColor = vec4(FragColor.x * ourColor.x , FragColor.y * ourColor.y, FragColor.z * ourColor.z, FragColor.w);\r\n    //fragColor = vec4(1, 0.7, 0.5, 1); // set all 4 vector values to 1.0\r\n}");
+/* harmony default export */ __webpack_exports__["default"] = ("#version 300 es\r\nprecision mediump float;\r\nout vec4 FragColor;\r\n\r\nin vec2 TexCoord;\r\n\r\nuniform float mixValue;\r\n\r\nuniform sampler2D texture1;\r\nuniform sampler2D texture2;\r\n\r\nvoid main()\r\n{\r\n    FragColor =  mix(texture(texture1, TexCoord), texture(texture2, TexCoord), 0.2f);\r\n    //fragColor = vec4(1, 0.7, 0.5, 1); // set all 4 vector values to 1.0\r\n}");
 
 /***/ }),
 /* 13 */
@@ -6833,7 +6891,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony default export */ __webpack_exports__["default"] = ("#version 300 es\r\nlayout (location = 0) in vec3 aPos;\r\nlayout (location = 1) in vec3 aColor;\r\nlayout (location = 2) in vec2 aTexCoord;\r\n//uniform mat4 u_ModelView;\r\n//uniform mat4 u_Persp;\r\n\r\nuniform mat4 model;\r\nuniform mat4 view;\r\nuniform mat4 projection;\r\n\r\nout vec3 ourColor;\r\nout vec2 TexCoord;\r\n\r\nvoid main()\r\n{\r\n\r\ngl_Position =   vec4(aPos,1.0f);\r\nourColor = aColor;\r\nTexCoord = aTexCoord;\r\n// gl_Position = u_Persp * u_ModelView * vec4(Position, 1.0);\r\n//    gl_Position = projection * view * model * vec4(Position, 1.0f);\r\n}   ");
+/* harmony default export */ __webpack_exports__["default"] = ("#version 300 es\r\nlayout (location = 0) in vec3 aPos;\r\nlayout (location = 1) in vec2 aTexCoord;\r\n\r\nout vec2 TexCoord;\r\n\r\nuniform mat4 model;\r\nuniform mat4 view;\r\nuniform mat4 projection;\r\n\r\nvoid main()\r\n{\r\n\r\ngl_Position =  projection * view * model *  vec4(aPos,1.0f);\r\nTexCoord = aTexCoord;\r\n// gl_Position = u_Persp * u_ModelView * vec4(Position, 1.0);\r\n//    gl_Position = projection * view * model * vec4(Position, 1.0f);\r\n}   ");
 
 /***/ }),
 /* 14 */
