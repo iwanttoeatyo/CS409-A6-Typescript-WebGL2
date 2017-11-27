@@ -22,13 +22,14 @@ let texture1: WebGLTexture;
 let texture2: WebGLTexture;
 let keys: boolean[] = [];
 let cubePositions: vec3[];
+let fpsCounter = document.getElementById('fpscounter')
 
 let mixValue: number = 0.2;
 
 let view: WebGLUniformLocation;
 let projection: WebGLUniformLocation;
 
-let camera:Camera = new Camera(vec3.fromValues(0,0,3));
+let camera: Camera = new Camera(vec3.fromValues(0, 0, 3));
 
 
 (function loadWebGL() {
@@ -43,9 +44,12 @@ let camera:Camera = new Camera(vec3.fromValues(0,0,3));
     gl.clearColor(0.2, 0.3, 0.3, 1.0);
     gl.enable(gl.DEPTH_TEST);
 
+
+
     //Wait 200ms so images can load to prevent texture warnings
     setInterval(function () {
-        MainLoop.setMaxAllowedFPS(60);
+
+
         MainLoop.setBegin(begin).setUpdate(update).setDraw(draw).setEnd(end).start();
     }, 200);
 
@@ -63,6 +67,7 @@ function initGL() {
     }
     gl.enable(gl.SAMPLE_COVERAGE);
     gl.sampleCoverage(1, false);
+
 
 }
 
@@ -216,14 +221,14 @@ function update(delta) {
  */
 function begin(timestamp, delta) {
     delta /= 1000;
-   
+
     if (keys[40] || keys[83]) {
         camera.processKeyboard(Camera_Movement.BACKWARD, delta);
     } else if (keys[38] || keys[87]) {
         camera.processKeyboard(Camera_Movement.FORWARD, delta);
-    } else if (keys[37] || keys[65]){
+    } else if (keys[37] || keys[65]) {
         camera.processKeyboard(Camera_Movement.LEFT, delta);
-    } else if(keys[39] || keys[68]){
+    } else if (keys[39] || keys[68]) {
         camera.processKeyboard(Camera_Movement.RIGHT, delta);
     }
 }
@@ -235,9 +240,9 @@ function begin(timestamp, delta) {
  *   How much to interpolate between frames.
  */
 function draw(interpolationPercentage) {
-    console.log(MainLoop.getFPS());
-    canvas.width = window.innerHeight * (15 / 16);
-    canvas.height = window.innerHeight * (15 / 16);
+    let min = Math.min(window.innerHeight, window.innerWidth);
+    canvas.width =  window.innerWidth;
+    canvas.height = window.innerHeight;
 
     gl.viewport(0, 0, canvas.width, canvas.height);
     gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
@@ -277,7 +282,7 @@ function draw(interpolationPercentage) {
     //mat4.perspective(projection, glMatrix.toRadian(camera.zoom), canvas.width / canvas.height, 0.1, 100);
     shader.setMat4("view", view);
     shader.setMat4("projection", projection);
-    
+
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texture1);
 
@@ -288,22 +293,23 @@ function draw(interpolationPercentage) {
     shader.use();
 
     gl.bindVertexArray(VAO);
-    
-    cubePositions.forEach(function(cube, index){
+
+    cubePositions.forEach(function (cube, index) {
         let model = mat4.create();
         mat4.translate(model, model, cube);
-        let angle = 20 * index ;
-        if(index % 3 == 0)
-            angle = Date.now()/1000 * 25.0;
-        mat4.rotate(model,model, glMatrix.toRadian(angle), vec3.fromValues(1,0.3, 0.5));
+        let angle = 20 * index;
+        if (index % 3 == 0)
+            angle = Date.now() / 1000 * 25.0;
+        mat4.rotate(model, model, glMatrix.toRadian(angle), vec3.fromValues(1, 0.3, 0.5));
         shader.setMat4("model", model);
         gl.drawArrays(gl.TRIANGLES, 0, 36);
     });
-  
+
 
 }
 
 function end(fps, panic) {
+    fpsCounter.textContent = Math.round(fps) + ' FPS';
     if (panic) {
         var discardedTime = Math.round(MainLoop.resetFrameDelta());
         console.warn("Main loop panicked, probably because the browser tab was put in the background. Discarding " + discardedTime + 'ms');
