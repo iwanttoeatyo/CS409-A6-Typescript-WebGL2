@@ -30,10 +30,10 @@ module.exports = {
 				loader: 'ts-loader'
 			},
 			{
-				test: /\.(glsl|vs|fs|frag|vert)$/,
+				test: /\.(glsl|vs|fs|frag|vert|obj|mtl)$/,
 				loader: 'ts-shader-loader'
 			},
-			{ test: /\.(jpe?g|gif|png|svg|woff|ttf|wav|mp3)$/, loader: "file-loader" }
+			{ test: /\.(jpe?g|gif|png|svg|woff|ttf|wav|mp3|bmp)$/, loader: "file-loader" }
 		]
 	},
 	devServer:{

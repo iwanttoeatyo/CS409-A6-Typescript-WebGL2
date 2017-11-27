@@ -18,7 +18,8 @@
   "dependencies": {
     "@types/gl-matrix": "^2.4.0",
     "@types/webgl2": "0.0.2",
-    "gl-matrix": "^2.4.0"
+    "gl-matrix": "^2.4.0",
+    "webgl-obj-loader": "^1.0.0"
   },
   "devDependencies": {
     "file-loader": "^1.1.5",

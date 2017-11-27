@@ -2,48 +2,43 @@ import {glMatrix, mat4, vec3, vec4} from "gl-matrix";
 import {Shader} from "./shader";
 import {Camera, Camera_Movement} from "./camera";
 
-let basicFrag = require("basic.frag");
-let basicVert = require("basic.vert");
-let imageSrc = require('../assets/container.jpg');
-let imageSrc2 = require('../assets/awesomeface.png');
+let OBJ = require('webgl-obj-loader');
+import {Mesh} from "./lib/mesh.js";
+
 let MainLoop = require('./lib/mainloop.min.js');
 
+let mesh: any;
+let material: any;
 let canvas: HTMLCanvasElement;
 let gl: WebGL2RenderingContext;
-let shader_prog: WebGLShader;
 let shader: Shader;
+
 let VBO: WebGLBuffer;
-let mMatrix: mat4 = mat4.create();
-let vMatrix: mat4 = mat4.create();
-let pMatrix: mat4 = mat4.create();
 let VAO: WebGLVertexArrayObject;
 let EBO: WebGLBuffer;
+
 let texture1: WebGLTexture;
 let texture2: WebGLTexture;
+
 let keys: boolean[] = [];
 let cubePositions: vec3[];
-let fpsCounter = document.getElementById('fpscounter')
 
-let mixValue: number = 0.2;
 
-let view: WebGLUniformLocation;
-let projection: WebGLUniformLocation;
+let fpsCounter = document.getElementById('fpscounter');
 
 let camera: Camera = new Camera(vec3.fromValues(0, 0, 3));
-
 
 (function loadWebGL() {
 
     canvas = <HTMLCanvasElement> document.getElementById("canvas");
     initGL();
 
-    shader = new Shader(gl, basicVert, basicFrag);
+    shader = new Shader(gl, require("basic.vert"), require("basic.frag"));
 
     initBuffers();
 
     gl.clearColor(0.2, 0.3, 0.3, 1.0);
     gl.enable(gl.DEPTH_TEST);
-
 
 
     //Wait 200ms so images can load to prevent texture warnings
@@ -73,128 +68,57 @@ function initGL() {
 
 
 function initBuffers() {
-    let vertices = [
-        -0.5, -0.5, -0.5, 0.0, 0.0,
-        0.5, -0.5, -0.5, 1.0, 0.0,
-        0.5, 0.5, -0.5, 1.0, 1.0,
-        0.5, 0.5, -0.5, 1.0, 1.0,
-        -0.5, 0.5, -0.5, 0.0, 1.0,
-        -0.5, -0.5, -0.5, 0.0, 0.0,
-
-        -0.5, -0.5, 0.5, 0.0, 0.0,
-        0.5, -0.5, 0.5, 1.0, 0.0,
-        0.5, 0.5, 0.5, 1.0, 1.0,
-        0.5, 0.5, 0.5, 1.0, 1.0,
-        -0.5, 0.5, 0.5, 0.0, 1.0,
-        -0.5, -0.5, 0.5, 0.0, 0.0,
-
-        -0.5, 0.5, 0.5, 1.0, 0.0,
-        -0.5, 0.5, -0.5, 1.0, 1.0,
-        -0.5, -0.5, -0.5, 0.0, 1.0,
-        -0.5, -0.5, -0.5, 0.0, 1.0,
-        -0.5, -0.5, 0.5, 0.0, 0.0,
-        -0.5, 0.5, 0.5, 1.0, 0.0,
-
-        0.5, 0.5, 0.5, 1.0, 0.0,
-        0.5, 0.5, -0.5, 1.0, 1.0,
-        0.5, -0.5, -0.5, 0.0, 1.0,
-        0.5, -0.5, -0.5, 0.0, 1.0,
-        0.5, -0.5, 0.5, 0.0, 0.0,
-        0.5, 0.5, 0.5, 1.0, 0.0,
-
-        -0.5, -0.5, -0.5, 0.0, 1.0,
-        0.5, -0.5, -0.5, 1.0, 1.0,
-        0.5, -0.5, 0.5, 1.0, 0.0,
-        0.5, -0.5, 0.5, 1.0, 0.0,
-        -0.5, -0.5, 0.5, 0.0, 0.0,
-        -0.5, -0.5, -0.5, 0.0, 1.0,
-
-        -0.5, 0.5, -0.5, 0.0, 1.0,
-        0.5, 0.5, -0.5, 1.0, 1.0,
-        0.5, 0.5, 0.5, 1.0, 0.0,
-        0.5, 0.5, 0.5, 1.0, 0.0,
-        -0.5, 0.5, 0.5, 0.0, 0.0,
-        -0.5, 0.5, -0.5, 0.0, 1.0
-    ];
-
-    let indices = [
-        0, 1, 3, // first triangle
-        1, 2, 3  // second triangle
-    ];
-
-    cubePositions = [
-        vec3.fromValues(0.0, 0.0, 0.0),
-        vec3.fromValues(2.0, 5.0, -15.0),
-        vec3.fromValues(-1.5, -2.2, -2.5),
-        vec3.fromValues(-3.8, -2.0, -12.3),
-        vec3.fromValues(2.4, -0.4, -3.5),
-        vec3.fromValues(-1.7, 3.0, -7.5),
-        vec3.fromValues(1.3, -2.0, -2.5),
-        vec3.fromValues(1.5, 2.0, -2.5),
-        vec3.fromValues(1.5, 0.2, -1.5),
-        vec3.fromValues(-1.3, 1.0, -1.5)
-    ];
 
     VAO = gl.createVertexArray();
     VBO = gl.createBuffer();
-    EBO = gl.createBuffer();
 
+    mesh = new Mesh(require('../assets/models/actors/cbabe/cbabe_stand.obj').default);
+    OBJ.initMeshBuffers(gl, mesh);
+
+    let mtl = new OBJ.MaterialLibrary(require('../assets/models/actors/cbabe/cbabe.mtl').default);
+
+    mesh.addMaterialLibrary(mtl);
     gl.bindVertexArray(VAO);
-
-    gl.bindBuffer(gl.ARRAY_BUFFER, VBO);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertices), gl.STATIC_DRAW);
-
-    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, EBO);
-    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint32Array(indices), gl.STATIC_DRAW);
+    console.log(mtl);
+    console.log(mesh);
 
     gl.enableVertexAttribArray(0);
-    gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 20, 0);
+    gl.bindBuffer(gl.ARRAY_BUFFER, mesh.vertexBuffer);
+    gl.vertexAttribPointer(0, mesh.vertexBuffer.itemSize, gl.FLOAT, false, 0, 0);
 
-    gl.enableVertexAttribArray(1);
-    gl.vertexAttribPointer(1, 2, gl.FLOAT, false, 20, 12);
+    if (!mesh.textures.length) {
+        gl.disableVertexAttribArray(1);
+    } else {
+
+        gl.enableVertexAttribArray(1);
+        gl.bindBuffer(gl.ARRAY_BUFFER, mesh.textureBuffer);
+        gl.vertexAttribPointer(1, mesh.textureBuffer.itemSize, gl.FLOAT, true, 0, 0);
+    }
+
 
     gl.bindBuffer(gl.ARRAY_BUFFER, null);
-
     gl.bindVertexArray(null);
+
 
     texture1 = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture1);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-    let image = new Image();
-    image.src = imageSrc;
-    image.addEventListener('load', function () {
 
+    let image = new Image();
+    image.src = require('../assets/models/actors/cbabe/cbabe.bmp');
+    image.addEventListener('load', function () {
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, texture1);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
-        gl.generateMipmap(gl.TEXTURE_2D);
-    });
-
-    texture2 = gl.createTexture();
-    gl.bindTexture(gl.TEXTURE_2D, texture2);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
-    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-
-    let image2 = new Image();
-    image2.src = imageSrc2;
-    image2.addEventListener('load', function () {
-
-        gl.activeTexture(gl.TEXTURE1);
-        gl.bindTexture(gl.TEXTURE_2D, texture2);
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image2);
-        gl.generateMipmap(gl.TEXTURE_2D);
-    });
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
 
+
+        gl.generateMipmap(gl.TEXTURE_2D);
+        
+
+    });
 
     shader.use();
     shader.setInt("texture1", 0);
-    shader.setInt("texture2", 1);
 }
 
 
@@ -226,11 +150,14 @@ function begin(timestamp, delta) {
         camera.processKeyboard(Camera_Movement.BACKWARD, delta);
     } else if (keys[38] || keys[87]) {
         camera.processKeyboard(Camera_Movement.FORWARD, delta);
-    } else if (keys[37] || keys[65]) {
+    } else if (keys[65]) {
         camera.processKeyboard(Camera_Movement.LEFT, delta);
-    } else if (keys[39] || keys[68]) {
+    } else if (keys[68]) {
         camera.processKeyboard(Camera_Movement.RIGHT, delta);
     }
+
+    if (keys[37]) camera.processMouseMovement(-50, 0, true);
+    if (keys[39]) camera.processMouseMovement(50, 0, true);
 }
 
 
@@ -241,7 +168,7 @@ function begin(timestamp, delta) {
  */
 function draw(interpolationPercentage) {
     let min = Math.min(window.innerHeight, window.innerWidth);
-    canvas.width =  window.innerWidth;
+    canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
 
     gl.viewport(0, 0, canvas.width, canvas.height);
@@ -278,32 +205,35 @@ function draw(interpolationPercentage) {
 
     view = camera.getViewMatrix();
 
-    mat4.perspective(projection, glMatrix.toRadian(80), canvas.width / canvas.height, 0.1, 100);
+    mat4.perspective(projection, glMatrix.toRadian(80), canvas.width / canvas.height, 0.1, 10000);
     //mat4.perspective(projection, glMatrix.toRadian(camera.zoom), canvas.width / canvas.height, 0.1, 100);
     shader.setMat4("view", view);
     shader.setMat4("projection", projection);
-
-    gl.activeTexture(gl.TEXTURE0);
-    gl.bindTexture(gl.TEXTURE_2D, texture1);
-
-    gl.activeTexture(gl.TEXTURE1);
-    gl.bindTexture(gl.TEXTURE_2D, texture2);
+    let model = mat4.create();
+    mat4.translate(model, model, vec3.fromValues(0, 0, 0));
+    shader.setMat4("model", model);
 
 
     shader.use();
 
+    gl.activeTexture(gl.TEXTURE0);
+    gl.bindTexture(gl.TEXTURE_2D, texture1);
+
     gl.bindVertexArray(VAO);
 
-    cubePositions.forEach(function (cube, index) {
-        let model = mat4.create();
-        mat4.translate(model, model, cube);
-        let angle = 20 * index;
-        if (index % 3 == 0)
-            angle = Date.now() / 1000 * 25.0;
-        mat4.rotate(model, model, glMatrix.toRadian(angle), vec3.fromValues(1, 0.3, 0.5));
-        shader.setMat4("model", model);
-        gl.drawArrays(gl.TRIANGLES, 0, 36);
-    });
+
+    gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, mesh.indexBuffer);
+    gl.drawElements(gl.TRIANGLES, mesh.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+    // cubePositions.forEach(function (cube, index) {
+    //     let model = mat4.create();
+    //     mat4.translate(model, model, cube);
+    //     let angle = 20 * index;
+    //     if (index % 3 == 0)
+    //         angle = Date.now() / 1000 * 25.0;
+    //     mat4.rotate(model, model, glMatrix.toRadian(angle), vec3.fromValues(1, 0.3, 0.5));
+    //     shader.setMat4("model", model);
+    //     gl.drawArrays(gl.TRIANGLES, 0, 36);
+    // });
 
 
 }
@@ -325,3 +255,6 @@ window.onkeyup = function (e) {
 };
 
 
+function isPowerOf2(value) {
+    return (value & (value - 1)) == 0;
+}

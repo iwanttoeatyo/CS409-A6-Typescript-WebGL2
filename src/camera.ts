@@ -5,7 +5,7 @@ const YAW: number = -90.0;
 const PITCH: number = 0.0;
 const SPEED: number = 10.0;
 const SENSITIVITY: number = 0.1;
-const ZOOM: number = 45.0;
+const ZOOM: number = 90.0;
 
 export enum Camera_Movement {
     FORWARD,
@@ -93,14 +93,14 @@ export class Camera {
     }
 
     _updateCameraVectors() {
-        console.log(this.front);
+   
         let x  = Math.cos(glMatrix.toRadian(this.yaw)) * Math.cos(glMatrix.toRadian(this.pitch));
         let y = Math.sin(glMatrix.toRadian(this.pitch));
         let z = Math.sin(glMatrix.toRadian(this.yaw)) * Math.cos(glMatrix.toRadian(this.pitch));
         let newFront: vec3 = vec3.fromValues(x,y,z);
         vec3.normalize(newFront, newFront);
         this.front = newFront;
-        console.log(this.front);
+  
         let cross: vec3 = vec3.create();
         vec3.normalize(cross, vec3.cross(cross, this.front, this.worldUp));
         this.right = cross;

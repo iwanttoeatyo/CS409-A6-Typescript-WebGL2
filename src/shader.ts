@@ -9,9 +9,9 @@ export class Shader {
     constructor(gl: WebGL2RenderingContext, vertexPath: string, fragmentPath: string) {
         this.gl = gl;
 
-        let fragmentShader: WebGLShader = getShader(gl, fragmentPath, gl.FRAGMENT_SHADER);
         let vertexShader: WebGLShader = getShader(gl, vertexPath, gl.VERTEX_SHADER);
-
+        let fragmentShader: WebGLShader = getShader(gl, fragmentPath, gl.FRAGMENT_SHADER);
+        
         this.ID = gl.createProgram();
         gl.attachShader(this.ID, vertexShader);
         gl.attachShader(this.ID, fragmentShader);
