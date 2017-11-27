@@ -1,5 +1,6 @@
 import {glMatrix, mat4, vec3, vec4} from "gl-matrix";
 import {Shader} from "./shader";
+import {Camera, Camera_Movement} from "./camera";
 
 let basicFrag = require("basic.frag");
 let basicVert = require("basic.vert");
@@ -27,10 +28,7 @@ let mixValue: number = 0.2;
 let view: WebGLUniformLocation;
 let projection: WebGLUniformLocation;
 
-
-let cPos: vec3 = vec3.fromValues(0, 0, 3.0);
-let cUp: vec3 = vec3.fromValues(0, 1, 0);
-let cFront: vec3 = vec3.fromValues(0, 0, -1);
+let camera:Camera = new Camera(vec3.fromValues(0,0,3));
 
 
 (function loadWebGL() {
@@ -65,6 +63,7 @@ function initGL() {
     }
     gl.enable(gl.SAMPLE_COVERAGE);
     gl.sampleCoverage(1, false);
+
 }
 
 
@@ -205,8 +204,7 @@ function update(delta) {
 /**
  * Called once per frame before update and draw
  * @param {Number} [timestamp]
- *   The current timestamp (when the frame started), in milliseconds. This
- *   should only be used for comparison to other timestamps because the
+ *   The current timestamp (when the frame started), in milliseconds. Thisw
  *   epoch (i.e. the "zero" time) depends on the engine running this code.
  *   In engines that support `DOMHighResTimeStamp` (all modern browsers
  *   except iOS Safari 8) the epoch is the time the page started loading,
@@ -217,12 +215,16 @@ function update(delta) {
  *   milliseconds.
  */
 function begin(timestamp, delta) {
-    if (keys['40']) {
-        mixValue += 0.05;
-        if (mixValue > 1) mixValue = 1;
-    } else if (keys[38]) {
-        mixValue -= 0.05;
-        if (mixValue < 0) mixValue = 0;
+    delta /= 1000;
+   
+    if (keys[40] || keys[83]) {
+        camera.processKeyboard(Camera_Movement.BACKWARD, delta);
+    } else if (keys[38] || keys[87]) {
+        camera.processKeyboard(Camera_Movement.FORWARD, delta);
+    } else if (keys[37] || keys[65]){
+        camera.processKeyboard(Camera_Movement.LEFT, delta);
+    } else if(keys[39] || keys[68]){
+        camera.processKeyboard(Camera_Movement.RIGHT, delta);
     }
 }
 
@@ -233,6 +235,7 @@ function begin(timestamp, delta) {
  *   How much to interpolate between frames.
  */
 function draw(interpolationPercentage) {
+    console.log(MainLoop.getFPS());
     canvas.width = window.innerHeight * (15 / 16);
     canvas.height = window.innerHeight * (15 / 16);
 
@@ -259,31 +262,30 @@ function draw(interpolationPercentage) {
 
     // gl.bindBuffer(gl.ARRAY_BUFFER, VBO);
     //gl.vertexAttribPointer(pos, 3, gl.FLOAT, false, 3, 0);
+
+
+    let view = mat4.create();
+
+    let projection = mat4.create();
+
+
+    mat4.translate(view, view, vec3.fromValues(0, 0, -3));
+
+    view = camera.getViewMatrix();
+
+    mat4.perspective(projection, glMatrix.toRadian(80), canvas.width / canvas.height, 0.1, 100);
+    //mat4.perspective(projection, glMatrix.toRadian(camera.zoom), canvas.width / canvas.height, 0.1, 100);
+    shader.setMat4("view", view);
+    shader.setMat4("projection", projection);
+    
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, texture1);
 
     gl.activeTexture(gl.TEXTURE1);
     gl.bindTexture(gl.TEXTURE_2D, texture2);
 
-    let view = mat4.create();
-   
-    let projection = mat4.create();
-
-   
-
-    mat4.translate(view, view, vec3.fromValues(0, 0, -3));
-
-    mat4.perspective(projection, glMatrix.toRadian(80), canvas.width / canvas.height, 0.1, 100);
-
-
-    let transform: mat4 = mat4.create();
-    mat4.translate(transform, transform, vec3.fromValues(0.5, -0.5, 0));
-    mat4.rotate(transform, transform, Date.now() / 1000, vec3.fromValues(0, 0, 1));
 
     shader.use();
-    
-    shader.setMat4("view", view);
-    shader.setMat4("projection", projection);
 
     gl.bindVertexArray(VAO);
     
@@ -314,6 +316,6 @@ window.onkeydown = function (e) {
 
 window.onkeyup = function (e) {
     keys[e.keyCode] = false;
-}
+};
 
 
