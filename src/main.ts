@@ -295,23 +295,6 @@ window.onkeyup = function (e) {
     keys[e.keyCode] = false;
 };
 
-
-let p = OBJ.downloadModels([
-    {
-        name: 'cbabe_stand',
-        obj: "../assets/models/actors/cbabe/cbabe_stand.obj",
-        mtl: "../assets/models/actors/cbabe/cbabe.mtl",
-    }
-]);
-
-p.then((models) => {
-    Object.keys(models).forEach((name) => {
-        console.log('Name:', name);
-        console.log('Mesh:', models[name]);
-    });
-    new Main(models);
-});
-
 function moveCallback(e) {
     let movementX = e.movementX ||
         e.mozMovementX ||
@@ -323,3 +306,21 @@ function moveCallback(e) {
         0;
     camera.processMouseMovement(movementX, -movementY, true);
 }
+
+
+let p = OBJ.downloadModels([
+    {
+        name: 'cbabe_stand',
+        obj: "/assets/models/actors/cbabe/cbabe_stand.obj",
+        mtl: "/assets/models/actors/cbabe/cbabe.mtl",
+    }
+], window.location.href.substr(0, window.location.href.lastIndexOf("/")));
+
+p.then((models) => {
+    Object.keys(models).forEach((name) => {
+        console.log('Name:', name);
+        console.log('Mesh:', models[name]);
+    });
+    new Main(models);
+});
+

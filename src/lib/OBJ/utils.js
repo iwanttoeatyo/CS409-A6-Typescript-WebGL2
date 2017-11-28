@@ -103,7 +103,10 @@ function downloadMtlTextures (mtl, root) {
  * and the value is its Mesh object. Each Mesh object will automatically
  * have its addMaterialLibrary() method called to set the given MTL data (if given).
  */
-export function downloadModels (models) {
+//to pass root to fetch callbacks
+let global_root;
+export function downloadModels (models, root = "") {
+	global_root = root;
   const finished = [];
 
   for (const model of models) {
@@ -115,17 +118,17 @@ export function downloadModels (models) {
         'in order to use downloadModels()'
       );
     }
-
+	
     // if the name is not provided, dervive it from the given OBJ
     let name = model.name;
     if (!name) {
       let parts = model.obj.split('/');
       name = parts[parts.length - 1].replace('.obj', '');
     }
-    parsed.push(Promise.resolve(name))
+    parsed.push(Promise.resolve(name));
 
     parsed.push(
-      fetch(model.obj)
+      fetch(root + model.obj)
         .then((response) => response.text())
         .then((data) => {
           return new Mesh(data);
@@ -140,16 +143,15 @@ export function downloadModels (models) {
       }
 
       parsed.push(
-        fetch(mtl)
+        fetch(root + mtl)
           .then((response) => response.text())
           .then((data) => {
             let material = new MaterialLibrary(data);
             if (model.downloadMtlTextures !== false) {
-              let root = model.mtlTextureRoot;
+              let root =  model.mtlTextureRoot;
               if (!root) {
                 // get the directory of the MTL file as default
                 root = mtl.substr(0, mtl.lastIndexOf("/"));
-               
               }
               // downloadMtlTextures returns a Promise that
               // is resolved once all of the images it
@@ -157,7 +159,7 @@ export function downloadModels (models) {
               // attached to the map data objects
               return Promise.all([
                 Promise.resolve(material),
-                downloadMtlTextures(material, root)
+                downloadMtlTextures(material, global_root + root)
               ]);
             }
             return Promise.all(Promise.resolve(material));
