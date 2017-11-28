@@ -13,7 +13,6 @@ let gl: WebGL2RenderingContext;
 let shader: Shader;
 
 
-
 let document = window.document;
 let VAO: WebGLVertexArrayObject;
 let VBO: WebGLBuffer;
@@ -33,7 +32,7 @@ class Main {
 
     constructor(models) {
         this.loadWebGL(models);
-        
+
     }
 
 
@@ -147,7 +146,8 @@ class Main {
             camera.processKeyboard(Camera_Movement.BACKWARD, delta);
         } else if (keys[38] || keys[87]) {
             camera.processKeyboard(Camera_Movement.FORWARD, delta);
-        } else if (keys[65]) {
+        }
+        if (keys[65]) {
             camera.processKeyboard(Camera_Movement.LEFT, delta);
         } else if (keys[68]) {
             camera.processKeyboard(Camera_Movement.RIGHT, delta);
@@ -235,7 +235,7 @@ class Main {
 
 
     initPointerLock() {
-        let _canvas:any = canvas;
+        let _canvas: any = canvas;
         // Start by going fullscreen with the element.  Current implementations
         // require the element to be in fullscreen before requesting pointer
         // lock--something that will likely change in the future.
@@ -255,8 +255,8 @@ class Main {
     }
 
     fullscreenChange() {
-        let document:any = window.document;
-        let _canvas:any = canvas;
+        let document: any = window.document;
+        let _canvas: any = canvas;
         if (document.webkitFullscreenElement === canvas ||
             document.mozFullscreenElement === canvas ||
             document.mozFullScreenElement === canvas ||
@@ -270,13 +270,13 @@ class Main {
     }
 
     pointerLockChange(e) {
- 
-        let document:any = window.document;
+
+        let document: any = window.document;
         if (document.pointerLockElement === canvas ||
             document.mozPointerLockElement === canvas ||
             document.webkitPointerLockElement === canvas) {
 
-            document.addEventListener("mousemove",moveCallback, false);
+            document.addEventListener("mousemove", moveCallback, false);
 
         }
         else {
