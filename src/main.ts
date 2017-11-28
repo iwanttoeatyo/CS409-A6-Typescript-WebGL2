@@ -13,6 +13,8 @@ let gl: WebGL2RenderingContext;
 let shader: Shader;
 
 
+
+let document = window.document;
 let VAO: WebGLVertexArrayObject;
 let VBO: WebGLBuffer;
 let EBO: any;
@@ -22,7 +24,7 @@ let texture2: WebGLTexture;
 let keys: boolean[] = [];
 
 let models: Object;
-let cbabe:Mesh;
+let cbabe: Mesh;
 let fpsCounter = document.getElementById('fpscounter');
 
 let camera: Camera = new Camera(vec3.fromValues(0, 0, 3));
@@ -31,16 +33,17 @@ class Main {
 
     constructor(models) {
         this.loadWebGL(models);
+        
     }
 
-    
+
     loadWebGL(_models) {
 
         models = _models;
         cbabe = models["cbabe_stand"];
-        
+
         canvas = <HTMLCanvasElement> document.getElementById("canvas");
-     
+
         this.initGL();
 
         shader = new Shader(gl, require("../src/shaders/basic.vert"), require("../src/shaders/basic.frag"));
@@ -50,11 +53,12 @@ class Main {
         gl.clearColor(0.2, 0.3, 0.3, 1.0);
         gl.enable(gl.DEPTH_TEST);
 
- 
+        this.initPointerLock();
         //Wait ms so images can load to prevent texture warnings
         setInterval(h => {
             MainLoop.setBegin(this.begin).setUpdate(this.update).setDraw(this.draw).setEnd(this.end).start();
-        },1);
+
+        }, 1);
 
     }
 
@@ -230,6 +234,57 @@ class Main {
     }
 
 
+    initPointerLock() {
+        let _canvas:any = canvas;
+        // Start by going fullscreen with the element.  Current implementations
+        // require the element to be in fullscreen before requesting pointer
+        // lock--something that will likely change in the future.
+        canvas.requestFullscreen = canvas.requestFullscreen ||
+            _canvas.mozRequestFullscreen ||
+            _canvas.mozRequestFullScreen || // Older API upper case 'S'.
+            canvas.webkitRequestFullscreen;
+        canvas.addEventListener('click', canvas.requestFullscreen, false);
+
+        document.addEventListener('fullscreenchange', this.fullscreenChange, false);
+        document.addEventListener('mozfullscreenchange', this.fullscreenChange, false);
+        document.addEventListener('webkitfullscreenchange', this.fullscreenChange, false);
+
+        document.addEventListener('pointerlockchange', this.pointerLockChange, false);
+        document.addEventListener('mozpointerlockchange', this.pointerLockChange, false);
+        document.addEventListener('webkitpointerlockchange', this.pointerLockChange, false);
+    }
+
+    fullscreenChange() {
+        let document:any = window.document;
+        let _canvas:any = canvas;
+        if (document.webkitFullscreenElement === canvas ||
+            document.mozFullscreenElement === canvas ||
+            document.mozFullScreenElement === canvas ||
+            document.fullscreenElement === canvas) { // Older API upper case 'S'.
+            // Element is fullscreen, now we can request pointer lock
+            canvas.requestPointerLock = canvas.requestPointerLock ||
+                _canvas.mozRequestPointerLock ||
+                _canvas.webkitRequestPointerLock;
+            canvas.requestPointerLock();
+        }
+    }
+
+    pointerLockChange(e) {
+ 
+        let document:any = window.document;
+        if (document.pointerLockElement === canvas ||
+            document.mozPointerLockElement === canvas ||
+            document.webkitPointerLockElement === canvas) {
+
+            document.addEventListener("mousemove",moveCallback, false);
+
+        }
+        else {
+            document.removeEventListener("mousemove", moveCallback, false);
+        }
+    }
+
+
 }
 
 window.onkeydown = function (e) {
@@ -256,3 +311,15 @@ p.then((models) => {
     });
     new Main(models);
 });
+
+function moveCallback(e) {
+    let movementX = e.movementX ||
+        e.mozMovementX ||
+        e.webkitMovementX ||
+        0;
+    let movementY = e.movementY ||
+        e.mozMovementY ||
+        e.webkitMovementY ||
+        0;
+    camera.processMouseMovement(movementX, -movementY, true);
+}

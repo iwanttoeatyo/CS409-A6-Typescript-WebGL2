@@ -3,9 +3,9 @@ import {vec3} from "gl-matrix";
 
 const YAW: number = -90.0;
 const PITCH: number = 0.0;
-const SPEED: number = 10.0;
+const SPEED: number = 5.0;
 const SENSITIVITY: number = 0.1;
-const ZOOM: number = 90.0;
+const ZOOM: number = 65.0;
 
 export enum Camera_Movement {
     FORWARD,
@@ -38,7 +38,7 @@ export class Camera {
         this.yaw = yaw;
         this.pitch = pitch;
 
-        this._updateCameraVectors();
+        this.updateCameraVectors();
     }
 
     getViewMatrix() {
@@ -89,10 +89,10 @@ export class Camera {
             if (this.pitch < -89) this.pitch = -89;
         }
 
-        this._updateCameraVectors();
+        this.updateCameraVectors();
     }
 
-    _updateCameraVectors() {
+    private updateCameraVectors() {
    
         let x  = Math.cos(glMatrix.toRadian(this.yaw)) * Math.cos(glMatrix.toRadian(this.pitch));
         let y = Math.sin(glMatrix.toRadian(this.pitch));
@@ -108,6 +108,8 @@ export class Camera {
         vec3.normalize(cross2, vec3.cross(cross2, this.right, this.front));
         this.up = cross2;
     }
+    
+
 
 }
 
