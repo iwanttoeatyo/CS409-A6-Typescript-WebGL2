@@ -14,7 +14,7 @@ let shader: Shader;
 
 
 let document = window.document;
-let VAO: WebGLVertexArrayObject;
+
 let VBO: WebGLBuffer;
 let EBO: any;
 let texture1: WebGLTexture;
@@ -23,7 +23,31 @@ let texture2: WebGLTexture;
 let keys: boolean[] = [];
 
 let models: Object;
-let cbabe: Mesh;
+
+interface Model {
+    mesh: Mesh;
+    texture: WebGLTexture;
+    textureNum;
+    VAO: WebGLVertexArrayObject;
+    position: vec3
+}
+
+let player: Model = {
+    mesh: null,
+    texture: null,
+    textureNum: 0,
+    VAO: null,
+    position: vec3.fromValues(0, 0.8, 0)
+};
+
+let disk: Model = {
+    mesh: null,
+    texture: null,
+    textureNum: 0,
+    VAO: null,
+    position: vec3.fromValues(0, 0, 0)
+};
+
 let fpsCounter = document.getElementById('fpscounter');
 
 let camera: Camera = new Camera(vec3.fromValues(0, 0, 3));
@@ -39,7 +63,8 @@ class Main {
     loadWebGL(_models) {
 
         models = _models;
-        cbabe = models["cbabe_stand"];
+        player.mesh = models["cbabe_stand"];
+        disk.mesh = models["DiskA"];
 
         canvas = <HTMLCanvasElement> document.getElementById("canvas");
 
@@ -77,40 +102,53 @@ class Main {
 
     }
 
-
-    initBuffers() {
-
-        VAO = gl.createVertexArray();
-
-        OBJ.initMeshBuffers(gl, cbabe);
-
-        //EBO = mesh.makeIndexBufferData();
-
-        gl.bindVertexArray(VAO);
+    initModel(model, texture_num) {
+        model.VAO = gl.createVertexArray();
+        OBJ.initMeshBuffers(gl, model.mesh);
+        gl.bindVertexArray(model.VAO);
         gl.enableVertexAttribArray(0);
-        gl.bindBuffer(gl.ARRAY_BUFFER, cbabe.vertexBuffer);
+        gl.bindBuffer(gl.ARRAY_BUFFER, model.mesh.vertexBuffer);
         gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
         gl.enableVertexAttribArray(1);
-        gl.bindBuffer(gl.ARRAY_BUFFER, cbabe.textureBuffer);
+        gl.bindBuffer(gl.ARRAY_BUFFER, model.mesh.textureBuffer);
         gl.vertexAttribPointer(1, 2, gl.FLOAT, true, 0, 0);
 
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
         gl.bindVertexArray(null);
 
-        texture1 = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, texture1);
+        model.texture = gl.createTexture();
+        gl.bindTexture(gl.TEXTURE_2D, model.texture);
 
-        cbabe.materialsByIndex[0].mapDiffuse.texture.addEventListener('load', function () {
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, texture1);
+        let i = new Image();
+        i.src = model.mesh.materialsByIndex[0].mapDiffuse.texture;
+        i.addEventListener('load', function () {
+            gl.activeTexture(gl.TEXTURE0  + texture_num);
+            gl.bindTexture(gl.TEXTURE_2D, model.texture);
             gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, cbabe.materialsByIndex[0].mapDiffuse.texture);
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, i);
             gl.generateMipmap(gl.TEXTURE_2D);
-
         });
+        gl.activeTexture(gl.TEXTURE0 + texture_num);
+        gl.bindTexture(gl.TEXTURE_2D, model.texture);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, model.mesh.materialsByIndex[0].mapDiffuse.texture);
+        gl.generateMipmap(gl.TEXTURE_2D);
+    }
+
+    initBuffers() {
+        this.initModel(disk, disk.textureNum);
+        this.initModel(player, player.textureNum);
+
 
         shader.use();
         shader.setInt("texture1", 0);
+
+
+        fetch('../assets/worlds/maps/Basic.txt').then((response) => response.text())
+            .then((data) => {
+
+            });
+
     }
 
 
@@ -118,8 +156,6 @@ class Main {
      * @param {Number} delta
      *   The amount of time since the last update, in seconds.
      */
-
-
     update(delta) {
     }
 
@@ -153,8 +189,8 @@ class Main {
             camera.processKeyboard(Camera_Movement.RIGHT, delta);
         }
 
-        if (keys[37]) camera.processMouseMovement(-50, 0, true);
-        if (keys[39]) camera.processMouseMovement(50, 0, true);
+        if (keys[37]) camera.processMouseMovement(-delta, 0, true);
+        if (keys[39]) camera.processMouseMovement(delta, 0, true);
     }
 
 
@@ -195,34 +231,51 @@ class Main {
         //gl.vertexAttribPointer(pos, 3, gl.FLOAT, false, 3, 0);
 
 
-        let view = mat4.create();
-
         let projection = mat4.create();
-
-
-        mat4.translate(view, view, vec3.fromValues(0, 0, -3));
-
-        view = camera.getViewMatrix();
+        let view = camera.getViewMatrix();
 
         mat4.perspective(projection, glMatrix.toRadian(80), canvas.width / canvas.height, 0.1, 100);
         //mat4.perspective(projection, glMatrix.toRadian(camera.zoom), canvas.width / canvas.height, 0.1, 100);
+
         shader.setMat4("view", view);
         shader.setMat4("projection", projection);
+        
+        //Draw Player
+        gl.bindVertexArray(player.VAO);
         let model = mat4.create();
-        mat4.translate(model, model, vec3.fromValues(0, 0, 0));
+        mat4.translate(model, model, camera.position);
+        mat4.translate(model, model, vec3.fromValues(1, -1, 0));
         shader.setMat4("model", model);
 
 
         shader.use();
 
         gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, texture1);
+        gl.bindTexture(gl.TEXTURE_2D, player.texture);
 
-        gl.bindVertexArray(VAO);
+        gl.bindVertexArray(player.VAO);
 
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, player.mesh.indexBuffer);
+        gl.drawElements(gl.TRIANGLES, player.mesh.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+        
+        gl.bindVertexArray(null);
+        //Draw Disk
+        gl.bindVertexArray(disk.VAO);
+        model = mat4.create();
+        mat4.translate(model, model, disk.position);
+        shader.setMat4("model", model);
 
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, cbabe.indexBuffer);
-        gl.drawElements(gl.TRIANGLES, cbabe.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+        shader.use();
+
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, disk.texture);
+
+        gl.bindVertexArray(disk.VAO);
+
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, disk.mesh.indexBuffer);
+        gl.drawElements(gl.TRIANGLES, disk.mesh.indexBuffer.numItems, gl.UNSIGNED_SHORT, 0);
+
+        gl.bindVertexArray(null);
     }
 
     end(fps, panic) {
@@ -313,6 +366,11 @@ let p = OBJ.downloadModels([
         name: 'cbabe_stand',
         obj: "/assets/models/actors/cbabe/cbabe_stand.obj",
         mtl: "/assets/models/actors/cbabe/cbabe.mtl",
+    },
+    {
+        name: 'DiskA',
+        obj: "/assets/models/environment/disks/DiskA.obj",
+        mtl: "/assets/models/environment/disks/Disks.mtl"
     }
 ], window.location.href.substr(0, window.location.href.lastIndexOf("/")));
 
