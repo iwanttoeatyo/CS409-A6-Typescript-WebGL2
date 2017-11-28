@@ -22,6 +22,7 @@
     "webgl-obj-loader": "^1.0.0"
   },
   "devDependencies": {
+    "copy-webpack-plugin": "^4.2.3",
     "file-loader": "^1.1.5",
     "html-webpack-plugin": "^2.30.1",
     "ts-loader": "^3.1.1",

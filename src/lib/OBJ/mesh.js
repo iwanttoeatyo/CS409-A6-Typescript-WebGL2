@@ -1,4 +1,4 @@
-let Layout = require('webgl-obj-loader').Layout;
+import {Layout} from "./layout";
 /**
  * The main Mesh class. The constructor will parse through the OBJ file data
  * and collect the vertex, vertex normal, texture, and face information. This
@@ -8,7 +8,7 @@ let Layout = require('webgl-obj-loader').Layout;
  * - Options
  *   - materials
  */
-export class Mesh {
+export default class Mesh {
     /**
      * Create a Mesh
      * @param {String} objectData a string representation of an OBJ file with
