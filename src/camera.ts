@@ -49,6 +49,16 @@ export class Camera {
         mat4.lookAt(look, this.position, forward, this.up);
         return look;
     }
+    
+    getInverseViewMatrix(){
+        let forward = vec3.create();
+        vec3.add(forward, this.position, this.front);
+
+        let look = mat4.create();
+        mat4.lookAt(look, this.position, forward, this.up);
+        mat4.invert(look,look);
+        return look;
+    }
 
     processKeyboard(direction: Camera_Movement, deltaTime: number) {
         let velocity: number = this.movementSpeed * deltaTime;
@@ -109,7 +119,6 @@ export class Camera {
         this.up = cross2;
     }
     
-
-
+    
 }
 
