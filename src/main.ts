@@ -374,6 +374,7 @@ function moveCallback(e) {
     
 }
 
+let root = window.location.href.substr(0, window.location.href.lastIndexOf("/"));
 
 let p1 = OBJ.downloadModels([
     {
@@ -386,9 +387,9 @@ let p1 = OBJ.downloadModels([
         obj: "/assets/models/environment/disks/DiskA.obj",
         mtl: "/assets/models/environment/disks/Disks.mtl"
     }
-], window.location.href.substr(0, window.location.href.lastIndexOf("/")));
+], root);
 
-let p2 = fetch('../assets/worlds/maps/Basic.txt').then((response) => response.text());
+let p2 = fetch(root + '/assets/worlds/maps/Basic.txt').then((response) => response.text());
 
 
 Promise.all([p1,p2])
