@@ -1,3 +1,5 @@
+import {vec3} from "gl-matrix";
+
 let OBJ = require('../lib/OBJ/index.js');
 import {Mesh} from '../lib/OBJ/index.js'
 
@@ -5,7 +7,6 @@ import {Mesh} from '../lib/OBJ/index.js'
 export class BasicModel {
     VAO: WebGLVertexArrayObject;
     mesh: Mesh;
-    texture: WebGLTexture;
     initialized:Boolean;
     instanceCount: number;
     instancingOffsets: any;
@@ -63,15 +64,47 @@ export class BasicModel {
         this.instancingOffsets = this.generateArrayBuffer(gl, new Float32Array(offsets), gl.STATIC_DRAW, 3);
         this.instancingColors = this.generateArrayBuffer(gl, new Float32Array(colors), gl.STATIC_DRAW, 4);
         this.instancingScales = this.generateArrayBuffer(gl, new Float32Array(scales), gl.STATIC_DRAW, 3);
-
-
-        gl.bindVertexArray(this.VAO);
         
+        this.doBinds(gl);
+
+    }
+
+    generateInstancingOffsetScale (gl:WebGL2RenderingContext, offsets, scales){
+        let colors = [];
+        let count = offsets.length/3;
+        
+        this.instanceCount =count;
+        for(let i =0; i < count; i++){
+            colors.push(1,1,1,1);
+        }
+
+        // Setup instancing buffers for position offsets and color
+        this.instancingOffsets = this.generateArrayBuffer(gl, new Float32Array(offsets), gl.STATIC_DRAW, 3);
+        this.instancingColors = this.generateArrayBuffer(gl, new Float32Array(colors), gl.STATIC_DRAW, 4);
+        this.instancingScales = this.generateArrayBuffer(gl, new Float32Array(scales), gl.STATIC_DRAW, 3);
+
+        this.doBinds(gl);
+
+
+    }   
+    
+    generateArrayBuffer(gl: WebGL2RenderingContext,data:Float32Array, type:GLint, itemsize:number) {
+        let buffer:any = <any> gl.createBuffer();
+        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+        gl.bufferData(gl.ARRAY_BUFFER, data, type);
+        buffer.itemSize = itemsize;
+        buffer.numItems = data.length / itemsize;
+        return buffer;
+    }
+    
+    doBinds(gl: WebGL2RenderingContext){
+        gl.bindVertexArray(this.VAO);
+
         gl.enableVertexAttribArray(2);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.instancingOffsets);
         gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 0, 0);
         gl.vertexAttribDivisor(2, 1);
-        
+
         gl.enableVertexAttribArray(3);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.instancingColors);
         gl.vertexAttribPointer(3, 4, gl.FLOAT, true, 0, 0);
@@ -81,17 +114,37 @@ export class BasicModel {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.instancingScales);
         gl.vertexAttribPointer(4, 3, gl.FLOAT, true, 0, 0);
         gl.vertexAttribDivisor(4, 1);
-        
+
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
         gl.bindVertexArray(null);
     }
 
-    generateArrayBuffer(gl: WebGL2RenderingContext,data:Float32Array, type:GLint, itemsize:number) {
-        let buffer:any = <any> gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, data, type);
-        buffer.itemSize = itemsize;
-        buffer.numItems = data.length / itemsize;
-        return buffer;
+    initTexture(gl: WebGL2RenderingContext,  texture_num: number) {
+        if (!this.mesh.materialsByIndex[texture_num]) return false;
+        if (this.mesh.materialsByIndex[texture_num].mapDiffuse.texture.complete) {
+            this.loadTexture(gl, texture_num);
+        } else {
+            this.mesh.materialsByIndex[texture_num].mapDiffuse.texture.addEventListener('load',  () => {
+                this.loadTexture(gl, texture_num);
+            });
+        }
+        return true
+    }
+
+
+    loadTexture(gl: WebGL2RenderingContext, texture_num: number) {
+        let texture = gl.createTexture();
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
+        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, this.mesh.materialsByIndex[texture_num].mapDiffuse.texture);
+        gl.generateMipmap(gl.TEXTURE_2D);
+
+        this.mesh.materialsByIndex[texture_num].mapDiffuse.texture = texture;
+    }
+
+    setTexture(texture:WebGLTexture, texture_num: number){
+        this.mesh.materialsByIndex[texture_num].mapDiffuse = {};
+        this.mesh.materialsByIndex[texture_num].mapDiffuse.texture = texture;
     }
 }

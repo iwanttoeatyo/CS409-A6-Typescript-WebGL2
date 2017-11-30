@@ -1,9 +1,9 @@
 import {glMatrix, mat4} from "gl-matrix";
 import {vec3} from "gl-matrix";
 
-const YAW: number = -90.0;
+const YAW: number = 90.0;
 const PITCH: number = 0.0;
-const SPEED: number = 5.0;
+const SPEED: number = 20.0;
 const SENSITIVITY: number = 0.1;
 const ZOOM: number = 65.0;
 
@@ -87,16 +87,24 @@ export class Camera {
         }
     }
 
-    processMouseMovement(xOffset: number, yOffset: number, constrainPitch: boolean = true) {
+    processMouseMovement(forward:vec3,pos:vec3, xOffset: number, yOffset: number, constrainPitch: boolean = true) {
         xOffset *= this.mouseSensitivity;
         yOffset *= this.mouseSensitivity;
 
         this.yaw += xOffset;
         this.pitch += yOffset;
-
+        
+        
+        //Makes Camera lock behind player
+        let a = Math.atan2(forward[0], forward[2]);
+        a += Math.PI;
+        a *= 360/(2*Math.PI);
+        a = 360 - a - 90;
         if (constrainPitch) {
-            if (this.pitch > 89) this.pitch = 89;
-            if (this.pitch < -89) this.pitch = -89;
+            if (this.pitch > 20) this.pitch = 20;
+            if (this.pitch < -20) this.pitch = -20;
+            if(this.yaw > a+ 20) this.yaw = a + 20;
+            if(this.yaw < a - 20) this.yaw = a - 20;
         }
 
         this.updateCameraVectors();

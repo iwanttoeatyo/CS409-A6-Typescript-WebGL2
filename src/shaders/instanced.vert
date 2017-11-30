@@ -15,10 +15,11 @@ uniform mat4 viewProjection;
 void main()
 {
     vec4 vertexPos = vec4(aPos, 1);
-    vertexPos.xyz += aInstancedOffset;
+
     vertexPos.x *= aScale.x;
     vertexPos.y *= aScale.y;
     vertexPos.z *= aScale.z;
+        vertexPos.xyz += aInstancedOffset;
     TexCoord = aTexCoord;
     Color = aColor;
     gl_Position = viewProjection * model *  vertexPos;
