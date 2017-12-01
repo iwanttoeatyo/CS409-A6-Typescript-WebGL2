@@ -87,13 +87,14 @@ export class Camera {
         }
     }
 
+    //TODO Change calculation to move camera position up and down and keep same target on player
     processMouseMovement(forward:vec3,pos:vec3, xOffset: number, yOffset: number, constrainPitch: boolean = true) {
         xOffset *= this.mouseSensitivity;
         yOffset *= this.mouseSensitivity;
 
-        this.yaw += xOffset;
+       // this.yaw += xOffset;
         this.pitch += yOffset;
-        
+        let yawConstrainAmount = 0;
         
         //Makes Camera lock behind player
         let a = Math.atan2(forward[0], forward[2]);
@@ -103,8 +104,8 @@ export class Camera {
         if (constrainPitch) {
             if (this.pitch > 20) this.pitch = 20;
             if (this.pitch < -20) this.pitch = -20;
-            if(this.yaw > a+ 20) this.yaw = a + 20;
-            if(this.yaw < a - 20) this.yaw = a - 20;
+            if(this.yaw > a+ yawConstrainAmount) this.yaw = a + yawConstrainAmount;
+            if(this.yaw < a - yawConstrainAmount) this.yaw = a - yawConstrainAmount;
         }
 
         this.updateCameraVectors();

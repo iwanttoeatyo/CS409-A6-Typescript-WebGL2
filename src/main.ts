@@ -10,6 +10,7 @@ import {DiskModel} from "./entities/diskmodel";
 import {DiskReader} from "./entities/diskreader";
 import {Player, Player_Movement} from "./entities/player";
 import {PlayerModel} from "./entities/playermodel";
+import {World, WorldMeshes} from "./entities/world";
 
 let MainLoop = require('./lib/MainLoop/mainloop.js');
 
@@ -32,43 +33,30 @@ let worldData: string;
 let disk: Disk;
 let diskModel: DiskModel;
 
-let player1:Player;
+let player:Player;
 let playerModel:PlayerModel;
-
-interface Model {
-    mesh: Mesh;
-    texture: WebGLTexture;
-    textureNum;
-    VAO: WebGLVertexArrayObject;
-    position: vec3,
-    forward: vec3
-}
-
-let player: Model = {
-    mesh: null,
-    texture: null,
-    textureNum: 0,
-    VAO: null,
-    position: vec3.fromValues(0, 0.8, 0),
-    forward: vec3.fromValues(0, -1, 0)
-};
+let world:World;
+let worldMeshes:WorldMeshes ;
 
 let fpsCounter = document.getElementById('fpscounter');
 
 let camera: Camera = new Camera(vec3.fromValues(0, 1, 0), vec3.fromValues(0, 1, 0), 0);
 
+
 class Main {
 
     constructor() {
-        player.mesh = models["cbabe_stand"];
+        
 
         canvas = <HTMLCanvasElement> document.getElementById("canvas");
 
         this.initGL();
 
+        
         shader = new Shader(gl, require("../src/shaders/basic.vert"), require("../src/shaders/basic.frag"));
         instancedShader = new Shader(gl, require('../src/shaders/instanced.vert'), require("../src/shaders/instanced.frag"));
-
+        world = new World(gl,worldData, worldMeshes);
+        
         this.initBuffers();
 
         gl.clearColor(0.2, 0.3, 0.3, 1.0);
@@ -83,7 +71,7 @@ class Main {
         
             MainLoop.setBegin(this.begin).setUpdate(this.update).setDraw(this.draw).setEnd(this.end).start();
 
-        }, 1);
+        }, 100);
 
     }
 
@@ -103,63 +91,24 @@ class Main {
 
     }
 
-    initModel(model, texture_num) {
-        model.VAO = gl.createVertexArray();
-        OBJ.initMeshBuffers(gl, model.mesh);
-        gl.bindVertexArray(model.VAO);
-        gl.enableVertexAttribArray(0);
-        gl.bindBuffer(gl.ARRAY_BUFFER, model.mesh.vertexBuffer);
-        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(1);
-        gl.bindBuffer(gl.ARRAY_BUFFER, model.mesh.textureBuffer);
-        gl.vertexAttribPointer(1, 2, gl.FLOAT, true, 0, 0);
 
-        gl.bindBuffer(gl.ARRAY_BUFFER, null);
-        gl.bindVertexArray(null);
-
-        model.texture = gl.createTexture();
-        gl.bindTexture(gl.TEXTURE_2D, model.texture);
-
-        let i = new Image();
-        i.src = model.mesh.materialsByIndex[texture_num].mapDiffuse.texture;
-        i.addEventListener('load', function () {
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, model.texture);
-            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, i);
-            gl.generateMipmap(gl.TEXTURE_2D);
-        });
-
-
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, model.texture);
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, model.mesh.materialsByIndex[texture_num].mapDiffuse.texture);
-        gl.generateMipmap(gl.TEXTURE_2D);
-
-
-
-    }
 
     initBuffers() {
-        this.initModel(player, player.textureNum);
-
-
 
         playerModel = new PlayerModel(models["cbabe_stand"]);
         playerModel.init(gl);
 
-        player1 = new Player(playerModel, 0,0.8,0);
+        player = new Player(playerModel, 0,0.8,0);
         
-        diskModel = new DiskModel(models["DiskA"]);
+        //diskModel = new DiskModel(models["DiskA"]);
+        diskModel = new DiskModel(worldMeshes.DiskA);
         diskModel.init(gl);
         
-        camera.front = player1.forward;
+        camera.front = player.forward;
         
         //diskModel.generateInstancingBuffers(gl, 100,0.5);
         DiskReader.createDisksInstanced(gl, worldData, diskModel);
         disk = new Disk(diskModel, 1, 0, 0, 0);
-
         shader.use();
         shader.setInt("texture1", 0);
         instancedShader.use();
@@ -182,33 +131,33 @@ class Main {
 
         if (keys[40] || keys[83]) {
        //     camera.processKeyboard(Camera_Movement.BACKWARD, delta);
-            player1.move(Player_Movement.BACKWARD, delta);
+            player.move(Player_Movement.BACKWARD, delta);
         } else if (keys[38] || keys[87]) {
        //     camera.processKeyboard(Camera_Movement.FORWARD, delta);
-            player1.move(Player_Movement.FORWARD, delta);
+            player.move(Player_Movement.FORWARD, delta);
         }
         if (keys[65]) {
          //   camera.processKeyboard(Camera_Movement.LEFT, delta);
-            player1.move(Player_Movement.LEFT, delta);
+            player.move(Player_Movement.LEFT, delta);
         } else if (keys[68]) {
          //   camera.processKeyboard(Camera_Movement.RIGHT, delta);
-            player1.move(Player_Movement.RIGHT, delta);
+            player.move(Player_Movement.RIGHT, delta);
         }
 
         if (keys[37]) {
-            player1.rotate(delta);
-            camera.front = player1.forward;
-            camera.up = player1.up;
+            player.rotate(delta);
+            camera.front = player.forward;
+            camera.up = player.up;
         }
         if (keys[39]){
-            player1.rotate(-delta);
-            camera.front = player1.forward;
-            camera.up = player1.up;
+            player.rotate(-delta);
+            camera.front = player.forward;
+            camera.up = player.up;
         } 
         
         if(keys[82]){
-            vec3.copy(player1.position, playerOrigin);
-            vec3.copy(player1.forward, playerOriginRotation);
+            vec3.copy(player.position, playerOrigin);
+            vec3.copy(player.forward, playerOriginRotation);
         }
     }
 
@@ -226,9 +175,9 @@ class Main {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         //CAMERA STUFF
-        vec3.copy(camera.position, player1.position);
-        camera.position[0] -= 2* player1.forward[0];
-        camera.position[2] -= 2* player1.forward[2];
+        vec3.copy(camera.position, player.position);
+        camera.position[0] -= 2* player.forward[0];
+        camera.position[2] -= 2* player.forward[2];
         camera.position[1] += 0.4;
        //vec3.sub(camera.position,camera.position,player.forward);
 
@@ -251,6 +200,7 @@ class Main {
         gl.activeTexture(gl.TEXTURE0);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, disk.model.mesh.indexBuffer);
 
+       
         disk.model.mesh.materials.forEach((material,index) =>{
             let is = disk.model.mesh.vertexBuffer.itemSize;
             let byteSize = 2;
@@ -268,19 +218,19 @@ class Main {
 
         
 
-        mat4.translate(model, model, player1.position);
-        mat4.rotateY(model, model, Math.atan2(player1.forward[0], player1.forward[2]) - Math.PI / 2);
+        mat4.translate(model, model, player.position);
+        mat4.rotateY(model, model, Math.atan2(player.forward[0], player.forward[2]) - Math.PI / 2);
 
         shader.setMat4("model", model);
 
-        gl.bindVertexArray(player1.model.VAO);
+        gl.bindVertexArray(player.model.VAO);
         gl.activeTexture(gl.TEXTURE0);
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, player1.model.mesh.indexBuffer);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, player.model.mesh.indexBuffer);
 
-        player1.model.mesh.materials.forEach((material,index) =>{
-            let is = player1.model.mesh.vertexBuffer.itemSize;
+        player.model.mesh.materials.forEach((material,index) =>{
+            let is = player.model.mesh.vertexBuffer.itemSize;
             let byteSize = 2;
-            gl.bindTexture(gl.TEXTURE_2D, player1.model.mesh.materialsByIndex[index].mapDiffuse.texture);
+            gl.bindTexture(gl.TEXTURE_2D, player.model.mesh.materialsByIndex[index].mapDiffuse.texture);
             gl.drawElements(gl.TRIANGLES, is* material.numItems, gl.UNSIGNED_SHORT,material.offset * is * byteSize);
         });
 
@@ -368,8 +318,10 @@ function moveCallback(e) {
         e.mozMovementY ||
         e.webkitMovementY ||
         0;
-    camera.processMouseMovement(player1.forward,player1.position, movementX, -movementY, true);
+    player.rotate(-movementX/300);
+    camera.processMouseMovement(player.forward,player.position, movementX, -movementY, true);
 
+    
    
     
 }
@@ -381,26 +333,24 @@ let p1 = OBJ.downloadModels([
         name: 'cbabe_stand',
         obj: "/assets/models/actors/cbabe/cbabe_stand.obj",
         mtl: "/assets/models/actors/cbabe/cbabe.mtl",
-    },
-    {
-        name: 'DiskA',
-        obj: "/assets/models/environment/disks/DiskA.obj",
-        mtl: "/assets/models/environment/disks/Disks.mtl"
     }
-], root);
+]);
 
 let p2 = fetch(root + '/assets/worlds/maps/Basic.txt').then((response) => response.text());
 
+let p3 = World.load();
 
-Promise.all([p1,p2])
+Promise.all([p1,p2,p3])
     .then((values) =>{
         let _models = values[0];
         let _worldData = values[1];
+        let _worldMeshes = values[2];
         Object.keys(_models).forEach((name) => {
             console.log('Name:', name);
             console.log('Mesh:', _models[name]);
         });
-        worldData = _worldData
+        worldData = _worldData;
         models = _models;
+        worldMeshes = <WorldMeshes>_worldMeshes;
         new Main();
     });

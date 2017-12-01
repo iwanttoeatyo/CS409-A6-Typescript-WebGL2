@@ -119,7 +119,10 @@ export class BasicModel {
         gl.bindVertexArray(null);
     }
 
+    //TODO THIS NEEDS TO BE DONE EARLIER OR MADE A PROMISE
+    //TODO Could added textureImg field and create the texture earlier to prevent crash.
     initTexture(gl: WebGL2RenderingContext,  texture_num: number) {
+
         if (!this.mesh.materialsByIndex[texture_num]) return false;
         if (this.mesh.materialsByIndex[texture_num].mapDiffuse.texture.complete) {
             this.loadTexture(gl, texture_num);
@@ -139,8 +142,9 @@ export class BasicModel {
         gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, this.mesh.materialsByIndex[texture_num].mapDiffuse.texture);
         gl.generateMipmap(gl.TEXTURE_2D);
+    
+       this.mesh.materialsByIndex[texture_num].mapDiffuse.texture = texture;
 
-        this.mesh.materialsByIndex[texture_num].mapDiffuse.texture = texture;
     }
 
     setTexture(texture:WebGLTexture, texture_num: number){

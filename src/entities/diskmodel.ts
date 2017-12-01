@@ -9,7 +9,7 @@ export class DiskModel extends BasicModel {
 
     init(gl: WebGL2RenderingContext) {
         super.init(gl);
-
+   
         if (!this.initTexture(gl, 0)) {
             console.warn("Disk model texture 0 wasn't downloaded")
         }

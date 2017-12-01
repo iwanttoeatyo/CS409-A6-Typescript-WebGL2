@@ -105,8 +105,8 @@ function downloadMtlTextures (mtl, root) {
  */
 //to pass root to fetch callbacks
 let global_root;
-export function downloadModels (models, root = "") {
-	global_root = root;
+export function downloadModels (models) {
+	global_root = window.location.href.substr(0, window.location.href.lastIndexOf("/"));
   const finished = [];
 
   for (const model of models) {
@@ -128,7 +128,7 @@ export function downloadModels (models, root = "") {
     parsed.push(Promise.resolve(name));
 
     parsed.push(
-      fetch(root + model.obj)
+      fetch(global_root + model.obj)
         .then((response) => response.text())
         .then((data) => {
           return new Mesh(data);
@@ -143,7 +143,7 @@ export function downloadModels (models, root = "") {
       }
 
       parsed.push(
-        fetch(root + mtl)
+        fetch(global_root + mtl)
           .then((response) => response.text())
           .then((data) => {
             let material = new MaterialLibrary(data);
