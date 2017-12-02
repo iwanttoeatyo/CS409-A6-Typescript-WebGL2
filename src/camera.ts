@@ -92,8 +92,9 @@ export class Camera {
         xOffset *= this.mouseSensitivity;
         yOffset *= this.mouseSensitivity;
 
-       // this.yaw += xOffset;
+        //this.yaw += xOffset;
         this.pitch += yOffset;
+
         let yawConstrainAmount = 0;
         
         //Makes Camera lock behind player
@@ -107,9 +108,11 @@ export class Camera {
             if(this.yaw > a+ yawConstrainAmount) this.yaw = a + yawConstrainAmount;
             if(this.yaw < a - yawConstrainAmount) this.yaw = a - yawConstrainAmount;
         }
+        
 
         this.updateCameraVectors();
     }
+
 
     private updateCameraVectors() {
    
@@ -131,3 +134,4 @@ export class Camera {
     
 }
 
+ 

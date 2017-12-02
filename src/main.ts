@@ -11,6 +11,7 @@ import {DiskReader} from "./entities/diskreader";
 import {Player, Player_Movement} from "./entities/player";
 import {PlayerModel} from "./entities/playermodel";
 import {World, WorldMeshes} from "./entities/world";
+import {Skybox} from "./entities/skybox";
 
 let MainLoop = require('./lib/MainLoop/mainloop.js');
 
@@ -19,59 +20,104 @@ let gl: WebGL2RenderingContext;
 let shader: Shader;
 let instancedShader: Shader;
 
-const playerOrigin = vec3.fromValues(0,0.8, 0);
-const playerOriginRotation = vec3.fromValues(1,0,0);
+const playerOrigin = vec3.fromValues(0, 0.8, 0);
+const playerOriginRotation = vec3.fromValues(1, 0, 0);
 
 
 let document = window.document;
 
 let keys: boolean[] = [];
+let mouseKeys: boolean[] = [];
 
 let models: Object;
-let worldData: string;
 
+let player: Player;
+let playerModel: PlayerModel;
 let disk: Disk;
 let diskModel: DiskModel;
-
-let player:Player;
-let playerModel:PlayerModel;
-let world:World;
-let worldMeshes:WorldMeshes ;
-
+let worldData: string
 let fpsCounter = document.getElementById('fpscounter');
 
-let camera: Camera = new Camera(vec3.fromValues(0, 1, 0), vec3.fromValues(0, 1, 0), 0);
+let camera: Camera = new Camera(vec3.fromValues(0, 1.6, 0), vec3.fromValues(0, 1, 0), 0);
 
 
 class Main {
+    world: World;
+    skybox: Skybox;
+
+
+    loadAssets(): Promise<void> {
+
+        let root = window.location.href.substr(0, window.location.href.lastIndexOf("/"));
+
+        let p1 = OBJ.downloadModels([
+            {
+                name: 'cbabe_stand',
+                obj: "/assets/models/actors/cbabe/cbabe_stand.obj",
+                mtl: "/assets/models/actors/cbabe/cbabe.mtl",
+            }
+        ]);
+
+        let p2 = fetch(root + '/assets/worlds/maps/Basic.txt').then((response) => response.text());
+
+        let p3 = World.load();
+        let p4 = Skybox.load();
+
+        return Promise.all([p1, p2, p3, p4])
+            .then((values) => {
+                let _models = values[0];
+                let _worldData = values[1];
+                let _worldMeshes = <WorldMeshes>values[2];
+                let _skyboxMesh = <Mesh>values[3]["Skybox"];
+                console.log(_worldMeshes);
+                console.log(_skyboxMesh);
+                Object.keys(_models).forEach((name) => {
+                    console.log('Name:', name);
+                    console.log('Mesh:', _models[name]);
+                });
+                models = _models;
+                worldData = _worldData;
+
+                shader = new Shader(gl, require("../src/shaders/basic.vert"), require("../src/shaders/basic.frag"));
+                instancedShader = new Shader(gl, require('../src/shaders/instanced.vert'), require("../src/shaders/instanced.frag"));
+                this.world = new World(gl, _worldData, _worldMeshes);
+                this.skybox = new Skybox(gl, _skyboxMesh);
+
+            });
+    }
+
 
     constructor() {
-        
 
         canvas = <HTMLCanvasElement> document.getElementById("canvas");
-
         this.initGL();
 
-        
-        shader = new Shader(gl, require("../src/shaders/basic.vert"), require("../src/shaders/basic.frag"));
-        instancedShader = new Shader(gl, require('../src/shaders/instanced.vert'), require("../src/shaders/instanced.frag"));
-        world = new World(gl,worldData, worldMeshes);
-        
-        this.initBuffers();
-
+        //Set the background color before we load any assets
         gl.clearColor(0.2, 0.3, 0.3, 1.0);
         gl.enable(gl.DEPTH_TEST);
         //  gl.enable(gl.CULL_FACE);
         gl.cullFace(gl.BACK);
 
-        this.initPointerLock();
+        this.resize();
+        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        //Wait ms so images can load to prevent texture warnings
-        setInterval(h => {
-        
-            MainLoop.setBegin(this.begin).setUpdate(this.update).setDraw(this.draw).setEnd(this.end).start();
 
-        }, 100);
+        this.loadAssets().then((values) => {
+            this.initBuffers();
+            this.initPointerLock();
+
+            //Wait ms so images can load to prevent texture warnings
+            setInterval(h => {
+                MainLoop.setBegin(this.begin.bind(this))
+                    .setUpdate(this.update.bind(this))
+                    .setDraw(this.draw.bind(this))
+                    .setEnd(this.end.bind(this))
+                    .start();
+
+            }, 100);
+
+        });
+
 
     }
 
@@ -92,23 +138,20 @@ class Main {
     }
 
 
-
     initBuffers() {
 
         playerModel = new PlayerModel(models["cbabe_stand"]);
         playerModel.init(gl);
 
-        player = new Player(playerModel, 0,0.8,0);
-        
-        //diskModel = new DiskModel(models["DiskA"]);
-        diskModel = new DiskModel(worldMeshes.DiskA);
+        player = new Player(playerModel, 0, 0.8, 0);
+
+        diskModel = new DiskModel(this.world.diskAModel.mesh, 0);
         diskModel.init(gl);
-        
-        camera.front = player.forward;
-        
-        //diskModel.generateInstancingBuffers(gl, 100,0.5);
         DiskReader.createDisksInstanced(gl, worldData, diskModel);
         disk = new Disk(diskModel, 1, 0, 0, 0);
+
+        camera.front = player.forward;
+
         shader.use();
         shader.setInt("texture1", 0);
         instancedShader.use();
@@ -130,32 +173,34 @@ class Main {
         delta /= 1000;
 
         if (keys[40] || keys[83]) {
-       //     camera.processKeyboard(Camera_Movement.BACKWARD, delta);
+            //     camera.processKeyboard(Camera_Movement.BACKWARD, delta);
             player.move(Player_Movement.BACKWARD, delta);
-        } else if (keys[38] || keys[87]) {
-       //     camera.processKeyboard(Camera_Movement.FORWARD, delta);
+        } else if ((keys[38] || keys[87]) || (mouseKeys[1] && mouseKeys[3])) {
+            //     camera.processKeyboard(Camera_Movement.FORWARD, delta);
             player.move(Player_Movement.FORWARD, delta);
         }
         if (keys[65]) {
-         //   camera.processKeyboard(Camera_Movement.LEFT, delta);
+            //   camera.processKeyboard(Camera_Movement.LEFT, delta);
             player.move(Player_Movement.LEFT, delta);
         } else if (keys[68]) {
-         //   camera.processKeyboard(Camera_Movement.RIGHT, delta);
+            //   camera.processKeyboard(Camera_Movement.RIGHT, delta);
             player.move(Player_Movement.RIGHT, delta);
         }
 
         if (keys[37]) {
             player.rotate(delta);
-            camera.front = player.forward;
+            camera.front[0] = player.forward[0];
+            camera.front[2] = player.forward[2];
             camera.up = player.up;
         }
-        if (keys[39]){
+        if (keys[39]) {
             player.rotate(-delta);
-            camera.front = player.forward;
+            camera.front[0] = player.forward[0];
+            camera.front[2] = player.forward[2];
             camera.up = player.up;
-        } 
-        
-        if(keys[82]){
+        }
+
+        if (keys[82]) {
             vec3.copy(player.position, playerOrigin);
             vec3.copy(player.forward, playerOriginRotation);
         }
@@ -167,75 +212,58 @@ class Main {
      *   How much to interpolate between frames.
      */
     draw(interpolationPercentage) {
-        let min = Math.min(window.innerHeight, window.innerWidth);
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
 
-        gl.viewport(0, 0, canvas.width, canvas.height);
+        this.resize();
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-        //CAMERA STUFF
-        vec3.copy(camera.position, player.position);
-        camera.position[0] -= 2* player.forward[0];
-        camera.position[2] -= 2* player.forward[2];
-        camera.position[1] += 0.4;
-       //vec3.sub(camera.position,camera.position,player.forward);
 
-        
-        
+       
+        camera.position[0] = player.position [0];
+        camera.position[2] = player.position[2];
+        camera.position[0] -= 2 * player.forward[0];
+        camera.position[2] -= 2 * player.forward[2];
+        // camera.position[1] +=  player.position[1] + 0.4;
+        //vec3.sub(camera.position,camera.position,player.forward);
+
+
         //Setup view and projection
         let projection = mat4.create();
         let view = camera.getViewMatrix();
-        mat4.perspective(projection, glMatrix.toRadian(80), canvas.width / canvas.height, 0.1, 100000);
+        mat4.perspective(projection, glMatrix.toRadian(80), canvas.width / canvas.height, 0.1, 10000);
         let viewProjection = mat4.multiply(projection, projection, view);
 
         let model = mat4.create();
 
+        gl.disable(gl.DEPTH_TEST);
+        shader.use();
+        mat4.translate(model, model, camera.position);
+        shader.setMat4("model", model);
+        shader.setMat4("viewProjection", viewProjection);
+        this.skybox.draw(gl);
+        //Draw Skybox
+
+        gl.enable(gl.DEPTH_TEST);
         //Draw Disk
+        //Draw Disk
+        model = mat4.create();
         instancedShader.use();
         instancedShader.setMat4("viewProjection", viewProjection);
         instancedShader.setMat4("model", model);
-        
-        gl.bindVertexArray(disk.model.VAO);
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, disk.model.mesh.indexBuffer);
 
-       
-        disk.model.mesh.materials.forEach((material,index) =>{
-            let is = disk.model.mesh.vertexBuffer.itemSize;
-            let byteSize = 2;
-            gl.bindTexture(gl.TEXTURE_2D, disk.model.mesh.materialsByIndex[index].mapDiffuse.texture);
-            gl.drawElementsInstanced(gl.TRIANGLES, is* material.numItems, gl.UNSIGNED_SHORT,material.offset * is * byteSize , disk.model.instanceCount);
-        });
-        
-        gl.bindVertexArray(null);
+        this.world.draw(gl);
 
-        
+
         //Draws Player in front of camera, always facing away from camera
         shader.use();
         shader.setMat4("viewProjection", viewProjection);
         model = mat4.create();
 
-        
-
+        //Move player model to its position
         mat4.translate(model, model, player.position);
+        //Rotate model to face away from camera
         mat4.rotateY(model, model, Math.atan2(player.forward[0], player.forward[2]) - Math.PI / 2);
-
         shader.setMat4("model", model);
-
-        gl.bindVertexArray(player.model.VAO);
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, player.model.mesh.indexBuffer);
-
-        player.model.mesh.materials.forEach((material,index) =>{
-            let is = player.model.mesh.vertexBuffer.itemSize;
-            let byteSize = 2;
-            gl.bindTexture(gl.TEXTURE_2D, player.model.mesh.materialsByIndex[index].mapDiffuse.texture);
-            gl.drawElements(gl.TRIANGLES, is* material.numItems, gl.UNSIGNED_SHORT,material.offset * is * byteSize);
-        });
-
-        gl.bindVertexArray(null);
-
+        player.model.draw(gl);
 
 
     }
@@ -247,6 +275,15 @@ class Main {
             console.warn("Main loop panicked, probably because the browser tab was put in the background. Discarding " + discardedTime + 'ms');
         }
     }
+
+    resize(): void {
+        let min = Math.min(window.innerHeight, window.innerWidth);
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+
+        gl.viewport(0, 0, canvas.width, canvas.height);
+    }
+
 
     initPointerLock() {
         let _canvas: any = canvas;
@@ -309,6 +346,14 @@ window.onkeyup = function (e) {
     keys[e.keyCode] = false;
 };
 
+window.onmousedown = function (e) {
+    mouseKeys[e.which] = true;
+}
+
+window.onmouseup = function (e) {
+    mouseKeys[e.which] = false;
+}
+
 function moveCallback(e) {
     let movementX = e.movementX ||
         e.mozMovementX ||
@@ -318,39 +363,12 @@ function moveCallback(e) {
         e.mozMovementY ||
         e.webkitMovementY ||
         0;
-    player.rotate(-movementX/300);
-    camera.processMouseMovement(player.forward,player.position, movementX, -movementY, true);
+    player.rotate(-movementX / 600);
+    camera.processMouseMovement(player.forward, player.position, movementX, -movementY, true);
 
-    
-   
-    
+
 }
 
-let root = window.location.href.substr(0, window.location.href.lastIndexOf("/"));
 
-let p1 = OBJ.downloadModels([
-    {
-        name: 'cbabe_stand',
-        obj: "/assets/models/actors/cbabe/cbabe_stand.obj",
-        mtl: "/assets/models/actors/cbabe/cbabe.mtl",
-    }
-]);
+new Main();
 
-let p2 = fetch(root + '/assets/worlds/maps/Basic.txt').then((response) => response.text());
-
-let p3 = World.load();
-
-Promise.all([p1,p2,p3])
-    .then((values) =>{
-        let _models = values[0];
-        let _worldData = values[1];
-        let _worldMeshes = values[2];
-        Object.keys(_models).forEach((name) => {
-            console.log('Name:', name);
-            console.log('Mesh:', _models[name]);
-        });
-        worldData = _worldData;
-        models = _models;
-        worldMeshes = <WorldMeshes>_worldMeshes;
-        new Main();
-    });

@@ -1,10 +1,10 @@
 import {DiskModel} from "./diskmodel";
 import {vec3} from "gl-matrix";
 
+
+
 export class Disk {
     model: DiskModel;
-    //TODO: Terrain for movespeed
-    //terrain:Terrain
     position: vec3;
     radius: number;
     

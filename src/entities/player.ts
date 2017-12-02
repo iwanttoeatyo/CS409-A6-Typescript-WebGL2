@@ -26,7 +26,7 @@ export class Player {
     
     
     rotate(angle:number){
-       vec3.rotateY(this.forward, this.forward, [0,0,0], angle);
+       vec3.rotateY(this.forward, this.forward, [0,0,0], angle*2);
     }
 
     move( direction:Player_Movement,deltaTime:number){
@@ -50,6 +50,7 @@ export class Player {
             vec3.scale(velocity,r,SPEED*deltaTime);
             vec3.add(this.position, this.position, velocity);
         }
+        
         
     }
 }

@@ -12,6 +12,7 @@ export class BasicModel {
     instancingOffsets: any;
     instancingColors: any;
     instancingScales: any;
+    textures: Array<WebGLTexture>;
     
     constructor(mesh:Mesh) {
         this.mesh = mesh;
@@ -29,15 +30,21 @@ export class BasicModel {
         gl.bindBuffer(gl.ARRAY_BUFFER, this.mesh.textureBuffer);
         gl.vertexAttribPointer(1, 2, gl.FLOAT, true, 0, 0);
 
-
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
         gl.bindVertexArray(null);
-
+        let grey = gl.createTexture();
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, grey);
+        const pixel = new Uint8Array([220, 220, 220, 255]);  // opaque blue
+        gl.texImage2D(gl.TEXTURE_2D, 0,  gl.RGB,1, 1, 0,  gl.RGB, gl.UNSIGNED_BYTE, pixel);
+     
+        this.textures = [];
+        this.textures.push(grey);
      
         this.initialized = true;
     }
 
-    generateInstancingBuffers(gl: WebGL2RenderingContext, dimensionCount, offset) {
+    generateRandomInstancingBuffers(gl: WebGL2RenderingContext, dimensionCount, offset) {
         var offsets = [];
         var colors = [];
         var scales = [];
@@ -72,8 +79,8 @@ export class BasicModel {
     generateInstancingOffsetScale (gl:WebGL2RenderingContext, offsets, scales){
         let colors = [];
         let count = offsets.length/3;
+        this.instanceCount = count;
         
-        this.instanceCount =count;
         for(let i =0; i < count; i++){
             colors.push(1,1,1,1);
         }
@@ -82,7 +89,7 @@ export class BasicModel {
         this.instancingOffsets = this.generateArrayBuffer(gl, new Float32Array(offsets), gl.STATIC_DRAW, 3);
         this.instancingColors = this.generateArrayBuffer(gl, new Float32Array(colors), gl.STATIC_DRAW, 4);
         this.instancingScales = this.generateArrayBuffer(gl, new Float32Array(scales), gl.STATIC_DRAW, 3);
-
+       
         this.doBinds(gl);
 
 
@@ -119,36 +126,70 @@ export class BasicModel {
         gl.bindVertexArray(null);
     }
 
-    //TODO THIS NEEDS TO BE DONE EARLIER OR MADE A PROMISE
-    //TODO Could added textureImg field and create the texture earlier to prevent crash.
-    initTexture(gl: WebGL2RenderingContext,  texture_num: number) {
-
+    initTexture(gl: WebGL2RenderingContext,  texture_num: number, flip:boolean = true) {
         if (!this.mesh.materialsByIndex[texture_num]) return false;
         if (this.mesh.materialsByIndex[texture_num].mapDiffuse.texture.complete) {
-            this.loadTexture(gl, texture_num);
+            this.loadTexture(gl, texture_num, flip);
         } else {
             this.mesh.materialsByIndex[texture_num].mapDiffuse.texture.addEventListener('load',  () => {
-                this.loadTexture(gl, texture_num);
+                this.loadTexture(gl, texture_num, flip);
             });
         }
         return true
     }
 
 
-    loadTexture(gl: WebGL2RenderingContext, texture_num: number) {
+    loadTexture(gl: WebGL2RenderingContext, texture_num: number, flip: boolean = true) {
         let texture = gl.createTexture();
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, texture);
-        gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+        if(flip)
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, this.mesh.materialsByIndex[texture_num].mapDiffuse.texture);
         gl.generateMipmap(gl.TEXTURE_2D);
-    
-       this.mesh.materialsByIndex[texture_num].mapDiffuse.texture = texture;
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+        this.textures[texture_num] = texture;
+ 
 
     }
 
     setTexture(texture:WebGLTexture, texture_num: number){
-        this.mesh.materialsByIndex[texture_num].mapDiffuse = {};
-        this.mesh.materialsByIndex[texture_num].mapDiffuse.texture = texture;
+        this.textures[texture_num] = texture;
+    }
+    
+    draw(gl:WebGL2RenderingContext){
+        gl.bindVertexArray(this.VAO);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.mesh.indexBuffer);
+
+
+        this.textures.forEach((texture,index) =>{
+            let is = this.mesh.vertexBuffer.itemSize;
+            let material = this.mesh.materials[index];
+            let byteSize = 2;
+            gl.bindTexture(gl.TEXTURE_2D, texture);
+            gl.drawElements(gl.TRIANGLES, is* material.numItems, gl.UNSIGNED_SHORT,material.offset * is * byteSize);
+        });
+
+        gl.bindVertexArray(null);
+    }
+    
+    drawInstanced(gl:WebGL2RenderingContext){
+        gl.bindVertexArray(this.VAO);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.mesh.indexBuffer);
+
+     
+        this.mesh.materials.forEach((material,index) =>{
+            let is = this.mesh.vertexBuffer.itemSize;
+            let byteSize = 2;
+            gl.bindTexture(gl.TEXTURE_2D, this.textures[index]);
+            gl.drawElementsInstanced(gl.TRIANGLES, is* material.numItems, gl.UNSIGNED_SHORT,material.offset * is * byteSize , this.instanceCount);
+        });
+
+
     }
 }
