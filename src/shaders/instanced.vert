@@ -1,15 +1,16 @@
 #version 300 es
 layout (location = 0) in vec3 aPos;
-layout (location = 1) in vec2 aTexCoord;
-layout (location = 2) in vec3 aInstancedOffset;
-layout (location = 3) in vec4 aColor;
+layout (location = 1) in vec3 aNormal;
+layout (location = 2) in vec2 aTexCoord;
+layout (location = 3) in vec3 aInstancedOffset;
 layout (location = 4) in vec3 aScale;
 
+
+out vec3 FragPos;
+out vec3 Normal;
 out vec2 TexCoord;
-out vec4 Color;
 
 uniform mat4 model;
-uniform mat4 view;
 uniform mat4 viewProjection;
 
 void main()
@@ -19,10 +20,9 @@ void main()
     vertexPos.x *= aScale.x;
     vertexPos.y *= aScale.y;
     vertexPos.z *= aScale.z;
-        vertexPos.xyz += aInstancedOffset;
+    vertexPos.xyz += aInstancedOffset.xyz;
     TexCoord = aTexCoord;
-    Color = aColor;
     gl_Position = viewProjection * model *  vertexPos;
-// gl_Position = u_Persp * u_ModelView * vec4(Position, 1.0);
-//    gl_Position = projection * view * model * vec4(Position, 1.0f);
+    Normal = mat3(transpose(inverse(model))) * aNormal;
+    FragPos = vec3(model * vertexPos);
 }   

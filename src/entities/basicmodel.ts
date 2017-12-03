@@ -26,9 +26,15 @@ export class BasicModel {
         gl.enableVertexAttribArray(0);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.mesh.vertexBuffer);
         gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+        
         gl.enableVertexAttribArray(1);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.mesh.normalBuffer);
+        gl.vertexAttribPointer(1, 3, gl.FLOAT, true, 0, 0);
+        
+        gl.enableVertexAttribArray(2);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.mesh.textureBuffer);
-        gl.vertexAttribPointer(1, 2, gl.FLOAT, true, 0, 0);
+        gl.vertexAttribPointer(2, 2, gl.FLOAT, true, 0, 0);
+
 
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
         gl.bindVertexArray(null);
@@ -69,7 +75,7 @@ export class BasicModel {
 
         // Setup instancing buffers for position offsets and color
         this.instancingOffsets = this.generateArrayBuffer(gl, new Float32Array(offsets), gl.STATIC_DRAW, 3);
-        this.instancingColors = this.generateArrayBuffer(gl, new Float32Array(colors), gl.STATIC_DRAW, 4);
+
         this.instancingScales = this.generateArrayBuffer(gl, new Float32Array(scales), gl.STATIC_DRAW, 3);
         
         this.doBinds(gl);
@@ -87,12 +93,10 @@ export class BasicModel {
 
         // Setup instancing buffers for position offsets and color
         this.instancingOffsets = this.generateArrayBuffer(gl, new Float32Array(offsets), gl.STATIC_DRAW, 3);
-        this.instancingColors = this.generateArrayBuffer(gl, new Float32Array(colors), gl.STATIC_DRAW, 4);
+
         this.instancingScales = this.generateArrayBuffer(gl, new Float32Array(scales), gl.STATIC_DRAW, 3);
        
         this.doBinds(gl);
-
-
     }   
     
     generateArrayBuffer(gl: WebGL2RenderingContext,data:Float32Array, type:GLint, itemsize:number) {
@@ -106,15 +110,10 @@ export class BasicModel {
     
     doBinds(gl: WebGL2RenderingContext){
         gl.bindVertexArray(this.VAO);
-
-        gl.enableVertexAttribArray(2);
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.instancingOffsets);
-        gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 0, 0);
-        gl.vertexAttribDivisor(2, 1);
-
+        
         gl.enableVertexAttribArray(3);
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.instancingColors);
-        gl.vertexAttribPointer(3, 4, gl.FLOAT, true, 0, 0);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.instancingOffsets);
+        gl.vertexAttribPointer(3, 3, gl.FLOAT, false, 0, 0);
         gl.vertexAttribDivisor(3, 1);
 
         gl.enableVertexAttribArray(4);

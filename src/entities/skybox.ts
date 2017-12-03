@@ -14,22 +14,9 @@ export class Skybox {
 
 
     draw(gl: WebGL2RenderingContext) {
-     //   this.model.draw(gl);
-
-        gl.bindVertexArray(this.model.VAO);
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.model.mesh.indexBuffer);
+        this.model.draw(gl);
 
 
-        this.model.textures.forEach((texture,index) =>{
-            let is = this.model.mesh.vertexBuffer.itemSize;
-            let material = this.model.mesh.materials[index];
-            let byteSize = 2;
-            gl.bindTexture(gl.TEXTURE_2D, texture);
-            gl.drawElements(gl.TRIANGLES, this.model.mesh.indexBuffer.numItems, gl.UNSIGNED_SHORT,material.offset * is * byteSize);
-        });
-
-        gl.bindVertexArray(null);
         
     }
 

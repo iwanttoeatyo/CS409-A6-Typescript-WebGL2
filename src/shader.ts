@@ -44,15 +44,15 @@ export class Shader {
         return this.gl.getUniformLocation(this.ID, name);
     }
 
-    setMat4(name: string, matrix: mat4) {
+    setMat4(name: string, matrix: mat4 | number[]) {
         this.gl.uniformMatrix4fv(this.getUniformLocation(name), false, matrix);
     }
 
-    setVec3(name: string, vec: vec3) {
+    setVec3(name: string, vec: vec3| number[]) {
         this.gl.uniform3fv(this.getUniformLocation(name), vec);
     }
     
-    setVec4(name: string, vec: vec4){
+    setVec4(name: string, vec: vec4| number[]){
         this.gl.uniform4fv(this.getUniformLocation(name), vec);
     }
 

@@ -1,8 +1,9 @@
 import {DiskModel} from "./diskmodel";
 import {vec3} from "gl-matrix";
 import {PlayerModel} from "./playermodel";
+import {Mesh} from "../lib/OBJ/index.js";
 
-const SPEED = 8;
+const SPEED = 20;
 
 export enum Player_Movement {
     FORWARD,
@@ -16,9 +17,9 @@ export class Player {
     forward: vec3;
     up: vec3;
 
-    constructor(model: PlayerModel, x:number, y: number, z: number) {
-        if(!model.initialized) throw "PlayerModel was not initialized";
-        this.model = model;
+    constructor(gl:WebGL2RenderingContext,mesh: Mesh, x:number, y: number, z: number) {
+        this.model = new PlayerModel(mesh);
+        this.model.init(gl);
         this.position = vec3.fromValues(x, y, z,);
         this.up = vec3.fromValues(0,1,0);
         this.forward = vec3.fromValues(1,0,0);
@@ -50,6 +51,12 @@ export class Player {
             vec3.scale(velocity,r,SPEED*deltaTime);
             vec3.add(this.position, this.position, velocity);
         }
+        
+        
+    }
+    
+    draw(gl:WebGL2RenderingContext){
+        this.model.draw(gl);
         
         
     }

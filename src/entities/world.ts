@@ -131,10 +131,10 @@ export class World {
 
     
     draw(gl:WebGL2RenderingContext){
-        this.diskAModel.drawInstanced(gl);
-        this.diskBModel.drawInstanced(gl);
-        this.diskCModel.drawInstanced(gl);
-        this.diskDModel.drawInstanced(gl);
-        this.diskEModel.drawInstanced(gl);
+        this.diskAModel.draw(gl);
+        this.diskBModel.draw(gl);
+        this.diskCModel.draw(gl);
+        this.diskDModel.draw(gl);
+        this.diskEModel.draw(gl);
     }
 }

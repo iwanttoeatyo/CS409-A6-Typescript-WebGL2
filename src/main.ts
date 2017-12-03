@@ -140,10 +140,8 @@ class Main {
 
     initBuffers() {
 
-        playerModel = new PlayerModel(models["cbabe_stand"]);
-        playerModel.init(gl);
 
-        player = new Player(playerModel, 0, 0.8, 0);
+        player = new Player(gl,models["cbabe_stand"], 0, 0.8, 0);
 
         diskModel = new DiskModel(this.world.diskAModel.mesh, 0);
         diskModel.init(gl);
@@ -155,8 +153,14 @@ class Main {
         shader.use();
         shader.setInt("texture1", 0);
         instancedShader.use();
-        instancedShader.setInt("texture1", 0);
+        instancedShader.setInt("material.diffuse", 0);
+       // instancedShader.setInt("material.specular", 1);
+       // instancedShader.setInt("material.emission", 2);
+        
+        
+        
     }
+    
 
 
     /**
@@ -217,13 +221,11 @@ class Main {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 
-       
+       //Move camera behind player
         camera.position[0] = player.position [0];
         camera.position[2] = player.position[2];
         camera.position[0] -= 2 * player.forward[0];
         camera.position[2] -= 2 * player.forward[2];
-        // camera.position[1] +=  player.position[1] + 0.4;
-        //vec3.sub(camera.position,camera.position,player.forward);
 
 
         //Setup view and projection
@@ -232,19 +234,44 @@ class Main {
         mat4.perspective(projection, glMatrix.toRadian(80), canvas.width / canvas.height, 0.1, 10000);
         let viewProjection = mat4.multiply(projection, projection, view);
 
+
         let model = mat4.create();
 
+        
+        //Draw Skybox
         gl.disable(gl.DEPTH_TEST);
         shader.use();
         mat4.translate(model, model, camera.position);
+        shader.setFloat("ambient", 0.75);
         shader.setMat4("model", model);
         shader.setMat4("viewProjection", viewProjection);
         this.skybox.draw(gl);
-        //Draw Skybox
 
+
+        instancedShader.use();
+        // directional light
+        instancedShader.setVec3("dirLight.direction", [-0.45, -1.0, -0.7]);
+        instancedShader.setVec3("dirLight.ambient", [0.10, 0.10, 0.10]);
+        instancedShader.setVec3("dirLight.diffuse", [0.6, 0.6, 0.6]);
+        instancedShader.setVec3("dirLight.specular", [0.0, 0.0, 0.0]);
+        //Setup player point light
+ 
+        instancedShader.setVec3("playerLight.position",[player.position[0], player.position[1], player.position[2]]);
+        instancedShader.setVec3("playerLight.ambient", [0.05, 0.05, 0.05]);
+        instancedShader.setVec3("playerLight.diffuse", [0.1, 0.1, 0.1]);
+        instancedShader.setVec3("playerLight.specular", [0.0, 0.0, 0.0]);
+        instancedShader.setFloat("playerLight.constant", 0.4);
+        instancedShader.setFloat("playerLight.linear", 0.09);
+        instancedShader.setFloat("playerLight.quadratic", 0.032);
+        instancedShader.setVec3("viewPos",camera.position);
+
+        // material properties
+        instancedShader.setFloat("material.shininess", 64.0);
+
+
+
+        //Draw Disk
         gl.enable(gl.DEPTH_TEST);
-        //Draw Disk
-        //Draw Disk
         model = mat4.create();
         instancedShader.use();
         instancedShader.setMat4("viewProjection", viewProjection);
@@ -263,7 +290,8 @@ class Main {
         //Rotate model to face away from camera
         mat4.rotateY(model, model, Math.atan2(player.forward[0], player.forward[2]) - Math.PI / 2);
         shader.setMat4("model", model);
-        player.model.draw(gl);
+        shader.setFloat("ambient", 0.75);
+        player.draw(gl);
 
 
     }
