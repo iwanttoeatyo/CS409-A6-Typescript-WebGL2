@@ -1,5 +1,5 @@
 import {BasicModel} from "./basicmodel";
-import {Mesh} from "../lib/OBJ/index.js";
+import {Mesh} from "../../lib/OBJ/index.js";
 
 
 export enum Terrain {

@@ -1,8 +1,8 @@
-import {BasicModel} from "./basicmodel";
+import {BasicModel} from "./models/basicmodel";
 
 let OBJ = require('../lib/OBJ/index.js');
 import {Mesh} from "../lib/OBJ/index.js";
-import {SkyboxModel} from "./skyboxModel";
+import {SkyboxModel} from "./models/skyboxmodel";
 
 export class Skybox {
     model: SkyboxModel;

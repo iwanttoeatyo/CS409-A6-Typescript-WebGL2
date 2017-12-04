@@ -1,7 +1,7 @@
 import {vec3} from "gl-matrix";
 
-let OBJ = require('../lib/OBJ/index.js');
-import {Mesh} from '../lib/OBJ/index.js'
+let OBJ = require('../../lib/OBJ/index.js');
+import {Mesh} from '../../lib/OBJ/index.js'
 
 
 export class BasicModel {

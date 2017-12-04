@@ -36,6 +36,10 @@ module.exports = {
 			{
 				test: /\.(glsl|vs|fs|frag|vert)$/,
 				loader: 'ts-shader-loader'
+			},
+			{
+				test: /\.(txt|obj|mtl|bmp|jpg)$/,
+				loader: 'raw-loader'
 			}
 		]
 	},

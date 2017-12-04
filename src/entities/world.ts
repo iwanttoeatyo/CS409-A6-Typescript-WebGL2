@@ -1,9 +1,9 @@
 import {Disk} from "./disk";
-import {DiskReader} from "./diskreader";
-import {DiskModel, Terrain} from "./diskmodel";
+import {DiskModel, Terrain} from "./models/diskmodel";
 
 let OBJ = require("../lib/OBJ/index.js");
 import {Mesh} from "../lib/OBJ/index.js";
+import {MaterialLibrary} from "../lib/OBJ/index.js";
 
 export interface WorldMeshes {
     DiskA: Mesh;
@@ -24,7 +24,13 @@ export class World {
 
     disks: Array<Disk>;
 
-    constructor(gl: WebGL2RenderingContext, worldData: string, meshes: WorldMeshes) {
+    constructor(gl: WebGL2RenderingContext, worldData: string, meshes: WorldMeshes, mat: MaterialLibrary) {
+        meshes.DiskA.addMaterialLibrary(mat);
+        meshes.DiskB.addMaterialLibrary(mat);
+        meshes.DiskC.addMaterialLibrary(mat);
+        meshes.DiskD.addMaterialLibrary(mat);
+        meshes.DiskE.addMaterialLibrary(mat);
+        
         this.diskAModel = new DiskModel(meshes.DiskA, Terrain.RED_ROCK);
         this.diskBModel = new DiskModel(meshes.DiskB, Terrain.LEAFY);
         this.diskCModel = new DiskModel(meshes.DiskC, Terrain.ICY);
@@ -32,6 +38,7 @@ export class World {
         this.diskEModel = new DiskModel(meshes.DiskE, Terrain.GREY_ROCK);
         this.worldData = worldData;
         this.disks = [];
+
 
         this.diskAModel.init(gl);
         this.diskBModel.init(gl);
@@ -42,10 +49,10 @@ export class World {
 
         const lines = worldData.split('\n');
 
-        let size = Object.keys(Terrain).length /2;
+        let size = Object.keys(Terrain).length / 2;
         let offsets = new Array(size);
         let scales = new Array(size);
-        for(let i = 0; i < size ; i++){
+        for (let i = 0; i < size; i++) {
             offsets[i] = [];
             scales[i] = [];
         }
@@ -86,55 +93,58 @@ export class World {
             let pos = [x, 0, z];
             offsets[model.terrain].push(pos[0], pos[1], pos[2]);
             scales[model.terrain].push(radius, 1, radius);
-            
+
         }
-        this.diskAModel.generateInstancingOffsetScale(gl,offsets[0],scales[0]);
-        this.diskBModel.generateInstancingOffsetScale(gl,offsets[1],scales[1]);
-        this.diskCModel.generateInstancingOffsetScale(gl,offsets[2],scales[2]);
-        this.diskDModel.generateInstancingOffsetScale(gl,offsets[3],scales[3]);
-        this.diskEModel.generateInstancingOffsetScale(gl,offsets[4],scales[4]);
+        this.diskAModel.generateInstancingOffsetScale(gl, offsets[0], scales[0]);
+        this.diskBModel.generateInstancingOffsetScale(gl, offsets[1], scales[1]);
+        this.diskCModel.generateInstancingOffsetScale(gl, offsets[2], scales[2]);
+        this.diskDModel.generateInstancingOffsetScale(gl, offsets[3], scales[3]);
+        this.diskEModel.generateInstancingOffsetScale(gl, offsets[4], scales[4]);
 
     }
 
 
-    static load(): Promise<Object> {
+    static load(): Array<Promise<Object>> {
 
         let p = OBJ.downloadModels([
             {
                 name: 'DiskA',
                 obj: "/assets/models/environment/disks/DiskASolid.obj",
-                mtl: "/assets/models/environment/disks/Disks.mtl"
+                downloadMtlTextures: false
             },
             {
                 name: 'DiskB',
                 obj: "/assets/models/environment/disks/DiskBSolid.obj",
-                mtl: "/assets/models/environment/disks/Disks.mtl"
+                downloadMtlTextures: false
             },
             {
                 name: 'DiskC',
                 obj: "/assets/models/environment/disks/DiskCSolid.obj",
-                mtl: "/assets/models/environment/disks/Disks.mtl"
+                downloadMtlTextures: false
             },
             {
                 name: 'DiskD',
                 obj: "/assets/models/environment/disks/DiskDSolid.obj",
-                mtl: "/assets/models/environment/disks/Disks.mtl"
+                downloadMtlTextures: false
             },
             {
                 name: 'DiskE',
                 obj: "/assets/models/environment/disks/DiskESolid.obj",
-                mtl: "/assets/models/environment/disks/Disks.mtl"
+                downloadMtlTextures: false
             }]);
+        let b = new MaterialLibrary(require('../../assets/models/environment/disks/Disks.mtl'));
+        let a = OBJ.downloadMtlTextures(b, 
+            window.location.href.substr(0, window.location.href.lastIndexOf("/")) + '/assets/models/environment/disks/');
 
-        return p;
+        return [p,a,Promise.resolve(b)];
     }
 
-    
-    draw(gl:WebGL2RenderingContext){
-        this.diskAModel.draw(gl);
-        this.diskBModel.draw(gl);
-        this.diskCModel.draw(gl);
-        this.diskDModel.draw(gl);
-        this.diskEModel.draw(gl);
+
+    draw(gl: WebGL2RenderingContext) {
+        this.diskAModel.drawInstanced(gl);
+        this.diskBModel.drawInstanced(gl);
+        this.diskCModel.drawInstanced(gl);
+        this.diskDModel.drawInstanced(gl);
+        this.diskEModel.drawInstanced(gl);
     }
 }

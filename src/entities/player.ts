@@ -1,7 +1,8 @@
-import {DiskModel} from "./diskmodel";
 import {vec3} from "gl-matrix";
-import {PlayerModel} from "./playermodel";
+import {PlayerModel} from "./models/playermodel";
 import {Mesh} from "../lib/OBJ/index.js";
+import {MaterialLibrary} from "../lib/OBJ/index.js";
+let OBJ = require("../lib/OBJ/index.js");
 
 const SPEED = 20;
 
@@ -12,25 +13,25 @@ export enum Player_Movement {
     RIGHT
 }
 export class Player {
-    model: PlayerModel  ;
+    model: PlayerModel;
     position: vec3;
     forward: vec3;
     up: vec3;
 
-    constructor(gl:WebGL2RenderingContext,mesh: Mesh, x:number, y: number, z: number) {
+    constructor(gl:WebGL2RenderingContext,mesh: Mesh, pos:vec3 | number[]) {
         this.model = new PlayerModel(mesh);
         this.model.init(gl);
-        this.position = vec3.fromValues(x, y, z,);
+        this.position = vec3.fromValues(pos[0],pos[1],pos[2]);
         this.up = vec3.fromValues(0,1,0);
         this.forward = vec3.fromValues(1,0,0);
     }
     
     
-    rotate(angle:number){
+    rotate(angle:number):void{
        vec3.rotateY(this.forward, this.forward, [0,0,0], angle*2);
     }
 
-    move( direction:Player_Movement,deltaTime:number){
+    move( direction:Player_Movement,deltaTime:number):void{
         let velocity = vec3.create();
         if(direction == Player_Movement.FORWARD){
             vec3.scale(velocity,this.forward,SPEED*deltaTime);
@@ -55,9 +56,20 @@ export class Player {
         
     }
     
-    draw(gl:WebGL2RenderingContext){
+    draw(gl:WebGL2RenderingContext):void{
         this.model.draw(gl);
         
         
+    }
+    
+    static load(): Object{
+        let a = new Mesh(require('../../assets/models/actors/cbabe/cbabe_stand_n.obj'));
+        let b = new MaterialLibrary(require('../../assets/models/actors/cbabe/cbabe.mtl'));
+        a.addMaterialLibrary(b);
+        let c = require('../../assets/models/actors/cbabe/cbabe_base64.txt');
+        let image = new Image();
+        image.src = 'data:image/jpeg;base64,' + c;
+        a.materialsByIndex[0].mapDiffuse.texture = image;
+        return  a;
     }
 }

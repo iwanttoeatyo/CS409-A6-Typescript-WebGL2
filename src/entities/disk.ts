@@ -1,4 +1,4 @@
-import {DiskModel} from "./diskmodel";
+import {DiskModel} from "./models/diskmodel";
 import {vec3} from "gl-matrix";
 
 

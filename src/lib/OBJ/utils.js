@@ -4,7 +4,7 @@ import {Material, MaterialLibrary} from './material';
 import {Layout} from './layout';
 
 
-function downloadMtlTextures (mtl, root) {
+export function downloadMtlTextures (mtl, root) {
   const mapAttributes = [
     'mapDiffuse',
     'mapAmbient',
@@ -168,6 +168,7 @@ export function downloadModels (models) {
             return value[0];
           })
       );
+    
     }
 
     finished.push(Promise.all(parsed));

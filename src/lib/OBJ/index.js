@@ -2,7 +2,7 @@ import Mesh from './mesh';
 import {Material, MaterialLibrary} from './material';
 import {Layout} from './layout';
 import {downloadModels, downloadMeshes,
-        initMeshBuffers, deleteMeshBuffers} from './utils';
+        initMeshBuffers, deleteMeshBuffers, downloadMtlTextures} from './utils';
 
 
 /**
@@ -17,6 +17,7 @@ export {
     downloadModels,
     downloadMeshes,
     initMeshBuffers,
-    deleteMeshBuffers
+    deleteMeshBuffers,
+    downloadMtlTextures
 
 };

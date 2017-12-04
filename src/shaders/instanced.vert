@@ -17,9 +17,12 @@ void main()
 {
     vec4 vertexPos = vec4(aPos, 1);
 
-    vertexPos.x *= aScale.x;
-    vertexPos.y *= aScale.y;
-    vertexPos.z *= aScale.z;
+    if(aScale.x > 0.0 && aScale.z > 0.0){
+        vertexPos.x *= aScale.x;
+        vertexPos.y *= aScale.y;
+        vertexPos.z *= aScale.z;
+    }
+
     vertexPos.xyz += aInstancedOffset.xyz;
     TexCoord = aTexCoord;
     gl_Position = viewProjection * model *  vertexPos;
