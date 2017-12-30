@@ -29,7 +29,9 @@ let mouseKeys: boolean[] = [];
 let fpsCounter = document.getElementById('fpscounter');
 
 let playerCamera: Camera = new Camera(vec3.fromValues(0, 1.6, 0), vec3.fromValues(0, 1, 0), 0);
-let worldCamera: Camera = new Camera(vec3.fromValues(0,200,0), vec3.fromValues(0,1,0), 0, -90);
+let worldCamera: Camera = new Camera(vec3.fromValues(100,200,10), vec3.fromValues(0,1,0), 0, 0);
+//Set overview camera to look at origin.
+worldCamera.lookAt(vec3.fromValues(0,0,0));
 
 let activeCamera:Camera = playerCamera;
 
@@ -92,6 +94,7 @@ class Main {
         console.log("skybox done "  + Date.now());
         this.skybox = new Skybox(gl, skybox_model["Skybox"]);
 
+        
         let _playerData =await Player.loadMesh();
 
         //   this.skybox = new Skybox(gl, _skyboxMesh);

@@ -50,6 +50,13 @@ export class Camera {
         return look;
     }
     
+    lookAt(pos: vec3){
+        let a = vec3.create();
+        vec3.subtract(a, pos, this.position);
+        vec3.normalize(a,a);
+        this.front = a;
+    }
+    
     getInverseViewMatrix(){
         let forward = vec3.create();
         vec3.add(forward, this.position, this.front);
