@@ -28,42 +28,15 @@ let mouseKeys: boolean[] = [];
 
 let fpsCounter = document.getElementById('fpscounter');
 
-let camera: Camera = new Camera(vec3.fromValues(0, 1.6, 0), vec3.fromValues(0, 1, 0), 0);
+let playerCamera: Camera = new Camera(vec3.fromValues(0, 1.6, 0), vec3.fromValues(0, 1, 0), 0);
+let worldCamera: Camera = new Camera(vec3.fromValues(0,200,0), vec3.fromValues(0,1,0), 0, -90);
 
+let activeCamera:Camera = playerCamera;
 
 class Main {
     world: World;
     skybox: Skybox;
     player:Player;
-
-
-    loadAssets(): Promise<void> {
-
-        let root = window.location.href.substr(0, window.location.href.lastIndexOf("/"));
-
-          let p2 = World.load();
-        let p3 = Skybox.load();
-
-        return Promise.all([ p2[0], p2[1],p2[2], p3])
-            .then((values) => {
-                let _playerData = Player.load(); 
-                let _worldMeshes = <WorldMeshes>values[0];
-                let _worldMat = <MaterialLibrary>values[2];
-                let _skyboxMesh = <Mesh>values[3]["Skybox"];
-                console.log(_playerData);
-                console.log(_worldMeshes);
-                console.log(_skyboxMesh);
-                
-                let _worldData = require('../assets/worlds/maps/Basic.txt');
-                this.world = new World(gl, _worldData, _worldMeshes, _worldMat);
-                this.skybox = new Skybox(gl, _skyboxMesh);
-                this.player = new Player(gl, _playerData,playerOrigin);
-
-                shader = new Shader(gl, require("../src/shaders/basic.vert"), require("../src/shaders/basic.frag"));
-                instancedShader = new Shader(gl, require('../src/shaders/instanced.vert'), require("../src/shaders/instanced.frag"));
-
-            });
-    }
 
 
     constructor() {
@@ -80,13 +53,16 @@ class Main {
         this.resize();
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-
+        //Display that we are loading
+        
+        
+        
         this.loadAssets().then(() => {
             this.initBuffers();
             this.initPointerLock();
 
             //Wait ms so images can load to prevent texture warnings
-            setInterval(h => {
+            setTimeout(h => {
                 MainLoop.setBegin(this.begin.bind(this))
                     .setUpdate(this.update.bind(this))
                     .setDraw(this.draw.bind(this))
@@ -99,6 +75,35 @@ class Main {
 
 
     }
+    async loadAssets(): Promise<void> {
+
+        let root = window.location.href.substr(0, window.location.href.lastIndexOf("/"));
+
+        console.log("world started " + Date.now());
+        let _worldMeshes = await World.loadWorldMeshes();
+        let _worldMat = await World.loadWorldMat();
+        console.log("world done "  + Date.now());
+        let _worldData = await World.loadWorldData();
+        this.world = new World(gl, _worldData, _worldMeshes, _worldMat);
+
+        
+        console.log("skybox started " + Date.now());
+        let skybox_model = await Skybox.load();
+        console.log("skybox done "  + Date.now());
+        this.skybox = new Skybox(gl, skybox_model["Skybox"]);
+
+        let _playerData =await Player.loadMesh();
+
+        //   this.skybox = new Skybox(gl, _skyboxMesh);
+        this.player = new Player(gl, _playerData["cbabe"],playerOrigin);
+
+        shader = new Shader(gl, require("../src/shaders/basic.vert"), require("../src/shaders/basic.frag"));
+        instancedShader = new Shader(gl, require('../src/shaders/instanced.vert'), require("../src/shaders/instanced.frag"));
+
+    }
+
+
+
 
 
     initGL() {
@@ -119,7 +124,7 @@ class Main {
 
     initBuffers() {
 
-        camera.front = this.player.forward;
+        playerCamera.front = this.player.forward;
 
         shader.use();
         shader.setInt("texture1", 0);
@@ -164,20 +169,26 @@ class Main {
 
         if (keys[37]) {
             this.player.rotate(delta);
-            camera.front[0] = this.player.forward[0];
-            camera.front[2] = this.player.forward[2];
-            camera.up = this.player.up;
+            playerCamera.front[0] = this.player.forward[0];
+            playerCamera.front[2] = this.player.forward[2];
+            playerCamera.up = this.player.up;
         }
         if (keys[39]) {
             this.player.rotate(-delta);
-            camera.front[0] = this.player.forward[0];
-            camera.front[2] = this.player.forward[2];
-            camera.up = this.player.up;
+            playerCamera.front[0] = this.player.forward[0];
+            playerCamera.front[2] = this.player.forward[2];
+            playerCamera.up = this.player.up;
         }
 
         if (keys[82]) {
             vec3.copy(this.player.position, playerOrigin);
             vec3.copy(this.player.forward, playerOriginRotation);
+        }
+        
+        if(keys[79]){
+            activeCamera = worldCamera;
+        }else{
+            activeCamera = playerCamera;
         }
     }
 
@@ -193,15 +204,15 @@ class Main {
 
 
        //Move camera behind player
-        camera.position[0] = this.player.position [0];
-        camera.position[2] = this.player.position[2];
-        camera.position[0] -= 2 * this.player.forward[0];
-        camera.position[2] -= 2 * this.player.forward[2];
+        playerCamera.position[0] = this.player.position [0];
+        playerCamera.position[2] = this.player.position[2];
+        playerCamera.position[0] -= 2 * this.player.forward[0];
+        playerCamera.position[2] -= 2 * this.player.forward[2];
 
 
         //Setup view and projection
         let projection = mat4.create();
-        let view = camera.getViewMatrix();
+        let view = activeCamera.getViewMatrix();
         mat4.perspective(projection, glMatrix.toRadian(80), canvas.width / canvas.height, 0.1, 10000);
         let viewProjection = mat4.multiply(projection, projection, view);
 
@@ -212,7 +223,7 @@ class Main {
         //Draw Skybox
         gl.disable(gl.DEPTH_TEST);
         shader.use();
-        mat4.translate(model, model, camera.position);
+        mat4.translate(model, model, activeCamera.position);
         shader.setFloat("ambient", 0.65);
         
         shader.setMat4("model", model);
@@ -223,8 +234,8 @@ class Main {
         instancedShader.use();
         // directional light
         instancedShader.setVec3("dirLight.direction", [-0.45, -1.0, -0.7]);
-        instancedShader.setVec3("dirLight.ambient", [0.10, 0.10, 0.10]);
-        instancedShader.setVec3("dirLight.diffuse", [0.6, 0.6, 0.6]);
+        instancedShader.setVec3("dirLight.ambient", [0.2, 0.2, 0.2]);
+        instancedShader.setVec3("dirLight.diffuse", [0.7, 0.7, 0.7]);
         instancedShader.setVec3("dirLight.specular", [0.0, 0.0, 0.0]);
         //Setup player point light
  
@@ -235,7 +246,7 @@ class Main {
         instancedShader.setFloat("playerLight.constant", 0.4);
         instancedShader.setFloat("playerLight.linear", 0.09);
         instancedShader.setFloat("playerLight.quadratic", 0.032);
-        instancedShader.setVec3("viewPos",camera.position);
+        instancedShader.setVec3("viewPos",playerCamera.position);
 
         // material properties
         instancedShader.setFloat("material.shininess", 64.0);
@@ -344,7 +355,7 @@ class Main {
             e.webkitMovementY ||
             0;
         this.player.rotate(-movementX / 600);
-        camera.processMouseMovement(this.player.forward, this.player.position, movementX, -movementY, true);
+        playerCamera.processMouseMovement(this.player.forward, this.player.position, movementX, -movementY, true);
     }
 
 }

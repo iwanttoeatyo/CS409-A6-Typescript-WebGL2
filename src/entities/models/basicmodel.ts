@@ -126,6 +126,7 @@ export class BasicModel {
     }
 
     initTexture(gl: WebGL2RenderingContext,  texture_num: number, flip:boolean = true) {
+
         if (!this.mesh.materialsByIndex[texture_num]) return false;
         if (this.mesh.materialsByIndex[texture_num].mapDiffuse.texture.complete) {
             this.loadTexture(gl, texture_num, flip);

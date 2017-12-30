@@ -30,7 +30,7 @@ export class World {
         meshes.DiskC.addMaterialLibrary(mat);
         meshes.DiskD.addMaterialLibrary(mat);
         meshes.DiskE.addMaterialLibrary(mat);
-        
+
         this.diskAModel = new DiskModel(meshes.DiskA, Terrain.RED_ROCK);
         this.diskBModel = new DiskModel(meshes.DiskB, Terrain.LEAFY);
         this.diskCModel = new DiskModel(meshes.DiskC, Terrain.ICY);
@@ -103,10 +103,8 @@ export class World {
 
     }
 
-
-    static load(): Array<Promise<Object>> {
-
-        let p = OBJ.downloadModels([
+    static async loadWorldMeshes(): Promise<WorldMeshes> {
+        return OBJ.downloadModels([
             {
                 name: 'DiskA',
                 obj: "/assets/models/environment/disks/DiskASolid.obj",
@@ -132,13 +130,18 @@ export class World {
                 obj: "/assets/models/environment/disks/DiskESolid.obj",
                 downloadMtlTextures: false
             }]);
-        let b = new MaterialLibrary(require('../../assets/models/environment/disks/Disks.mtl'));
-        let a = OBJ.downloadMtlTextures(b, 
-            window.location.href.substr(0, window.location.href.lastIndexOf("/")) + '/assets/models/environment/disks/');
-
-        return [p,a,Promise.resolve(b)];
     }
 
+    static async loadWorldMat(): Promise<MaterialLibrary> {
+        let mat = new MaterialLibrary(require('../../assets/models/environment/disks/Disks.mtl'));
+        await OBJ.downloadMtlTextures(mat, 
+            window.location.href.substr(0, window.location.href.lastIndexOf("/")) + '/assets/models/environment/disks/');
+        return mat;
+    }
+
+    static async loadWorldData(): Promise<string>{
+        return require('../../assets/worlds/maps/Basic.txt');
+    }
 
     draw(gl: WebGL2RenderingContext) {
         this.diskAModel.drawInstanced(gl);

@@ -62,6 +62,16 @@ export class Player {
         
     }
     
+    static async loadMesh(){
+        return OBJ.downloadModels([
+            {
+                name: 'cbabe',
+                obj: "/assets/models/actors/cbabe/cbabe_stand_n.obj",
+                mtl: "/assets/models/actors/cbabe/cbabe.mtl"
+            }
+        ]);
+    }
+    
     static load(): Object{
         let a = new Mesh(require('../../assets/models/actors/cbabe/cbabe_stand_n.obj'));
         let b = new MaterialLibrary(require('../../assets/models/actors/cbabe/cbabe.mtl'));

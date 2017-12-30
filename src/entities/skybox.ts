@@ -21,7 +21,9 @@ export class Skybox {
     }
 
 
-    static load(): Promise<Object> {
+
+    
+    static async load(): Promise<Object> {
         return OBJ.downloadModels([
             {
                 name: 'Skybox',
