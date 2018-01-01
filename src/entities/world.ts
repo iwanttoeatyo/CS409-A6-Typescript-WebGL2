@@ -4,6 +4,8 @@ import {DiskModel, Terrain} from "./models/diskmodel";
 let OBJ = require("../lib/OBJ/index.js");
 import {Mesh} from "../lib/OBJ/index.js";
 import {MaterialLibrary} from "../lib/OBJ/index.js";
+import {Shader} from "../shader";
+import {mat4} from "gl-matrix";
 
 export interface WorldMeshes {
     DiskA: Mesh;
@@ -23,8 +25,11 @@ export class World {
     worldData: string;
 
     disks: Array<Disk>;
+    diskAHeightMap: number[][];
 
     constructor(gl: WebGL2RenderingContext, worldData: string, meshes: WorldMeshes, mat: MaterialLibrary) {
+        this.initDiskAHeightMap();
+
         meshes.DiskA.addMaterialLibrary(mat);
         meshes.DiskB.addMaterialLibrary(mat);
         meshes.DiskC.addMaterialLibrary(mat);
@@ -107,39 +112,39 @@ export class World {
         return OBJ.downloadModels([
             {
                 name: 'DiskA',
-                obj: "/assets/models/environment/disks/DiskASolid.obj",
+                obj: "/assets/models/environment/disks/DiskARainbow.obj",
                 downloadMtlTextures: false
             },
             {
                 name: 'DiskB',
-                obj: "/assets/models/environment/disks/DiskBSolid.obj",
+                obj: "/assets/models/environment/disks/DiskB.obj",
                 downloadMtlTextures: false
             },
             {
                 name: 'DiskC',
-                obj: "/assets/models/environment/disks/DiskCSolid.obj",
+                obj: "/assets/models/environment/disks/DiskC.obj",
                 downloadMtlTextures: false
             },
             {
                 name: 'DiskD',
-                obj: "/assets/models/environment/disks/DiskDSolid.obj",
+                obj: "/assets/models/environment/disks/DiskD.obj",
                 downloadMtlTextures: false
             },
             {
                 name: 'DiskE',
-                obj: "/assets/models/environment/disks/DiskESolid.obj",
+                obj: "/assets/models/environment/disks/DiskE.obj",
                 downloadMtlTextures: false
             }]);
     }
 
     static async loadWorldMat(): Promise<MaterialLibrary> {
         let mat = new MaterialLibrary(require('../../assets/models/environment/disks/Disks.mtl'));
-        await OBJ.downloadMtlTextures(mat, 
+        await OBJ.downloadMtlTextures(mat,
             window.location.href.substr(0, window.location.href.lastIndexOf("/")) + '/assets/models/environment/disks/');
         return mat;
     }
 
-    static async loadWorldData(): Promise<string>{
+    static async loadWorldData(): Promise<string> {
         return require('../../assets/worlds/maps/Basic.txt');
     }
 
@@ -149,5 +154,36 @@ export class World {
         this.diskCModel.drawInstanced(gl);
         this.diskDModel.drawInstanced(gl);
         this.diskEModel.drawInstanced(gl);
+    }
+
+    drawDiskHeightmaps(gl: WebGL2RenderingContext, shader: Shader) {
+
+    }
+
+    private initDiskAHeightMap() {
+        let diskAHeightMapSize = 16;
+        this.diskAHeightMap = [];
+        let heights = [];
+        heights.push(0,0);
+        for (let i = 2; i <= diskAHeightMapSize / 2; i++) {
+            let a =heights[i-1];
+            heights.push( Math.round((a + Math.random() * (3) - 1)* 1e1) / 1e1);
+        }
+        console.log(heights);
+        for (let x = 0; x <= diskAHeightMapSize; x++) {
+            this.diskAHeightMap[x] = [];
+            let max = x > diskAHeightMapSize/2 ?  diskAHeightMapSize - x : x;
+            for (let z = 0; z <= diskAHeightMapSize; z++) {
+                if(z > diskAHeightMapSize-max) max--;
+                
+                let a = z;
+                if (a > max) a = max;
+         
+               
+                this.diskAHeightMap[x].push(heights[a]);
+            }
+
+        }
+        console.log(this.diskAHeightMap);
     }
 }

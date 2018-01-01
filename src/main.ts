@@ -249,7 +249,77 @@ class Main {
         instancedShader.setMat4("model", model);
 
         this.world.draw(gl);
+        
+  
 
+        let hmap:number[] =
+            [   0,0,0,0,0,
+                0,1,1,1,0,
+                0,1,2,1,0,
+                0,1,1,1,0,
+                0,0,0,0,0];
+
+        //poistion, normal, texcoord
+        let positions:number[] =
+            [   1,0,0,   0,1,0,    1,0,
+                0,0,0,   0,1,0,    0,0,  
+                1,0,1,   0,1,0,    1,1,
+                0,0,1,   0,1,0,    0,1];
+
+        instancedShader.use();
+        this.world.disks.forEach(disk => {
+            let width = 16;
+            model = mat4.create();
+            //Center the squares in the disk
+            let pos = vec3.fromValues(disk.position[0],disk.position[1],disk.position[2]);
+            pos[0] -= disk.radius*Math.SQRT2/2;
+            pos[2] -= disk.radius*Math.SQRT2/2;
+            mat4.translate(model, model, pos);
+            mat4.scale(model,model,vec3.fromValues(disk.radius*Math.SQRT2/width,1,disk.radius*Math.SQRT2/width));
+            instancedShader.setMat4("model", model);
+            
+            gl.bindTexture(gl.TEXTURE_2D, disk.model.textures[2]);
+            let newp = [];
+            for(let x0 = 0; x0 < width; x0++){
+                let x1 = x0 + 1;
+                for(let z = 0; z <= width; z++)
+                {
+                    let h = 0;
+                    
+                    if(x0 < 2 || z < 2) h = 0;
+                    
+                    let normal = vec3.create();
+                    vec3.cross(normal, vec3.fromValues(x1, this.world.diskAHeightMap[x1][z], z),  vec3.fromValues(x1, this.world.diskAHeightMap[x0][z], z));
+                    
+                    newp.push(
+                        x1, this.world.diskAHeightMap[x1][z], z,
+                        normal[0], normal[1], normal[2],
+                        x1/16, z/16
+                        );
+                    newp.push(
+                        x0, this.world.diskAHeightMap[x0][z], z,
+                        normal[0], normal[1], normal[2],
+                        x0/16, z/16
+                    );
+                } 
+            }
+            
+            let buffer = gl.createBuffer();
+
+            let VAO = gl.createVertexArray();
+            gl.bindVertexArray(VAO);
+            gl.enableVertexAttribArray(0);
+            gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+            gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(newp), gl.STATIC_DRAW);
+            gl.vertexAttribPointer(0, 3, gl.FLOAT, true, 32, 0);
+            gl.enableVertexAttribArray(1);
+            gl.vertexAttribPointer(1, 3, gl.FLOAT, true, 32, 12);
+            gl.enableVertexAttribArray(2);
+            gl.vertexAttribPointer(2, 2, gl.FLOAT, true, 32, 24);
+         
+            gl.drawArrays(gl.TRIANGLE_STRIP,0 ,newp.length/8)
+        });
+        
 
         //Draws Player in front of camera, always facing away from camera
         instancedShader.use();
