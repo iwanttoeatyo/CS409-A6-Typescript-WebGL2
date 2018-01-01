@@ -1,7 +1,6 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
-var ImageminPlugin = require('imagemin-webpack-plugin').default;
 
 module.exports = {
 	entry: './src/main.ts',
@@ -11,7 +10,7 @@ module.exports = {
 		publicPath: ''
 	},
 	plugins: [new HtmlWebpackPlugin({
-				title: 'CS409 A1 Typsecript WebGL2',
+				title: 'CS409 A2 Typsecript WebGL2',
 				filename: 'index.html',
 				template: 'index.html'
 			}
@@ -36,7 +35,7 @@ module.exports = {
 			},
 			{
 				test: /\.(glsl|vs|fs|frag|vert)$/,
-				loader: 'ts-shader-loader'
+				loader: 'raw-loader'
 			},
 			{
 				test: /\.(txt|obj|mtl|bmp|jpg)$/,

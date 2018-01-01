@@ -6,11 +6,11 @@ export class Shader {
     ID: WebGLProgram;
     gl: WebGL2RenderingContext;
 
-    constructor(gl: WebGL2RenderingContext, vertexPath: string, fragmentPath: string) {
+    constructor(gl: WebGL2RenderingContext, vertexSourceCode: string, fragmentSourceCode: string) {
         this.gl = gl;
 
-        let vertexShader: WebGLShader = getShader(gl, vertexPath, gl.VERTEX_SHADER);
-        let fragmentShader: WebGLShader = getShader(gl, fragmentPath, gl.FRAGMENT_SHADER);
+        let vertexShader: WebGLShader = getShader(gl, vertexSourceCode, gl.VERTEX_SHADER);
+        let fragmentShader: WebGLShader = getShader(gl, fragmentSourceCode, gl.FRAGMENT_SHADER);
         
         this.ID = gl.createProgram();
         gl.attachShader(this.ID, vertexShader);
@@ -59,12 +59,12 @@ export class Shader {
 
 }
 
-function getShader(gl: WebGL2RenderingContext, path, type) {
+function getShader(gl: WebGL2RenderingContext, sourceCode, type) {
     let shader: WebGLShader;
     shader = gl.createShader(type);
 
 
-    gl.shaderSource(shader, path.default);
+    gl.shaderSource(shader,sourceCode);
 
     gl.compileShader(shader);
 

@@ -12,7 +12,6 @@ import {Skybox} from "./entities/skybox";
 
 let MainLoop = require('./lib/MainLoop/mainloop.js');
 
-
 let document = window.document;
 let canvas: HTMLCanvasElement;
 let gl: WebGL2RenderingContext;
@@ -38,8 +37,7 @@ let activeCamera:Camera = playerCamera;
 class Main {
     world: World;
     skybox: Skybox;
-    player:Player;
-
+    player: Player;
 
     constructor() {
 
@@ -57,12 +55,12 @@ class Main {
 
         //Display that we are loading
         
-        
-        
         this.loadAssets().then(() => {
+            
+            //Done loading
+            
             this.initBuffers();
             this.initPointerLock();
-
             //Wait ms so images can load to prevent texture warnings
             setTimeout(h => {
                 MainLoop.setBegin(this.begin.bind(this))
@@ -72,15 +70,10 @@ class Main {
                     .start();
 
             }, 100);
-
         });
-
-
     }
+    
     async loadAssets(): Promise<void> {
-
-        let root = window.location.href.substr(0, window.location.href.lastIndexOf("/"));
-
         console.log("world started " + Date.now());
         let _worldMeshes = await World.loadWorldMeshes();
         let _worldMat = await World.loadWorldMat();
@@ -88,25 +81,19 @@ class Main {
         let _worldData = await World.loadWorldData();
         this.world = new World(gl, _worldData, _worldMeshes, _worldMat);
 
-        
         console.log("skybox started " + Date.now());
         let skybox_model = await Skybox.load();
         console.log("skybox done "  + Date.now());
         this.skybox = new Skybox(gl, skybox_model["Skybox"]);
 
-        
+        console.log("Player started " + Date.now());
         let _playerData =await Player.loadMesh();
-
-        //   this.skybox = new Skybox(gl, _skyboxMesh);
+        console.log("Player done "  + Date.now());
         this.player = new Player(gl, _playerData["cbabe"],playerOrigin);
 
         shader = new Shader(gl, require("../src/shaders/basic.vert"), require("../src/shaders/basic.frag"));
         instancedShader = new Shader(gl, require('../src/shaders/instanced.vert'), require("../src/shaders/instanced.frag"));
-
     }
-
-
-
 
 
     initGL() {
@@ -120,8 +107,6 @@ class Main {
         }
         gl.enable(gl.SAMPLE_COVERAGE);
         gl.sampleCoverage(1, false);
-
-
     }
 
 
