@@ -140,7 +140,7 @@ export class BasicModel {
 
 
     loadTexture(gl: WebGL2RenderingContext, texture_num: number, flip: boolean = true) {
-        let texture = gl.createTexture();
+        let texture =  gl.createTexture();
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, texture);
         if(flip)
@@ -164,8 +164,7 @@ export class BasicModel {
         gl.bindVertexArray(this.VAO);
         gl.activeTexture(gl.TEXTURE0);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.mesh.indexBuffer);
-
-
+        
         this.textures.forEach((texture,index) =>{
             let is = this.mesh.vertexBuffer.itemSize;
             let material = this.mesh.materials[index];
