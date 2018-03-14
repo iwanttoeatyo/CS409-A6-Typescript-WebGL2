@@ -6,22 +6,28 @@ import {vec3} from "gl-matrix";
 export class MeshlessModel {
     VAO: WebGLVertexArrayObject;
     data: number[];
+    indices: number[];
     buffer: WebGLBuffer;
+    index_buffer: WebGLBuffer;
     initialized:Boolean;
     texture: WebGLTexture;
     stride: number;
     
-    constructor(data:number[]) {
+    constructor(data:number[], indices:number[]) {
         this.data = data;
+        this.indices = indices;
         this.stride = 8;
     }
 
     init(gl: WebGL2RenderingContext) {
         this.VAO = gl.createVertexArray();
         this.buffer = gl.createBuffer();
+        this.index_buffer = gl.createBuffer();
         gl.bindVertexArray(this.VAO);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.data), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.index_buffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.indices), gl.STATIC_DRAW);
         gl.enableVertexAttribArray(0);
         gl.vertexAttribPointer(0, 3, gl.FLOAT, true, this.stride*4, 0);
         gl.enableVertexAttribArray(1);
@@ -61,10 +67,11 @@ export class MeshlessModel {
     draw(gl:WebGL2RenderingContext){
         gl.bindVertexArray(this.VAO);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.index_buffer);
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.texture);
         
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.data.length/this.stride);
+        gl.drawElements(gl.TRIANGLES, this.indices.length, gl.UNSIGNED_SHORT,0);
 
         gl.bindVertexArray(null);
     }

@@ -4200,8 +4200,8 @@ const shader_1 = __webpack_require__(16);
 const camera_1 = __webpack_require__(17);
 const player_1 = __webpack_require__(18);
 const world_1 = __webpack_require__(24);
-const skybox_1 = __webpack_require__(30);
-let MainLoop = __webpack_require__(32);
+const skybox_1 = __webpack_require__(32);
+let MainLoop = __webpack_require__(34);
 let document = window.document;
 let canvas;
 let gl;
@@ -4296,8 +4296,8 @@ class Main {
             this.player = new player_1.Player(gl, _playerData["cbabe"], playerOrigin);
             this.skybox = new skybox_1.Skybox(gl, skybox_model["Skybox"]);
             this.world = new world_1.World(gl, _worldData, _worldMeshes, _worldMat);
-            shader = new shader_1.Shader(gl, __webpack_require__(33), __webpack_require__(34));
-            instancedShader = new shader_1.Shader(gl, __webpack_require__(35), __webpack_require__(36));
+            shader = new shader_1.Shader(gl, __webpack_require__(35), __webpack_require__(36));
+            instancedShader = new shader_1.Shader(gl, __webpack_require__(37), __webpack_require__(38));
         });
     }
     initGL() {
@@ -9222,7 +9222,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const disk_1 = __webpack_require__(25);
-const diskmodel_1 = __webpack_require__(27);
+const diskmodel_1 = __webpack_require__(29);
 let OBJ = __webpack_require__(1);
 const index_js_1 = __webpack_require__(1);
 class World {
@@ -9319,14 +9319,14 @@ class World {
     }
     static loadWorldMat() {
         return __awaiter(this, void 0, void 0, function* () {
-            let mat = new index_js_1.MaterialLibrary(__webpack_require__(28));
+            let mat = new index_js_1.MaterialLibrary(__webpack_require__(30));
             yield OBJ.downloadMtlTextures(mat, window.location.href.substr(0, window.location.href.lastIndexOf("/")) + '/assets/models/environment/disks/');
             return mat;
         });
     }
     static loadWorldData() {
         return __awaiter(this, void 0, void 0, function* () {
-            return __webpack_require__(29);
+            return __webpack_require__(31);
         });
     }
     draw(gl, shader) {
@@ -9347,6 +9347,8 @@ exports.World = World;
 Object.defineProperty(exports, "__esModule", { value: true });
 const gl_matrix_1 = __webpack_require__(2);
 const meshlessmodel_1 = __webpack_require__(26);
+const Random = __webpack_require__(27);
+const noisefield_1 = __webpack_require__(28);
 var Terrain;
 (function (Terrain) {
     Terrain[Terrain["RED_ROCK"] = 0] = "RED_ROCK";
@@ -9383,50 +9385,81 @@ class Disk {
                 break;
             case Terrain.SANDY:
                 this.heightMapSize = 64;
-                this.initRedRockHeightMap();
+                this.initSandyHeightMap();
                 break;
             case Terrain.GREY_ROCK:
                 this.heightMapSize = 80;
-                this.initRedRockHeightMap();
+                this.initGreyRockHeightMap();
                 break;
         }
         this.generateHeightMapModel(gl);
     }
     generateHeightMapModel(gl) {
-        let newp = [];
-        for (let x0 = 0; x0 < this.heightMapSize; x0++) {
-            let x1 = x0 + 1;
-            for (let z = 0; z <= this.heightMapSize; z++) {
-                let normal = gl_matrix_1.vec3.create();
-                gl_matrix_1.vec3.cross(normal, gl_matrix_1.vec3.fromValues(x1, this.heightMap[x1][z], z), gl_matrix_1.vec3.fromValues(x1, this.heightMap[x0][z], z));
-                newp.push(x1, this.heightMap[x1][z], z, 0, 1, 0, x1 / 16, z / 16);
-                newp.push(x0, this.heightMap[x0][z], z, 0, 1, 0, x0 / 16, z / 16);
+        let vert_buffer_size = (this.heightMapSize + 1) * (this.heightMapSize + 1);
+        let verts = new Array(vert_buffer_size);
+        let count = 0;
+        for (let x = 0; x < this.heightMapSize + 1; x++) {
+            for (let z = 0; z < this.heightMapSize + 1; z++) {
+                //Position
+                verts[count] = {
+                    m_x: x - (this.heightMapSize / 2),
+                    m_y: this.heightMap[x][z],
+                    m_z: z - (this.heightMapSize / 2),
+                    m_s: x / 16.0,
+                    m_t: z / 16.0,
+                    m_nx: 0, m_ny: 0, m_nz: 0
+                };
+                count++;
             }
         }
-        this.heightMapModel = new meshlessmodel_1.MeshlessModel(newp);
+        let index_buffer_size = this.heightMapSize * (this.heightMapSize) * 6;
+        let indices = new Array(index_buffer_size);
+        count = 0;
+        //Create triangles using indices which reference vertices in the triangle strip
+        for (let i = 0; i < vert_buffer_size - (this.heightMapSize + 1); i += (this.heightMapSize + 1)) {
+            for (let j = 0; j < this.heightMapSize; j++) {
+                let v = i + j;
+                //0,1,2
+                indices[count++] = v + (this.heightMapSize + 1);
+                indices[count++] = v;
+                indices[count++] = v + (this.heightMapSize + 1) + 1;
+                //2,1,3
+                indices[count++] = v + (this.heightMapSize + 1) + 1;
+                indices[count++] = v;
+                indices[count++] = v + 1;
+            }
+        }
+        //Calculate the normals. For each faces normal we add it to the normals of the vertices used.
+        //Normals will be normalized in fragment shader
+        for (let i = 0; i < index_buffer_size - 2; i += 3) {
+            let i1 = indices[i];
+            let i2 = indices[i + 1];
+            let i3 = indices[i + 2];
+            //Calculate normal for this face
+            let v1 = gl_matrix_1.vec3.fromValues(verts[i1].m_x, verts[i1].m_y, verts[i1].m_z);
+            let v2 = gl_matrix_1.vec3.fromValues(verts[i2].m_x, verts[i2].m_y, verts[i2].m_z);
+            let v3 = gl_matrix_1.vec3.fromValues(verts[i3].m_x, verts[i3].m_y, verts[i3].m_z);
+            let dir = gl_matrix_1.vec3.fromValues(0, 0, 0);
+            let diff = gl_matrix_1.vec3.fromValues(0, 0, 0);
+            gl_matrix_1.vec3.subtract(dir, v2, v1);
+            gl_matrix_1.vec3.subtract(diff, v3, v1);
+            gl_matrix_1.vec3.cross(dir, dir, diff);
+            //Add to the existing normals
+            verts[i1].m_nx += dir[0];
+            verts[i1].m_ny += dir[1];
+            verts[i1].m_nz += dir[2];
+            verts[i2].m_nx += dir[0];
+            verts[i2].m_ny += dir[1];
+            verts[i2].m_nz += dir[2];
+            verts[i3].m_nx += dir[0];
+            verts[i3].m_ny += dir[1];
+            verts[i3].m_nz += dir[2];
+        }
+        let d = verts.map(o => [o.m_x, o.m_y, o.m_z, o.m_nx, o.m_ny, o.m_nz, o.m_s, o.m_t]);
+        let data = [].concat.apply([], d);
+        this.heightMapModel = new meshlessmodel_1.MeshlessModel(data, indices);
         this.heightMapModel.init(gl);
         this.heightMapModel.setTexture(this.diskModel.textures[2]);
-    }
-    initHeightMap() {
-        this.heightMap = [];
-        let heights = [];
-        heights.push(0, 0);
-        for (let i = 2; i <= this.heightMapSize / 2; i++) {
-            let a = i - 1;
-            heights.push(a);
-        }
-        for (let x = 0; x <= this.heightMapSize; x++) {
-            this.heightMap[x] = [];
-            let max = x > this.heightMapSize / 2 ? this.heightMapSize - x : x;
-            for (let z = 0; z <= this.heightMapSize; z++) {
-                if (z > this.heightMapSize - max)
-                    max--;
-                let a = z;
-                if (a > max)
-                    a = max;
-                this.heightMap[x].push(heights[a]);
-            }
-        }
     }
     initRedRockHeightMap() {
         this.heightMap = [];
@@ -9451,22 +9484,43 @@ class Disk {
     }
     initSandyHeightMap() {
         this.heightMap = [];
-        let heights = [];
-        heights.push(0, 0);
-        for (let i = 2; i <= this.heightMapSize / 2; i++) {
-            let a = heights[i - 1];
-            heights.push(Math.round((a + Math.random() * (3) - 1) * 1e1) / 1e1);
+        let ns = new noisefield_1.Noisefield(16, 8, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF));
+        let xz_6 = new Array(this.heightMapSize + 1);
+        let pow_divisor = (1.0 - Math.pow(0.5, 6));
+        for (let x = 0; x <= this.heightMapSize; x++) {
+            let ux = x / this.heightMapSize;
+            xz_6[x] = Math.max(Math.pow(ux, 6), Math.pow(1.0 - ux, 6));
         }
         for (let x = 0; x <= this.heightMapSize; x++) {
             this.heightMap[x] = [];
-            let max = x > this.heightMapSize / 2 ? this.heightMapSize - x : x;
             for (let z = 0; z <= this.heightMapSize; z++) {
-                if (z > this.heightMapSize - max)
-                    max--;
-                let a = z;
-                if (a > max)
-                    a = max;
-                this.heightMap[x].push(heights[a]);
+                let h = ns.perlineNoise(z, x);
+                let f = (1 - Math.max(xz_6[x], xz_6[z])) / pow_divisor;
+                this.heightMap[x].push(h * f);
+            }
+        }
+    }
+    initGreyRockHeightMap() {
+        this.heightMap = [];
+        let ns = [
+            new noisefield_1.Noisefield(32, 1.0, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF)),
+            new noisefield_1.Noisefield(16, 7.0, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF)),
+            new noisefield_1.Noisefield(8, 5.0, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF)),
+            new noisefield_1.Noisefield(4, 3.5, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF)),
+            new noisefield_1.Noisefield(2, 2.5, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF)),
+        ];
+        for (let x = 0; x <= this.heightMapSize; x++) {
+            this.heightMap[x] = [];
+            for (let z = 0; z <= this.heightMapSize; z++) {
+                let h = ns[0].perlineNoise(z, x)
+                    + ns[1].perlineNoise(z, x)
+                    + ns[2].perlineNoise(z, x)
+                    + ns[3].perlineNoise(z, x)
+                    + ns[4].perlineNoise(z, x);
+                let ux = x / this.heightMapSize;
+                let uy = z / this.heightMapSize;
+                let f = (1 - Math.max(Math.max(Math.pow(ux, 6), Math.pow(1.0 - ux, 6)), Math.max(Math.pow(uy, 6), Math.pow(1.0 - uy, 6)))) / (1.0 - Math.pow(0.5, 6));
+                this.heightMap[x].push(h * f);
             }
         }
     }
@@ -9504,9 +9558,6 @@ class Disk {
             }
         }
     }
-    getRandomInt(max) {
-        return Math.floor(Math.random() * Math.floor(max));
-    }
     initLeafyHeightMap() {
         //Math.random() * (max - min) + min;
         let LL = Math.random() * (2) - 1;
@@ -9515,8 +9566,8 @@ class Disk {
         let RI = Math.random() * (2) - 1;
         let RM = Math.random() * (2) - 1;
         let RO = Math.random() * (2) - 1;
-        let a1 = this.getRandomInt(7);
-        let a2 = this.getRandomInt(7);
+        let a1 = Random.randi(7);
+        let a2 = Random.randi(7);
         let ARM_COUNT = a1 < a2 ? a1 : a2;
         let ARM_RADIANS = Math.random() * (Math.PI * 2);
         let AI = Math.random();
@@ -9550,7 +9601,7 @@ class Disk {
                 let ao = (Math.sqrt(1 - dist) - (1 - dist)) * 4;
                 let asum = ai * AI + am * AM + ao * AO;
                 let non_arm_height = lsum * rsum;
-                let arm_radians = radians * ARM_COUNT * ARM_RADIANS;
+                let arm_radians = radians * ARM_COUNT + ARM_RADIANS;
                 let arm_magnitude = (Math.sin(arm_radians) + 1.0) * 0.5;
                 let arm_height = arm_magnitude * asum;
                 this.heightMap[x][z] = non_arm_height * 5 + arm_height * 3;
@@ -9574,10 +9625,10 @@ class Disk {
         let model = gl_matrix_1.mat4.create();
         //Center the squares in the disk
         let pos = gl_matrix_1.vec3.fromValues(this.position[0], this.position[1], this.position[2]);
-        pos[0] -= this.radius * Math.SQRT2 / 2;
-        pos[2] -= this.radius * Math.SQRT2 / 2;
+        let corner = this.radius * Math.SQRT2 / 2;
+        pos[1] += 0.00001;
         gl_matrix_1.mat4.translate(model, model, pos);
-        gl_matrix_1.mat4.scale(model, model, gl_matrix_1.vec3.fromValues(this.radius * Math.SQRT2 / this.heightMapSize, 1, this.radius * Math.SQRT2 / this.heightMapSize));
+        gl_matrix_1.mat4.scale(model, model, gl_matrix_1.vec3.fromValues(corner * 2 / this.heightMapSize, 1, corner * 2 / this.heightMapSize));
         shader.setMat4("model", model);
         this.heightMapModel.draw(gl);
     }
@@ -9593,16 +9644,20 @@ exports.Disk = Disk;
 
 Object.defineProperty(exports, "__esModule", { value: true });
 class MeshlessModel {
-    constructor(data) {
+    constructor(data, indices) {
         this.data = data;
+        this.indices = indices;
         this.stride = 8;
     }
     init(gl) {
         this.VAO = gl.createVertexArray();
         this.buffer = gl.createBuffer();
+        this.index_buffer = gl.createBuffer();
         gl.bindVertexArray(this.VAO);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
         gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.data), gl.STATIC_DRAW);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.index_buffer);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.indices), gl.STATIC_DRAW);
         gl.enableVertexAttribArray(0);
         gl.vertexAttribPointer(0, 3, gl.FLOAT, true, this.stride * 4, 0);
         gl.enableVertexAttribArray(1);
@@ -9633,9 +9688,10 @@ class MeshlessModel {
     draw(gl) {
         gl.bindVertexArray(this.VAO);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.index_buffer);
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, this.texture);
-        gl.drawArrays(gl.TRIANGLE_STRIP, 0, this.data.length / this.stride);
+        gl.drawElements(gl.TRIANGLES, this.indices.length, gl.UNSIGNED_SHORT, 0);
         gl.bindVertexArray(null);
     }
 }
@@ -9644,6 +9700,96 @@ exports.MeshlessModel = MeshlessModel;
 
 /***/ }),
 /* 27 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+//Return random signed int
+function randi(max) {
+    return Math.floor(Math.random() * Math.floor(max));
+}
+exports.randi = randi;
+
+
+/***/ }),
+/* 28 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+class Noisefield {
+    constructor(grid_size, amplitude, x1, x2, y1, y2, q0, q1, q2) {
+        this.GRID_SIZE = grid_size;
+        this.amplitude = amplitude;
+        this.SEED_X1 = x1;
+        this.SEED_X2 = x2;
+        this.SEED_Y1 = y1;
+        this.SEED_Y2 = y2;
+        this.SEED_Q0 = q0;
+        this.SEED_Q1 = q1;
+        this.SEED_Q2 = q2;
+    }
+    pseudorandom(x, y) {
+        let n = (this.SEED_X1 * x) + (this.SEED_Y1 * y);
+        let quad_term = this.SEED_Q2 * n * n +
+            this.SEED_Q1 * n +
+            this.SEED_Q0;
+        return quad_term +
+            (this.SEED_X2 * x) +
+            (this.SEED_Y2 * y);
+    }
+    fade(n) {
+        //result = (1 - cos(n * 3.14159265f)) * 0.5f;
+        //result = -2 * (n*n*n) + 3 * (n*n);
+        let result = 6 * (n * n * n * n * n) - 15 * (n * n * n * n) + 10 * (n * n * n);
+        //result = n;
+        return result;
+    }
+    lattice(x, y) {
+        let value = this.pseudorandom(x, y);
+        let radians = value * 2 * Math.PI;
+        return { x: Math.cos(radians), y: Math.sin(radians) };
+    }
+    perlineNoise(x, y) {
+        let x0 = Math.floor(x / this.GRID_SIZE);
+        let y0 = Math.floor(y / this.GRID_SIZE);
+        let x_frac = x / this.GRID_SIZE - x0;
+        let y_frac = y / this.GRID_SIZE - y0;
+        let x1 = x0 + 1;
+        let y1 = y0 + 1;
+        let lattice00 = this.lattice(x0, y0);
+        let lattice01 = this.lattice(x0, y1);
+        let lattice10 = this.lattice(x1, y0);
+        let lattice11 = this.lattice(x1, y1);
+        let direction00 = { x: -x_frac, y: -y_frac };
+        let direction01 = { x: -x_frac, y: 1 - y_frac };
+        let direction10 = { x: 1 - x_frac, y: -y_frac };
+        let direction11 = { x: 1 - x_frac, y: 1 - y_frac };
+        let value00 = this.dotProduct(lattice00, direction00);
+        let value01 = this.dotProduct(lattice01, direction01);
+        let value10 = this.dotProduct(lattice10, direction10);
+        let value11 = this.dotProduct(lattice11, direction11);
+        let x_fade1 = this.fade(x_frac);
+        let y_fade1 = this.fade(y_frac);
+        let x_fade0 = 1 - x_fade1;
+        let y_fade0 = 1 - y_fade1;
+        let value0 = value00 * y_fade0 + value01 * y_fade1;
+        let value1 = value10 * y_fade0 + value11 * y_fade1;
+        let value = value0 * x_fade0 + value1 * x_fade1;
+        let result = value * this.amplitude;
+        return result;
+    }
+    dotProduct(a, b) {
+        return a.x * b.x + a.y * b.y;
+    }
+}
+exports.Noisefield = Noisefield;
+
+
+/***/ }),
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9675,19 +9821,19 @@ exports.DiskModel = DiskModel;
 
 
 /***/ }),
-/* 28 */
+/* 30 */
 /***/ (function(module, exports) {
 
 module.exports = "#\r\n#  Disks.mtl\r\n#\r\n\r\nnewmtl diskA\r\nillum 0\r\nKd 1.00 1.00 1.00\r\nKa 0.00 0.00 0.00\r\nmap_Kd DiskA.jpg\r\n\r\nnewmtl diskA_side\r\nillum 0\r\nKd 1.00 1.00 1.00\r\nKa 0.00 0.00 0.00\r\nmap_Kd DiskA_side.jpg\r\n\r\nnewmtl diskB\r\nillum 0\r\nKd 1.00 1.00 1.00\r\nKa 0.00 0.00 0.00\r\nmap_Kd DiskB.jpg\r\n\r\nnewmtl diskB_side\r\nillum 0\r\nKd 1.00 1.00 1.00\r\nKa 0.00 0.00 0.00\r\nmap_Kd DiskB_side.jpg\r\n\r\nnewmtl diskC\r\nillum 0\r\nKd 1.00 1.00 1.00\r\nKa 0.00 0.00 0.00\r\nmap_Kd DiskC.jpg\r\n\r\nnewmtl diskC_side\r\nillum 0\r\nKd 1.00 1.00 1.00\r\nKa 0.00 0.00 0.00\r\nmap_Kd DiskC_side.jpg\r\n\r\nnewmtl diskD\r\nillum 0\r\nKd 1.00 1.00 1.00\r\nKa 0.00 0.00 0.00\r\nmap_Kd DiskD.jpg\r\n\r\nnewmtl diskD_side\r\nillum 0\r\nKd 1.00 1.00 1.00\r\nKa 0.00 0.00 0.00\r\nmap_Kd DiskD_side.jpg\r\n\r\nnewmtl diskE\r\nillum 0\r\nKd 1.00 1.00 1.00\r\nKa 0.00 0.00 0.00\r\nmap_Kd DiskE.jpg\r\n\r\nnewmtl diskE_side\r\nillum 0\r\nKd 1.00 1.00 1.00\r\nKa 0.00 0.00 0.00\r\nmap_Kd DiskE_side.jpg\r\n\r\nnewmtl flat_black\r\nillum 0\r\nKd 0.00 0.00 0.00\r\nKa 0.00 0.00 0.00\r\n\r\nnewmtl rainbow\r\nillum 0\r\nKd 1.00 1.00 1.00\r\nKa 0.00 0.00 0.00\r\nmap_Kd Rainbow.jpg\r\n"
 
 /***/ }),
-/* 29 */
+/* 31 */
 /***/ (function(module, exports) {
 
 module.exports = "DISK version 1\r\n159.835\r\n61\r\n5.61676\t34.6006\t6.55774\t\r\n4.5521\t49.1698\t8.0504\t\r\n6.29182\t17.456\t10.6\t\r\n19.2771\t30.399\t7.7341\t\r\n-5.63964\t-6.61964\t16.2699\t\r\n-34.8144\t-13.928\t13.8063\t\r\n17.7224\t44.1054\t6.06006\t\r\n16.9081\t56.4082\t6.2697\t\r\n-51.3318\t-2.99788\t6\t\r\n-61.6816\t3.18528\t6.0561\t\r\n2.67116\t-44.403\t22.4166\t\r\n-61.7976\t-8.87178\t6.00154\t\r\n20.3596\t-15.7251\t11.2777\t\r\n53.2492\t45.6392\t29.4998\t\r\n28.4818\t20.19\t6.01188\t\r\n-56.16\t-23.3322\t9.51902\t\r\n29.7014\t5.71352\t8.51594\t\r\n-4.05204\t60.2884\t6.00862\t\r\n-73.0756\t12.5486\t8.6916\t\r\n-13.4131\t76.324\t12.5593\t\r\n-73.0176\t-2.86702\t6.72414\t\r\n-72.7376\t-17.5524\t7.96394\t\r\n-69.9778\t-32.1062\t6.84908\t\r\n-21.5382\t-69.3478\t12.3445\t\r\n-43.1694\t-31.9836\t6.08872\t\r\n10.4786\t-94.7314\t28.5138\t\r\n68.47\t106.494\t33.2292\t\r\n-55.834\t-44.7244\t11.8756\t\r\n-90.5932\t35.5246\t20.2006\t\r\n-42.9236\t-77.4838\t10.5364\t\r\n58.784\t-6.65676\t23.0884\t\r\n30.7258\t-49.0178\t6.01498\t\r\n-23.5632\t-87.8066\t6.22514\t\r\n-50.58\t-62.8268\t6\t\r\n35.7504\t-30.2686\t9.89758\t\r\n-48.2148\t94.9572\t26.9168\t\r\n29.0574\t108.357\t6.22754\t\r\n-82.3006\t-74.0996\t27.664\t\r\n31.4576\t120.811\t6.45576\t\r\n106.947\t61.002\t26.3522\t\r\n-71.8658\t55.0002\t6.81826\t\r\n-14.8019\t95.3308\t6.4983\t\r\n-87.6702\t-35.6198\t11.1887\t\r\n39.751\t-56.9514\t6.00168\t\r\n-1.16644\t108.714\t12.6072\t\r\n42.0084\t-44.884\t6.0011\t\r\n-115.571\t-43.2198\t17.7283\t\r\n-10.0822\t-128.608\t11.1144\t\r\n-72.6896\t69.6884\t7.89294\t\r\n39.1888\t-68.9426\t6.0027\t\r\n42.1076\t-80.6828\t6.09486\t\r\n-59.1878\t-102.758\t7.0319\t\r\n-99.9152\t88.4796\t25.1878\t\r\n-117.585\t54.717\t12.919\t\r\n50.7834\t-36.2758\t6.29124\t\r\n53.196\t-63.5894\t8.99256\t\r\n-59.0672\t-116.049\t6.25942\t\r\n-113.225\t21.0036\t6.6893\t\r\n-72.514\t-107.455\t7.09802\t\r\n81.1576\t23.6564\t6.0266\t\r\n69.0202\t-52.9854\t10.0561\t\r\n"
 
 /***/ }),
-/* 30 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9702,7 +9848,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 let OBJ = __webpack_require__(1);
-const skyboxmodel_1 = __webpack_require__(31);
+const skyboxmodel_1 = __webpack_require__(33);
 class Skybox {
     constructor(gl, mesh) {
         this.model = new skyboxmodel_1.SkyboxModel(mesh);
@@ -9727,7 +9873,7 @@ exports.Skybox = Skybox;
 
 
 /***/ }),
-/* 31 */
+/* 33 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9763,7 +9909,7 @@ exports.SkyboxModel = SkyboxModel;
 
 
 /***/ }),
-/* 32 */
+/* 34 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;/*
@@ -10528,25 +10674,25 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;/*
 })(this);
 
 /***/ }),
-/* 33 */
+/* 35 */
 /***/ (function(module, exports) {
 
 module.exports = "#version 300 es\r\nlayout (location = 0) in vec3 aPos;\r\nlayout (location = 2) in vec2 aTexCoord;\r\n\r\nout vec2 TexCoord;\r\n\r\nuniform mat4 model;\r\nuniform mat4 viewProjection;\r\n\r\nvoid main()\r\n{\r\n    gl_Position = viewProjection * model *  vec4(aPos,1.0f);\r\n    TexCoord = aTexCoord;\r\n}   "
 
 /***/ }),
-/* 34 */
+/* 36 */
 /***/ (function(module, exports) {
 
 module.exports = "#version 300 es\r\nprecision mediump  float;\r\nout vec4 FragColor;\r\n\r\nin vec2 TexCoord;\r\n\r\nuniform sampler2D texture1;\r\nuniform float ambient;\r\n\r\nvoid main()\r\n{\r\n    FragColor = vec4(ambient * texture(texture1, TexCoord).xyz,1.0);\r\n\r\n    //FragColor = vec4(1, 0.7, 0.5, 1); // set all 4 vector values to 1.0\r\n}"
 
 /***/ }),
-/* 35 */
+/* 37 */
 /***/ (function(module, exports) {
 
 module.exports = "#version 300 es\r\nlayout (location = 0) in vec3 aPos;\r\nlayout (location = 1) in vec3 aNormal;\r\nlayout (location = 2) in vec2 aTexCoord;\r\nlayout (location = 3) in vec3 aInstancedOffset;\r\nlayout (location = 4) in vec3 aScale;\r\n\r\n\r\nout vec3 FragPos;\r\nout vec3 Normal;\r\nout vec2 TexCoord;\r\n\r\nuniform mat4 model;\r\nuniform mat4 viewProjection;\r\n\r\nvoid main()\r\n{\r\n    vec4 vertexPos = vec4(aPos, 1);\r\n\r\n    if(aScale.x > 0.0 && aScale.z > 0.0){\r\n        vertexPos.x *= aScale.x;\r\n        vertexPos.y *= aScale.y;\r\n        vertexPos.z *= aScale.z;\r\n    }\r\n\r\n    vertexPos.xyz += aInstancedOffset.xyz;\r\n    TexCoord = aTexCoord;\r\n    gl_Position = viewProjection * model *  vertexPos;\r\n    Normal = mat3(transpose(inverse(model))) * aNormal;\r\n    FragPos = vec3(model * vertexPos);\r\n}   "
 
 /***/ }),
-/* 36 */
+/* 38 */
 /***/ (function(module, exports) {
 
 module.exports = "#version 300 es\r\nprecision mediump  float;\r\nout vec4 FragColor;\r\n\r\nin vec3 FragPos;\r\nin vec3 Normal;\r\nin vec2 TexCoord;\r\n\r\nuniform vec3 viewPos;\r\n\r\nstruct Material {\r\n    sampler2D diffuse;\r\n   // sampler2D specular;\r\n//\tsampler2D emission;\r\n    float shininess;\r\n}; \r\nuniform Material material;\r\n\r\nstruct DirLight {\r\n    vec3 direction;\r\n  \r\n    vec3 ambient;\r\n    vec3 diffuse;\r\n    vec3 specular;\r\n};  \r\nuniform DirLight dirLight;\r\n\r\nstruct PointLight{\r\n    vec3 position;\r\n    \r\n    float constant;\r\n    float linear;\r\n    float quadratic;\r\n    \r\n    vec3 ambient;\r\n    vec3 diffuse;\r\n    vec3 specular;\r\n};\r\n\r\nuniform PointLight playerLight;\r\n\r\nvec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);\r\nvec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);\r\n//vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir);\r\n\r\nvoid main()\r\n{\r\n    vec3 viewDir = normalize(viewPos - FragPos);\r\n    vec3 norm = normalize(Normal);\r\n\r\n    //point lights\r\n    vec3 result;\r\n    result = CalcDirLight(dirLight, norm, viewDir);\r\n    result += CalcPointLight(playerLight, norm, FragPos, viewDir);\r\n\r\n    FragColor = vec4(result, 1.0);\r\n    //FragColor = vec4(1, 0.7, 0.5, 1); // set all 4 vector values to 1.0\r\n}\r\n\r\nvec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir){\r\n\r\n\tvec3 lightDir = normalize(-light.direction);\r\n\t//diffuse shading\r\n\tfloat diff = max(dot(normal, lightDir), 0.0);\r\n\t//specular shading\r\n\tvec3 reflectDir = reflect(-lightDir, normal);\r\n\tfloat spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);\r\n\r\n\t//combine\r\n\tvec3 ambient = light.ambient * vec3(texture(material.diffuse, TexCoord));\r\n\tvec3 diffuse = light.diffuse * diff * vec3(texture(material.diffuse, TexCoord));\r\n\tvec3 specular = light.specular * spec * vec3(texture(material.diffuse, TexCoord));\r\n\treturn (ambient + diffuse + specular);\r\n\r\n\r\n}\r\n\r\nvec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)\r\n{\r\n    vec3 lightDir = normalize(light.position - fragPos);\r\n    // diffuse shading\r\n    float diff = max(dot(normal, lightDir), 0.0);\r\n    // specular shading\r\n    vec3 reflectDir = reflect(-lightDir, normal);\r\n    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);\r\n    // attenuation\r\n    float distance    = length(light.position - fragPos);\r\n    float attenuation = 1.0 / (light.constant + light.linear * distance + \r\n  \t\t\t     light.quadratic * (distance * distance));    \r\n    // combine results\r\n    vec3 ambient  = light.ambient  * vec3(texture(material.diffuse, TexCoord));\r\n    vec3 diffuse  = light.diffuse  * diff * vec3(texture(material.diffuse, TexCoord));\r\n    vec3 specular = light.specular * spec * vec3(texture(material.diffuse, TexCoord));\r\n    ambient  *= attenuation;\r\n    diffuse  *= attenuation; \r\n    specular *= attenuation;\r\n    vec3 result = ambient + diffuse + specular;\r\n    return result;\r\n} \r\n\r\n//vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)\r\n//{\r\n//    vec3 lightDir = normalize(light.position - fragPos);\r\n//    // diffuse shading\r\n//    float diff = max(dot(normal, lightDir), 0.0);\r\n//    // specular shading\r\n//    vec3 reflectDir = reflect(-lightDir, normal);\r\n//    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);\r\n//    \r\n//\r\n//    // combine results\r\n//    vec3 ambient  = light.ambient  * vec3(texture(material.diffuse, TexCoords));\r\n//    vec3 diffuse  = light.diffuse  * diff * vec3(texture(material.diffuse, TexCoords));\r\n//    vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords));\r\n//\r\n//\t//spotlight\r\n//\tfloat theta = dot(lightDir, normalize(-light.direction));\r\n//\tfloat epsilon = light.cutOff - light.outerCutOff;\r\n//\tfloat intesity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);\r\n//\tdiffuse *= intesity;\r\n//\tspecular *= intesity;\r\n//\r\n//\t// attenuation\r\n//    float distance    = length(light.position - fragPos);\r\n//\tfloat attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));\r\n//\tambient *= attenuation;\r\n//\tdiffuse *= attenuation;\r\n//\tspecular  *= attenuation;\r\n//    return (ambient + diffuse + specular);\r\n//} "
