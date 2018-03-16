@@ -26,6 +26,6 @@ void main()
     vertexPos.xyz += aInstancedOffset.xyz;
     TexCoord = aTexCoord;
     gl_Position = viewProjection * model *  vertexPos;
-    Normal = mat3(transpose(inverse(model))) * aNormal;
+    Normal = mat3(transpose(inverse(model))) * normalize(aNormal);
     FragPos = vec3(model * vertexPos);
 }   

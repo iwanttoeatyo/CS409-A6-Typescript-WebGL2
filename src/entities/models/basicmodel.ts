@@ -2,6 +2,7 @@ import {vec3} from "gl-matrix";
 
 let OBJ = require('../../lib/OBJ/index.js');
 import {Mesh} from '../../lib/OBJ/index.js'
+import {Shader} from '../../shader';
 
 
 export class BasicModel {
@@ -160,7 +161,7 @@ export class BasicModel {
         this.textures[texture_num] = texture;
     }
     
-    draw(gl:WebGL2RenderingContext){
+    draw(gl:WebGL2RenderingContext, shader:Shader){
         gl.bindVertexArray(this.VAO);
         gl.activeTexture(gl.TEXTURE0);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.mesh.indexBuffer);
@@ -168,6 +169,8 @@ export class BasicModel {
         this.textures.forEach((texture,index) =>{
             let is = this.mesh.vertexBuffer.itemSize;
             let material = this.mesh.materials[index];
+            shader.setVec3("material.ambient_color", this.mesh.materialsByIndex[index].ambient);
+            shader.setVec3("material.diffuse_color", this.mesh.materialsByIndex[index].diffuse);
             let byteSize = 2;
             gl.bindTexture(gl.TEXTURE_2D, texture);
             gl.drawElements(gl.TRIANGLES, is* material.numItems, gl.UNSIGNED_SHORT,material.offset * is * byteSize);

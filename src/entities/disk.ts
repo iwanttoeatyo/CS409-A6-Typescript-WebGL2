@@ -78,26 +78,26 @@ export class Disk {
 
     private generateHeightMapModel(gl: WebGL2RenderingContext) {
         let vert_buffer_size = (this.heightMapSize + 1) * (this.heightMapSize + 1);
-        let verts: VertexDataFormat[] = new Array<VertexDataFormat>(vert_buffer_size);
+        let verts: Float32Array = new Float32Array(vert_buffer_size * 8);
         let count = 0;
         for (let x = 0; x < this.heightMapSize + 1; x++) {
             for (let z = 0; z < this.heightMapSize + 1; z++) {
                 //Position
-                verts[count] = {
-                    m_x: x - (this.heightMapSize / 2),
-                    m_y: this.heightMap[x][z],
-                    m_z: z - (this.heightMapSize / 2),
-                    m_s: x / 16.0,
-                    m_t: z / 16.0,
-                    m_nx: 0, m_ny: 0, m_nz: 0
-                }
-                count++;
-            
+                verts[count++] = x - (this.heightMapSize / 2);
+                verts[count++] = this.heightMap[x][z];
+                verts[count++] = z - (this.heightMapSize / 2);
+                //Normals
+                verts[count++] = 0;
+                verts[count++] = 0;
+                verts[count++] = 0;
+                //Texture coords
+                verts[count++] = x / 16.0;
+                verts[count++] = z / 16.0;
             }
         }
 
         let index_buffer_size = this.heightMapSize * (this.heightMapSize) * 6;
-        let indices = new Array(index_buffer_size);
+        let indices = new Uint16Array(index_buffer_size);
         count = 0;
         //Create triangles using indices which reference vertices in the triangle strip
         for (let i = 0; i < vert_buffer_size - (this.heightMapSize + 1); i += (this.heightMapSize + 1)) {
@@ -120,35 +120,33 @@ export class Disk {
         //Calculate the normals. For each faces normal we add it to the normals of the vertices used.
         //Normals will be normalized in fragment shader
         for (let i = 0; i < index_buffer_size - 2; i += 3) {
-            let i1 = indices[i];
-            let i2 = indices[i + 1];
-            let i3 = indices[i + 2];
+            let i1 = indices[i] * 8;
+            let i2 = indices[i + 1] * 8;
+            let i3 = indices[i + 2] * 8;
 
             //Calculate normal for this face
-            let v1 = vec3.fromValues(verts[i1].m_x, verts[i1].m_y, verts[i1].m_z);
-            let v2 = vec3.fromValues(verts[i2].m_x, verts[i2].m_y, verts[i2].m_z);
-            let v3 =  vec3.fromValues(verts[i3].m_x, verts[i3].m_y, verts[i3].m_z);
-            let dir: vec3 = vec3.fromValues(0, 0, 0);
-            let diff = vec3.fromValues(0, 0, 0);
+            let v1 = vec3.fromValues(verts[i1], verts[i1 + 1], verts[i1 + 2]);
+            let v2 = vec3.fromValues(verts[i2], verts[i2 + 1], verts[i2 + 2]);
+            let v3 = vec3.fromValues(verts[i3], verts[i3 + 1], verts[i3 + 2]);
+            let dir = vec3.create();
+            let diff = vec3.create();
             vec3.subtract(dir, v2, v1);
             vec3.subtract(diff, v3, v1);
             vec3.cross(dir, dir, diff);
 
             //Add to the existing normals
-            verts[i1].m_nx += dir[0];
-            verts[i1].m_ny += dir[1];
-            verts[i1].m_nz += dir[2];
-            verts[i2].m_nx += dir[0];
-            verts[i2].m_ny += dir[1];
-            verts[i2].m_nz += dir[2];
-            verts[i3].m_nx += dir[0];
-            verts[i3].m_ny += dir[1];
-            verts[i3].m_nz += dir[2];
+            verts[i1 + 3] += dir[0];
+            verts[i1 + 4] += dir[1];
+            verts[i1 + 5] += dir[2];
+            verts[i2 + 3] += dir[0];
+            verts[i2 + 4] += dir[1];
+            verts[i2 + 5] += dir[2];
+            verts[i3 + 3] += dir[0];
+            verts[i3 + 4] += dir[1];
+            verts[i3 + 5] += dir[2];
         }
-        let d = verts.map(o => [o.m_x,o.m_y,o.m_z,o.m_nx,o.m_ny,o.m_nz,o.m_s,o.m_t]);
-        let data = [].concat.apply([],d);
 
-        this.heightMapModel = new MeshlessModel(data, indices);
+        this.heightMapModel = new MeshlessModel(verts, indices);
         this.heightMapModel.init(gl);
         this.heightMapModel.setTexture(this.diskModel.textures[2]);
     }
@@ -257,13 +255,13 @@ export class Disk {
             for (let z = 0; z <= this.heightMapSize; z++) {
                 let min = 0, max = 0;
                 for (let i = 0; i < points.length; i++) {
-                    let distance = Math.sqrt(Math.pow(points[i][0] - x, 2) + Math.pow(points[i][2] - z, 2)) * 0.7;
-                    let p = points[i][1] - distance;
-                    if (p > max) max = p;
-                    let n = points[i][1] + distance;
-                    if (n < min) min = n;
+                    let x2 = (points[i][0] - x) * (points[i][0] - x);
+                    let z2 = (points[i][2] - z) * (points[i][2] - z);
+                    let distance = Math.sqrt(x2 + z2);
+                    max = Math.max(max, points[i][1] - distance);
+                    min = Math.min(min, points[i][1] + distance);
                 }
-                this.heightMap[x][z] = max + (-min);
+                this.heightMap[x][z] = max + min;
             }
         }
     }
@@ -343,7 +341,7 @@ export class Disk {
         mat4.translate(model, model, pos);
         mat4.scale(model, model, vec3.fromValues(this.radius, 1, this.radius));
         shader.setMat4("model", model);
-        this.diskModel.draw(gl);
+        this.diskModel.draw(gl, shader);
     }
 
     drawHeightMapModel(gl: WebGL2RenderingContext, shader: Shader) {
@@ -352,7 +350,7 @@ export class Disk {
         let pos = vec3.fromValues(this.position[0], this.position[1], this.position[2]);
         let corner = this.radius * Math.SQRT2 / 2;
         pos[1] += 0.00001;
-        
+
         mat4.translate(model, model, pos);
         mat4.scale(model, model, vec3.fromValues(corner * 2 / this.heightMapSize, 1, corner * 2 / this.heightMapSize));
         shader.setMat4("model", model);

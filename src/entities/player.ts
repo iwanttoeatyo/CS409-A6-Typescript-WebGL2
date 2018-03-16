@@ -66,14 +66,14 @@ export class Player {
         return OBJ.downloadModels([
             {
                 name: 'cbabe',
-                obj: "/assets/models/actors/cbabe/cbabe_stand_n.obj",
+                obj: "/assets/models/actors/cbabe/cbabe_stand.obj",
                 mtl: "/assets/models/actors/cbabe/cbabe.mtl"
             }
         ]);
     }
     
     static load(): Object{
-        let a = new Mesh(require('../../assets/models/actors/cbabe/cbabe_stand_n.obj'));
+        let a = new Mesh(require('../../assets/models/actors/cbabe/cbabe_stand.obj'));
         let b = new MaterialLibrary(require('../../assets/models/actors/cbabe/cbabe.mtl'));
         a.addMaterialLibrary(b);
         let c = require('../../assets/models/actors/cbabe/cbabe_base64.txt');

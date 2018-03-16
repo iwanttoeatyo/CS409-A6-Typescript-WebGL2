@@ -5,15 +5,15 @@ import {vec3} from "gl-matrix";
 
 export class MeshlessModel {
     VAO: WebGLVertexArrayObject;
-    data: number[];
-    indices: number[];
+    data: Float32Array;
+    indices: Uint16Array;
     buffer: WebGLBuffer;
     index_buffer: WebGLBuffer;
     initialized:Boolean;
     texture: WebGLTexture;
     stride: number;
     
-    constructor(data:number[], indices:number[]) {
+    constructor(data:Float32Array, indices:Uint16Array) {
         this.data = data;
         this.indices = indices;
         this.stride = 8;
@@ -25,9 +25,9 @@ export class MeshlessModel {
         this.index_buffer = gl.createBuffer();
         gl.bindVertexArray(this.VAO);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(this.data), gl.STATIC_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, this.data, gl.STATIC_DRAW);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.index_buffer);
-        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, new Uint16Array(this.indices), gl.STATIC_DRAW);
+        gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indices, gl.STATIC_DRAW);
         gl.enableVertexAttribArray(0);
         gl.vertexAttribPointer(0, 3, gl.FLOAT, true, this.stride*4, 0);
         gl.enableVertexAttribArray(1);

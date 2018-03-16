@@ -28,11 +28,11 @@ let mouseKeys: boolean[] = [];
 let fpsCounter = document.getElementById('fpscounter');
 
 let playerCamera: Camera = new Camera(vec3.fromValues(0, 1.6, 0), vec3.fromValues(0, 1, 0), 0);
-let worldCamera: Camera = new Camera(vec3.fromValues(100,200,10), vec3.fromValues(0,1,0), 0, 0);
+let worldCamera: Camera = new Camera(vec3.fromValues(100, 200, 10), vec3.fromValues(0, 1, 0), 0, 0);
 //Set overview camera to look at origin.
-worldCamera.lookAt(vec3.fromValues(0,0,0));
+worldCamera.lookAt(vec3.fromValues(0, 0, 0));
 
-let activeCamera:Camera = playerCamera;
+let activeCamera: Camera = playerCamera;
 
 class Main {
     world: World;
@@ -54,11 +54,11 @@ class Main {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
         //Display that we are loading
-        
+
         this.loadAssets().then(() => {
-            
+
             //Done loading
-            
+
             this.initBuffers();
             this.initPointerLock();
             //Wait ms so images can load to prevent texture warnings
@@ -72,29 +72,30 @@ class Main {
             }, 100);
         });
     }
-    
+
     async loadAssets(): Promise<void> {
-        console.log("world started " + Date.now());
+        let start = Date.now();
+
+        let loading = document.getElementById("loading");
+        loading.innerText = "Loading Models and World. Please Wait.";
+
         let _worldMeshes = await World.loadWorldMeshes();
         let _worldMat = await World.loadWorldMat();
-        console.log("world done "  + Date.now());
         let _worldData = await World.loadWorldData();
-  
 
-        console.log("skybox started " + Date.now());
         let skybox_model = await Skybox.load();
-        console.log("skybox done "  + Date.now());
-    
-        console.log("Player started " + Date.now());
-        let _playerData =await Player.loadMesh();
-        console.log("Player done "  + Date.now());
-        
-        this.player = new Player(gl, _playerData["cbabe"],playerOrigin);
+        let _playerData = await Player.loadMesh();
+
+        this.player = new Player(gl, _playerData["cbabe"], playerOrigin);
         this.skybox = new Skybox(gl, skybox_model["Skybox"]);
         this.world = new World(gl, _worldData, _worldMeshes, _worldMat);
-        
-        shader = new Shader(gl, require("../src/shaders/basic.vert"), require("../src/shaders/basic.frag"));
-        instancedShader = new Shader(gl, require('../src/shaders/instanced.vert'), require("../src/shaders/instanced.frag"));
+
+        shader = await new Shader(gl, require("../src/shaders/basic.vert"), require("../src/shaders/basic.frag"));
+        instancedShader = await new Shader(gl, require('../src/shaders/instanced.vert'), require("../src/shaders/instanced.frag"));
+
+        loading.remove();
+        let end = Date.now();
+        console.log("total time: " + (end - start) / 1000 + "s");
     }
 
 
@@ -120,13 +121,11 @@ class Main {
         shader.setInt("texture1", 0);
         instancedShader.use();
         instancedShader.setInt("material.diffuse", 0);
-       // instancedShader.setInt("material.specular", 1);
-       // instancedShader.setInt("material.emission", 2);
-        
-        
-        
+        // instancedShader.setInt("material.specular", 1);
+        // instancedShader.setInt("material.emission", 2);
+
+
     }
-    
 
 
     /**
@@ -174,10 +173,10 @@ class Main {
             vec3.copy(this.player.position, playerOrigin);
             vec3.copy(this.player.forward, playerOriginRotation);
         }
-        
-        if(keys[79]){
+
+        if (keys[79]) {
             activeCamera = worldCamera;
-        }else{
+        } else {
             activeCamera = playerCamera;
         }
     }
@@ -193,7 +192,7 @@ class Main {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
 
-       //Move camera behind player
+        //Move camera behind player
         playerCamera.position[0] = this.player.position [0];
         playerCamera.position[2] = this.player.position[2];
         playerCamera.position[0] -= 2 * this.player.forward[0];
@@ -209,13 +208,13 @@ class Main {
 
         let model = mat4.create();
 
-        
+
         //Draw Skybox
         gl.disable(gl.DEPTH_TEST);
         shader.use();
         mat4.translate(model, model, activeCamera.position);
-        shader.setFloat("ambient", 0.65);
-        
+        shader.setFloat("ambient", 1.0);
+
         shader.setMat4("model", model);
         shader.setMat4("viewProjection", viewProjection);
         this.skybox.draw(gl);
@@ -224,19 +223,19 @@ class Main {
         instancedShader.use();
         // directional light
         instancedShader.setVec3("dirLight.direction", [-0.45, -1.0, -0.7]);
-        instancedShader.setVec3("dirLight.ambient", [0.2, 0.2, 0.2]);
-        instancedShader.setVec3("dirLight.diffuse", [0.7, 0.7, 0.7]);
+        instancedShader.setVec3("dirLight.ambient", [1.0, 1.0, 1.0]);
+        instancedShader.setVec3("dirLight.diffuse", [1.0, 1.0, 1.0]);
         instancedShader.setVec3("dirLight.specular", [0.0, 0.0, 0.0]);
         //Setup player point light
- 
-        instancedShader.setVec3("playerLight.position",[this.player.position[0], this.player.position[1], this.player.position[2]]);
+
+        instancedShader.setVec3("playerLight.position", [this.player.position[0], this.player.position[1], this.player.position[2]]);
         instancedShader.setVec3("playerLight.ambient", [0.05, 0.05, 0.05]);
         instancedShader.setVec3("playerLight.diffuse", [0.1, 0.1, 0.1]);
         instancedShader.setVec3("playerLight.specular", [0.0, 0.0, 0.0]);
         instancedShader.setFloat("playerLight.constant", 0.4);
         instancedShader.setFloat("playerLight.linear", 0.09);
         instancedShader.setFloat("playerLight.quadratic", 0.032);
-        instancedShader.setVec3("viewPos",playerCamera.position);
+        instancedShader.setVec3("viewPos", playerCamera.position);
 
         // material properties
         instancedShader.setFloat("material.shininess", 64.0);
@@ -325,10 +324,10 @@ class Main {
             document.mozPointerLockElement === canvas ||
             document.webkitPointerLockElement === canvas) {
 
-            document.addEventListener("mousemove", this.moveCallback,false);
+            document.addEventListener("mousemove", this.moveCallback, false);
         }
         else {
-            document.removeEventListener("mousemove", this.moveCallback,false);
+            document.removeEventListener("mousemove", this.moveCallback, false);
         }
     };
 
@@ -362,8 +361,6 @@ window.onmousedown = function (e) {
 window.onmouseup = function (e) {
     mouseKeys[e.which] = false;
 };
-
-
 
 
 new Main();
