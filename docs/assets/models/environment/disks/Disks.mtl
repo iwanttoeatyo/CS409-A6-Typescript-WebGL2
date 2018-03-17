@@ -3,64 +3,76 @@
 #
 
 newmtl diskA
-illum 0
-Kd 1.00 1.00 1.00
-Ka 0.00 0.00 0.00
+illum 1
+Kd 0.80 0.80 0.80
+Ka 0.20 0.20 0.20
 map_Kd DiskA.jpg
+map_Ka DiskA.jpg
 
 newmtl diskA_side
-illum 0
-Kd 1.00 1.00 1.00
-Ka 0.00 0.00 0.00
+illum 1
+Kd 0.80 0.80 0.80
+Ka 0.20 0.20 0.20
 map_Kd DiskA_side.jpg
+map_Ka DiskA_side.jpg
 
 newmtl diskB
-illum 0
-Kd 1.00 1.00 1.00
-Ka 0.00 0.00 0.00
+illum 1
+Kd 0.80 0.80 0.80
+Ka 0.20 0.20 0.20
 map_Kd DiskB.jpg
+map_Ka DiskB.jpg
 
 newmtl diskB_side
-illum 0
-Kd 1.00 1.00 1.00
-Ka 0.00 0.00 0.00
+illum 1
+Kd 0.80 0.80 0.80
+Ka 0.20 0.20 0.20
 map_Kd DiskB_side.jpg
+map_Ka DiskB_side.jpg
 
 newmtl diskC
-illum 0
-Kd 1.00 1.00 1.00
-Ka 0.00 0.00 0.00
+illum 1
+Kd 0.80 0.80 0.80
+Ka 0.20 0.20 0.20
 map_Kd DiskC.jpg
+map_Ka DiskC.jpg
+
 
 newmtl diskC_side
-illum 0
-Kd 1.00 1.00 1.00
-Ka 0.00 0.00 0.00
+illum 1
+Kd 0.80 0.80 0.80
+Ka 0.20 0.20 0.20
 map_Kd DiskC_side.jpg
+map_Ka DiskC_side.jpg
 
 newmtl diskD
-illum 0
-Kd 1.00 1.00 1.00
-Ka 0.00 0.00 0.00
+illum 1
+Kd 0.80 0.80 0.80
+Ka 0.20 0.20 0.20
+Ks 0.0 0.0 0.0
 map_Kd DiskD.jpg
+map_Ka DiskD.jpg
 
 newmtl diskD_side
-illum 0
-Kd 1.00 1.00 1.00
-Ka 0.00 0.00 0.00
+illum 1
+Kd 0.80 0.80 0.80
+Ka 0.20 0.20 0.20
 map_Kd DiskD_side.jpg
+map_Ka DiskD_side.jpg
 
 newmtl diskE
-illum 0
-Kd 1.00 1.00 1.00
-Ka 0.00 0.00 0.00
+illum 1
+Kd 0.80 0.80 0.80
+Ka 0.20 0.20 0.20
 map_Kd DiskE.jpg
+map_Ka DiskE.jpg
 
 newmtl diskE_side
-illum 0
-Kd 1.00 1.00 1.00
-Ka 0.00 0.00 0.00
+illum 1
+Kd 0.80 0.80 0.80
+Ka 0.20 0.20 0.20
 map_Kd DiskE_side.jpg
+map_Ka DiskE_side.jpg
 
 newmtl flat_black
 illum 0
@@ -68,7 +80,8 @@ Kd 0.00 0.00 0.00
 Ka 0.00 0.00 0.00
 
 newmtl rainbow
-illum 0
-Kd 1.00 1.00 1.00
-Ka 0.00 0.00 0.00
+illum 1
+Kd 0.80 0.80 0.80
+Ka 0.20 0.20 0.20
 map_Kd Rainbow.jpg
+map_Ka Rainbow.jpg
