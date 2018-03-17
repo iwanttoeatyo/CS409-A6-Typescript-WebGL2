@@ -88,8 +88,9 @@ class Main {
 
         this.player = new Player(gl, _playerData["cbabe"], playerOrigin);
         this.skybox = new Skybox(gl, skybox_model["Skybox"]);
+        let w = Date.now();
         this.world = new World(gl, _worldData, _worldMeshes, _worldMat);
-
+        console.log("world gen time: " + (Date.now() - w) / 1000 + "s");
         shader = await new Shader(gl, require("../src/shaders/basic.vert"), require("../src/shaders/basic.frag"));
         instancedShader = await new Shader(gl, require('../src/shaders/instanced.vert'), require("../src/shaders/instanced.frag"));
 

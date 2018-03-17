@@ -15,19 +15,6 @@ export enum Terrain {
     GREY_ROCK = 4
 }
 
-interface VertexDataFormat {
-    m_x: number;
-    m_y: number;
-    m_z: number;
-
-    m_s: number;
-    m_t: number;
-
-    m_nx: number;
-    m_ny: number;
-    m_nz: number;
-}
-
 export class Disk {
     diskModel: DiskModel;
     heightMapModel: MeshlessModel;
@@ -49,6 +36,7 @@ export class Disk {
         this.generateHeightMapModels(gl);
     }
 
+   
     private generateHeightMapModels(gl: WebGL2RenderingContext) {
         switch (this.type) {
             case Terrain.RED_ROCK:
@@ -102,7 +90,7 @@ export class Disk {
         //Create triangles using indices which reference vertices in the triangle strip
         for (let i = 0; i < vert_buffer_size - (this.heightMapSize + 1); i += (this.heightMapSize + 1)) {
             for (let j = 0; j < this.heightMapSize; j++) {
-                let v = i + j;
+                const v = i + j;
 
                 //0,1,2
                 indices[count++] = v + (this.heightMapSize + 1);
@@ -120,30 +108,35 @@ export class Disk {
         //Calculate the normals. For each faces normal we add it to the normals of the vertices used.
         //Normals will be normalized in fragment shader
         for (let i = 0; i < index_buffer_size - 2; i += 3) {
-            let i1 = indices[i] * 8;
-            let i2 = indices[i + 1] * 8;
-            let i3 = indices[i + 2] * 8;
+            const i1 = indices[i] * 8;
+            const i2 = indices[i + 1] * 8;
+            const i3 = indices[i + 2] * 8;
 
-            //Calculate normal for this face
-            let v1 = vec3.fromValues(verts[i1], verts[i1 + 1], verts[i1 + 2]);
-            let v2 = vec3.fromValues(verts[i2], verts[i2 + 1], verts[i2 + 2]);
-            let v3 = vec3.fromValues(verts[i3], verts[i3 + 1], verts[i3 + 2]);
-            let dir = vec3.create();
-            let diff = vec3.create();
-            vec3.subtract(dir, v2, v1);
-            vec3.subtract(diff, v3, v1);
-            vec3.cross(dir, dir, diff);
+            //Find normal using cross product
+            // // (v2 - v1) cross (v3 - v1)
+            let norm = new Array(3);
+
+            const ax = verts[i2] - verts[i1],
+                ay = verts[i2 + 1] - verts[i1 + 1],
+                az = verts[i2 + 2] - verts[i1 + 2];
+            const bx = verts[i3] - verts[i1],
+                by = verts[i3 + 1] - verts[i1 + 1],
+                bz = verts[i3 + 2] - verts[i1 + 2];
+
+            norm[0] = ay * bz - az * by;
+            norm[1] = az * bx - ax * bz;
+            norm[2] = ax * by - ay * bx;
 
             //Add to the existing normals
-            verts[i1 + 3] += dir[0];
-            verts[i1 + 4] += dir[1];
-            verts[i1 + 5] += dir[2];
-            verts[i2 + 3] += dir[0];
-            verts[i2 + 4] += dir[1];
-            verts[i2 + 5] += dir[2];
-            verts[i3 + 3] += dir[0];
-            verts[i3 + 4] += dir[1];
-            verts[i3 + 5] += dir[2];
+            verts[i1 + 3] += norm[0];
+            verts[i1 + 4] += norm[1];
+            verts[i1 + 5] += norm[2];
+            verts[i2 + 3] += norm[0];
+            verts[i2 + 4] += norm[1];
+            verts[i2 + 5] += norm[2];
+            verts[i3 + 3] += norm[0];
+            verts[i3 + 4] += norm[1];
+            verts[i3 + 5] += norm[2];
         }
 
         this.heightMapModel = new MeshlessModel(verts, indices);

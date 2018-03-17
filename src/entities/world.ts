@@ -39,15 +39,15 @@ export class World {
         this.diskEModel = new DiskModel(meshes.DiskE);
         this.worldData = worldData;
         this.disks = [];
- 
+
         this.diskAModel.init(gl);
         this.diskBModel.init(gl);
         this.diskCModel.init(gl);
         this.diskDModel.init(gl);
         this.diskEModel.init(gl);
-        
+
         const lines = worldData.split('\n');
-        
+
         if (lines[0].indexOf("version 1") == -1) console.warn("Can't read Disk World File");
 
         let count = parseInt(lines[2]);
@@ -83,12 +83,11 @@ export class World {
                     break;
             }
             if (!model) throw "No Disk Model found for radius: " + radius;
-            this.disks.push(new Disk(model,terrain, radius, x, 0, z));
-            
-            this.disks.forEach(disk =>{
-                disk.init(gl);
-            })
+            this.disks.push(new Disk(model, terrain, radius, x, 0, z));
         }
+        this.disks.forEach(disk => {
+            disk.init(gl);
+        })
     }
 
     static async loadWorldMeshes(): Promise<WorldMeshes> {
@@ -131,8 +130,8 @@ export class World {
         return require('../../assets/worlds/maps/Basic.txt');
     }
 
-    draw(gl: WebGL2RenderingContext, shader:Shader) {
-        this.disks.forEach(disk =>{
+    draw(gl: WebGL2RenderingContext, shader: Shader) {
+        this.disks.forEach(disk => {
             disk.draw(gl, shader);
         })
     }
