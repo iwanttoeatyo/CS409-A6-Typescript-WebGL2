@@ -60,11 +60,75 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 10);
+/******/ 	return __webpack_require__(__webpack_require__.s = 14);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__gl_matrix_common__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__gl_matrix_mat2__ = __webpack_require__(15);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__gl_matrix_mat2d__ = __webpack_require__(16);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__gl_matrix_mat3__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__gl_matrix_mat4__ = __webpack_require__(17);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__gl_matrix_quat__ = __webpack_require__(18);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__gl_matrix_vec2__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__gl_matrix_vec3__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__gl_matrix_vec4__ = __webpack_require__(8);
+/* harmony reexport (module object) */ __webpack_require__.d(__webpack_exports__, "glMatrix", function() { return __WEBPACK_IMPORTED_MODULE_0__gl_matrix_common__; });
+/* harmony reexport (module object) */ __webpack_require__.d(__webpack_exports__, "mat2", function() { return __WEBPACK_IMPORTED_MODULE_1__gl_matrix_mat2__; });
+/* harmony reexport (module object) */ __webpack_require__.d(__webpack_exports__, "mat2d", function() { return __WEBPACK_IMPORTED_MODULE_2__gl_matrix_mat2d__; });
+/* harmony reexport (module object) */ __webpack_require__.d(__webpack_exports__, "mat3", function() { return __WEBPACK_IMPORTED_MODULE_3__gl_matrix_mat3__; });
+/* harmony reexport (module object) */ __webpack_require__.d(__webpack_exports__, "mat4", function() { return __WEBPACK_IMPORTED_MODULE_4__gl_matrix_mat4__; });
+/* harmony reexport (module object) */ __webpack_require__.d(__webpack_exports__, "quat", function() { return __WEBPACK_IMPORTED_MODULE_5__gl_matrix_quat__; });
+/* harmony reexport (module object) */ __webpack_require__.d(__webpack_exports__, "vec2", function() { return __WEBPACK_IMPORTED_MODULE_6__gl_matrix_vec2__; });
+/* harmony reexport (module object) */ __webpack_require__.d(__webpack_exports__, "vec3", function() { return __WEBPACK_IMPORTED_MODULE_7__gl_matrix_vec3__; });
+/* harmony reexport (module object) */ __webpack_require__.d(__webpack_exports__, "vec4", function() { return __WEBPACK_IMPORTED_MODULE_8__gl_matrix_vec4__; });
+/**
+ * @fileoverview gl-matrix - High performance matrix and vector operations
+ * @author Brandon Jones
+ * @author Colin MacKenzie IV
+ * @version 2.4.0
+ */
+
+/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE. */
+// END HEADER
+
+
+
+
+
+
+
+
+
+
+
+
+
+/***/ }),
+/* 1 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -142,15 +206,196 @@ function equals(a, b) {
 
 
 /***/ }),
-/* 1 */
+/* 2 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const gl_matrix_1 = __webpack_require__(0);
+let OBJ = __webpack_require__(3);
+class BasicModel {
+    constructor(mesh) {
+        this.mesh = mesh;
+        this.initialized = false;
+        this.rotation_offset = gl_matrix_1.vec3.fromValues(0, 0, 0);
+    }
+    static initWithShader(gl, shader) {
+        this.shader = shader;
+        gl.bindAttribLocation(shader.ID, 0, "a_vertex");
+        gl.bindAttribLocation(shader.ID, 1, "a_tex_coord");
+        gl.bindAttribLocation(shader.ID, 2, "a_normal");
+        // gl.bindAttribLocation(shader.ID, 3, "a_vertex1");
+        // gl.bindAttribLocation(shader.ID, 4, "a_normal1");
+        gl.bindVertexArray(null);
+        BasicModel.emptyTexture = gl.createTexture();
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, BasicModel.emptyTexture);
+        const pixel = new Uint8Array([0, 0, 0, 255]); // black
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, 1, 1, 0, gl.RGB, gl.UNSIGNED_BYTE, pixel);
+    }
+    static setMVPMatrices(model, view, projection) {
+        let mvp_matrix = gl_matrix_1.mat4.create();
+        gl_matrix_1.mat4.mul(mvp_matrix, view, model);
+        gl_matrix_1.mat4.mul(mvp_matrix, projection, mvp_matrix);
+        this.shader.setMat4(this.shader.uniforms.model_matrix, model);
+        //  BasicModel.shader.setMat4(BasicModel.uniforms.view_matrix, view);
+        this.shader.setMat4(this.shader.uniforms.model_view_projection_matrix, mvp_matrix);
+    }
+    static use(gl) {
+    }
+    init(gl) {
+        this.VAO = gl.createVertexArray();
+        OBJ.initMeshBuffers(gl, this.mesh);
+        gl.bindVertexArray(this.VAO);
+        gl.enableVertexAttribArray(0);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.mesh.vertexBuffer);
+        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
+        gl.enableVertexAttribArray(1);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.mesh.textureBuffer);
+        gl.vertexAttribPointer(1, 2, gl.FLOAT, true, 0, 0);
+        gl.enableVertexAttribArray(2);
+        gl.bindBuffer(gl.ARRAY_BUFFER, this.mesh.normalBuffer);
+        gl.vertexAttribPointer(2, 3, gl.FLOAT, false, 0, 0);
+        //
+        // gl.disableVertexAttribArray(3);
+        // gl.disableVertexAttribArray(4);
+        this.textures = [];
+        this.initialized = true;
+    }
+    initAllTextures(gl) {
+        for (let i = 0; i < this.mesh.materialNames.length; i++) {
+            if (this.mesh.materialsByIndex[i].mapDiffuse) {
+                if (this.mesh.materialsByIndex[i].mapDiffuse.texture.complete) {
+                    this.mesh.materialsByIndex[i].mapDiffuse.texture_id = this.loadTexture(gl, i, this.mesh.materialsByIndex[i].mapDiffuse.texture);
+                }
+                else {
+                    this.mesh.materialsByIndex[i].mapDiffuse.texture.addEventListener('load', () => {
+                        this.mesh.materialsByIndex[i].mapDiffuse.texture_id = this.loadTexture(gl, i, this.mesh.materialsByIndex[i].mapDiffuse.texture);
+                    });
+                }
+            }
+            if (this.mesh.materialsByIndex[i].mapAmbient) {
+                if (this.mesh.materialsByIndex[i].mapAmbient.texture.complete) {
+                    this.mesh.materialsByIndex[i].mapAmbient.texture_id = this.loadTexture(gl, i, this.mesh.materialsByIndex[i].mapAmbient.texture);
+                }
+                else {
+                    this.mesh.materialsByIndex[i].mapAmbient.texture.addEventListener('load', () => {
+                        this.mesh.materialsByIndex[i].mapAmbient.texture_id = this.loadTexture(gl, i, this.mesh.materialsByIndex[i].mapAmbient.texture);
+                    });
+                }
+            }
+            if (this.mesh.materialsByIndex[i].mapEmissive) {
+                if (this.mesh.materialsByIndex[i].mapEmissive.texture.complete) {
+                    this.mesh.materialsByIndex[i].mapEmissive.texture_id = this.loadTexture(gl, i, this.mesh.materialsByIndex[i].mapEmissive.texture);
+                }
+                else {
+                    this.mesh.materialsByIndex[i].mapEmissive.texture.addEventListener('load', () => {
+                        this.mesh.materialsByIndex[i].mapEmissive.texture_id = this.loadTexture(gl, i, this.mesh.materialsByIndex[i].mapEmissive.texture);
+                    });
+                }
+            }
+        }
+    }
+    initTexture(gl, texture_num, flip = true) {
+        if (!this.mesh.materialsByIndex[texture_num])
+            return false;
+        if (this.mesh.materialsByIndex[texture_num].mapDiffuse.texture.complete) {
+            this.loadTexture(gl, texture_num, this.mesh.materialsByIndex[texture_num].mapDiffuse.texture);
+        }
+        else {
+            this.mesh.materialsByIndex[texture_num].mapDiffuse.texture.addEventListener('load', () => {
+                this.loadTexture(gl, texture_num, this.mesh.materialsByIndex[texture_num].mapDiffuse.texture);
+            });
+        }
+        return true;
+    }
+    loadTexture(gl, texture_num, texture, flip = true) {
+        let texture_id = gl.createTexture();
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, texture_id);
+        if (flip)
+            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, texture);
+        gl.generateMipmap(gl.TEXTURE_2D);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+        this.textures[texture_num] = texture_id;
+        return texture_id;
+    }
+    setTexture(texture, texture_num) {
+        this.textures[texture_num] = texture;
+    }
+    draw(gl) {
+        this.activateBuffers(gl);
+        this.textures.forEach((texture, index) => {
+            let is = this.mesh.vertexBuffer.itemSize;
+            let submesh = this.mesh.submesh[index];
+            this.activateMaterial(gl, index);
+            let byteSize = 2;
+            gl.drawElements(gl.TRIANGLES, is * submesh.numItems, gl.UNSIGNED_SHORT, submesh.offset * is * byteSize);
+        });
+        gl.bindVertexArray(null);
+    }
+    activateBuffers(gl) {
+        gl.bindVertexArray(this.VAO);
+        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.mesh.indexBuffer);
+    }
+    drawActivatedMaterial(gl, index) {
+        let is = this.mesh.vertexBuffer.itemSize;
+        let submesh = this.mesh.submesh[index];
+        let byteSize = 2;
+        gl.drawElements(gl.TRIANGLES, is * submesh.numItems, gl.UNSIGNED_SHORT, submesh.offset * is * byteSize);
+    }
+    activateMaterial(gl, index) {
+        if (this.mesh.materialsByIndex[index].isTextureActive[0] && this.mesh.materialsByIndex[index].mapTransparency.texture_id) {
+            gl.activeTexture(gl.TEXTURE0); // transparency
+            gl.bindTexture(gl.TEXTURE_2D, this.mesh.materialsByIndex[index].mapTransparency.texture_id);
+        }
+        if (this.mesh.materialsByIndex[index].isTextureActive[1] && this.mesh.materialsByIndex[index].mapEmissive.texture_id) {
+            gl.activeTexture(gl.TEXTURE1); // emission
+            gl.bindTexture(gl.TEXTURE_2D, this.mesh.materialsByIndex[index].mapEmissive.texture_id);
+        }
+        if (this.mesh.materialsByIndex[index].isTextureActive[2] && this.mesh.materialsByIndex[index].mapAmbient.texture_id) {
+            gl.activeTexture(gl.TEXTURE2); // ambient
+            gl.bindTexture(gl.TEXTURE_2D, this.mesh.materialsByIndex[index].mapAmbient.texture_id);
+        }
+        if (this.mesh.materialsByIndex[index].isTextureActive[3] && this.mesh.materialsByIndex[index].mapDiffuse.texture_id) {
+            gl.activeTexture(gl.TEXTURE3); // diffuse
+            gl.bindTexture(gl.TEXTURE_2D, this.mesh.materialsByIndex[index].mapDiffuse.texture_id);
+        }
+        if (this.mesh.materialsByIndex[index].isTextureActive[4] && this.mesh.materialsByIndex[index].mapSpecular.texture_id) {
+            gl.activeTexture(gl.TEXTURE4); // specular
+            gl.bindTexture(gl.TEXTURE_2D, this.mesh.materialsByIndex[index].mapSpecular.texture_id);
+        }
+        if (this.mesh.materialsByIndex[index].isTextureActive[5] && this.mesh.materialsByIndex[index].mapSpecularExponent.texture_id) {
+            gl.activeTexture(gl.TEXTURE5); // shininess
+            gl.bindTexture(gl.TEXTURE_2D, this.mesh.materialsByIndex[index].mapSpecularExponent.texture_id);
+        }
+        BasicModel.shader.setFloat(BasicModel.shader.uniforms.material_transparency, this.mesh.materialsByIndex[index].transparency);
+        BasicModel.shader.setVec3(BasicModel.shader.uniforms.material_ambient_colour, this.mesh.materialsByIndex[index].ambient);
+        BasicModel.shader.setVec3(BasicModel.shader.uniforms.material_diffuse_colour, this.mesh.materialsByIndex[index].diffuse);
+        BasicModel.shader.setVec3(BasicModel.shader.uniforms.material_specular_colour, this.mesh.materialsByIndex[index].specular);
+        BasicModel.shader.setVec3(BasicModel.shader.uniforms.material_emissive_colour, this.mesh.materialsByIndex[index].emissive);
+        BasicModel.shader.setFloat(BasicModel.shader.uniforms.material_shininess, this.mesh.materialsByIndex[index].specularExponent);
+        BasicModel.shader.setIntV(BasicModel.shader.uniforms.material_is_texture_active, this.mesh.materialsByIndex[index].isTextureActive);
+    }
+}
+exports.BasicModel = BasicModel;
+
+
+/***/ }),
+/* 3 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__mesh__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__material__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__mesh__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__material__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__layout__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__utils__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__utils__ = __webpack_require__(23);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "Mesh", function() { return __WEBPACK_IMPORTED_MODULE_0__mesh__["a"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "Material", function() { return __WEBPACK_IMPORTED_MODULE_1__material__["a"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "MaterialLibrary", function() { return __WEBPACK_IMPORTED_MODULE_1__material__["b"]; });
@@ -170,227 +415,6 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
  * @namespace
  */
 
-
-
-/***/ }),
-/* 2 */
-/***/ (function(module, __webpack_exports__, __webpack_require__) {
-
-"use strict";
-Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__gl_matrix_common__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__gl_matrix_mat2__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__gl_matrix_mat2d__ = __webpack_require__(12);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__gl_matrix_mat3__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__gl_matrix_mat4__ = __webpack_require__(13);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__gl_matrix_quat__ = __webpack_require__(14);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__gl_matrix_vec2__ = __webpack_require__(15);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__gl_matrix_vec3__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__gl_matrix_vec4__ = __webpack_require__(7);
-/* harmony reexport (module object) */ __webpack_require__.d(__webpack_exports__, "glMatrix", function() { return __WEBPACK_IMPORTED_MODULE_0__gl_matrix_common__; });
-/* harmony reexport (module object) */ __webpack_require__.d(__webpack_exports__, "mat2", function() { return __WEBPACK_IMPORTED_MODULE_1__gl_matrix_mat2__; });
-/* harmony reexport (module object) */ __webpack_require__.d(__webpack_exports__, "mat2d", function() { return __WEBPACK_IMPORTED_MODULE_2__gl_matrix_mat2d__; });
-/* harmony reexport (module object) */ __webpack_require__.d(__webpack_exports__, "mat3", function() { return __WEBPACK_IMPORTED_MODULE_3__gl_matrix_mat3__; });
-/* harmony reexport (module object) */ __webpack_require__.d(__webpack_exports__, "mat4", function() { return __WEBPACK_IMPORTED_MODULE_4__gl_matrix_mat4__; });
-/* harmony reexport (module object) */ __webpack_require__.d(__webpack_exports__, "quat", function() { return __WEBPACK_IMPORTED_MODULE_5__gl_matrix_quat__; });
-/* harmony reexport (module object) */ __webpack_require__.d(__webpack_exports__, "vec2", function() { return __WEBPACK_IMPORTED_MODULE_6__gl_matrix_vec2__; });
-/* harmony reexport (module object) */ __webpack_require__.d(__webpack_exports__, "vec3", function() { return __WEBPACK_IMPORTED_MODULE_7__gl_matrix_vec3__; });
-/* harmony reexport (module object) */ __webpack_require__.d(__webpack_exports__, "vec4", function() { return __WEBPACK_IMPORTED_MODULE_8__gl_matrix_vec4__; });
-/**
- * @fileoverview gl-matrix - High performance matrix and vector operations
- * @author Brandon Jones
- * @author Colin MacKenzie IV
- * @version 2.4.0
- */
-
-/* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in
-all copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-THE SOFTWARE. */
-// END HEADER
-
-
-
-
-
-
-
-
-
-
-
-
-
-/***/ }),
-/* 3 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-let OBJ = __webpack_require__(1);
-class BasicModel {
-    constructor(mesh) {
-        this.mesh = mesh;
-        this.initialized = false;
-    }
-    init(gl) {
-        this.VAO = gl.createVertexArray();
-        OBJ.initMeshBuffers(gl, this.mesh);
-        gl.bindVertexArray(this.VAO);
-        gl.enableVertexAttribArray(0);
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.mesh.vertexBuffer);
-        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, 0, 0);
-        gl.enableVertexAttribArray(1);
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.mesh.normalBuffer);
-        gl.vertexAttribPointer(1, 3, gl.FLOAT, true, 0, 0);
-        gl.enableVertexAttribArray(2);
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.mesh.textureBuffer);
-        gl.vertexAttribPointer(2, 2, gl.FLOAT, true, 0, 0);
-        gl.bindBuffer(gl.ARRAY_BUFFER, null);
-        gl.bindVertexArray(null);
-        let grey = gl.createTexture();
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, grey);
-        const pixel = new Uint8Array([220, 220, 220, 255]); // opaque blue
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, 1, 1, 0, gl.RGB, gl.UNSIGNED_BYTE, pixel);
-        this.textures = [];
-        this.textures.push(grey);
-        this.initialized = true;
-    }
-    generateRandomInstancingBuffers(gl, dimensionCount, offset) {
-        var offsets = [];
-        var colors = [];
-        var scales = [];
-        // Generate a three dmensional grid for our instanced positions
-        var dim = dimensionCount;
-        this.instanceCount = 0;
-        for (var x = 0; x < dim; x++) {
-            for (var z = 0; z < dim; z++) {
-                let v = z;
-                if (v % 2)
-                    v = -v;
-                let w = x;
-                if (w % 2)
-                    w = -w;
-                offsets.push(w * offset, Math.random() * 3000 - 6000, v * offset);
-                colors.push(0.75 + Math.random() * 0.25, 0.75 + Math.random() * 0.25, 0.75 + Math.random() * 0.25, 1.0);
-                let rand = Math.random();
-                scales.push(rand * 5 + 1, 0.001, rand * 5 + 1);
-                this.instanceCount++;
-            }
-        }
-        // Setup instancing buffers for position offsets and color
-        this.instancingOffsets = this.generateArrayBuffer(gl, new Float32Array(offsets), gl.STATIC_DRAW, 3);
-        this.instancingScales = this.generateArrayBuffer(gl, new Float32Array(scales), gl.STATIC_DRAW, 3);
-        this.doBinds(gl);
-    }
-    generateInstancingOffsetScale(gl, offsets, scales) {
-        let colors = [];
-        let count = offsets.length / 3;
-        this.instanceCount = count;
-        for (let i = 0; i < count; i++) {
-            colors.push(1, 1, 1, 1);
-        }
-        // Setup instancing buffers for position offsets and color
-        this.instancingOffsets = this.generateArrayBuffer(gl, new Float32Array(offsets), gl.STATIC_DRAW, 3);
-        this.instancingScales = this.generateArrayBuffer(gl, new Float32Array(scales), gl.STATIC_DRAW, 3);
-        this.doBinds(gl);
-    }
-    generateArrayBuffer(gl, data, type, itemsize) {
-        let buffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, data, type);
-        buffer.itemSize = itemsize;
-        buffer.numItems = data.length / itemsize;
-        return buffer;
-    }
-    doBinds(gl) {
-        gl.bindVertexArray(this.VAO);
-        gl.enableVertexAttribArray(3);
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.instancingOffsets);
-        gl.vertexAttribPointer(3, 3, gl.FLOAT, false, 0, 0);
-        gl.vertexAttribDivisor(3, 1);
-        gl.enableVertexAttribArray(4);
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.instancingScales);
-        gl.vertexAttribPointer(4, 3, gl.FLOAT, true, 0, 0);
-        gl.vertexAttribDivisor(4, 1);
-        gl.bindBuffer(gl.ARRAY_BUFFER, null);
-        gl.bindVertexArray(null);
-    }
-    initTexture(gl, texture_num, flip = true) {
-        if (!this.mesh.materialsByIndex[texture_num])
-            return false;
-        if (this.mesh.materialsByIndex[texture_num].mapDiffuse.texture.complete) {
-            this.loadTexture(gl, texture_num, flip);
-        }
-        else {
-            this.mesh.materialsByIndex[texture_num].mapDiffuse.texture.addEventListener('load', () => {
-                this.loadTexture(gl, texture_num, flip);
-            });
-        }
-        return true;
-    }
-    loadTexture(gl, texture_num, flip = true) {
-        let texture = gl.createTexture();
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, texture);
-        if (flip)
-            gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, this.mesh.materialsByIndex[texture_num].mapDiffuse.texture);
-        gl.generateMipmap(gl.TEXTURE_2D);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
-        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-        this.textures[texture_num] = texture;
-    }
-    setTexture(texture, texture_num) {
-        this.textures[texture_num] = texture;
-    }
-    draw(gl, shader) {
-        gl.bindVertexArray(this.VAO);
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.mesh.indexBuffer);
-        this.textures.forEach((texture, index) => {
-            let is = this.mesh.vertexBuffer.itemSize;
-            let material = this.mesh.materials[index];
-            shader.setVec3("material.ambient_color", this.mesh.materialsByIndex[index].ambient);
-            shader.setVec3("material.diffuse_color", this.mesh.materialsByIndex[index].diffuse);
-            let byteSize = 2;
-            gl.bindTexture(gl.TEXTURE_2D, texture);
-            gl.drawElements(gl.TRIANGLES, is * material.numItems, gl.UNSIGNED_SHORT, material.offset * is * byteSize);
-        });
-        gl.bindVertexArray(null);
-    }
-    drawInstanced(gl) {
-        gl.bindVertexArray(this.VAO);
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.mesh.indexBuffer);
-        this.mesh.materials.forEach((material, index) => {
-            let is = this.mesh.vertexBuffer.itemSize;
-            let byteSize = 2;
-            gl.bindTexture(gl.TEXTURE_2D, this.textures[index]);
-            gl.drawElementsInstanced(gl.TRIANGLES, is * material.numItems, gl.UNSIGNED_SHORT, material.offset * is * byteSize, this.instanceCount);
-        });
-    }
-}
-exports.BasicModel = BasicModel;
 
 
 /***/ }),
@@ -658,6 +682,33 @@ Layout.MAP_EMISSIVE = new Attribute('mapEmissive', 1, 'SHORT');
 
 /***/ }),
 /* 5 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const gl_matrix_1 = __webpack_require__(0);
+const guid_1 = __webpack_require__(24);
+var Model_Type;
+(function (Model_Type) {
+    Model_Type[Model_Type["BASIC"] = 0] = "BASIC";
+    Model_Type[Model_Type["MESHLESS"] = 1] = "MESHLESS";
+})(Model_Type = exports.Model_Type || (exports.Model_Type = {}));
+class Entity {
+    constructor(pos, scale, forward, mesh_name, model_type) {
+        this.id = guid_1.Guid.newGuid();
+        this.position = pos;
+        this.scalar = scale || gl_matrix_1.vec3.fromValues(1, 1, 1);
+        this.forward = forward || gl_matrix_1.vec3.create();
+        this.mesh_name = mesh_name;
+        this.model_type = model_type;
+    }
+}
+exports.Entity = Entity;
+
+
+/***/ }),
+/* 6 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -692,7 +743,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (immutable) */ __webpack_exports__["multiplyScalarAndAdd"] = multiplyScalarAndAdd;
 /* harmony export (immutable) */ __webpack_exports__["exactEquals"] = exactEquals;
 /* harmony export (immutable) */ __webpack_exports__["equals"] = equals;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common__ = __webpack_require__(1);
 /* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -1465,7 +1516,7 @@ const sub = subtract;
 
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1509,7 +1560,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (immutable) */ __webpack_exports__["str"] = str;
 /* harmony export (immutable) */ __webpack_exports__["exactEquals"] = exactEquals;
 /* harmony export (immutable) */ __webpack_exports__["equals"] = equals;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common__ = __webpack_require__(1);
 /* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -2305,7 +2356,7 @@ const forEach = (function() {
 
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2341,7 +2392,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (immutable) */ __webpack_exports__["str"] = str;
 /* harmony export (immutable) */ __webpack_exports__["exactEquals"] = exactEquals;
 /* harmony export (immutable) */ __webpack_exports__["equals"] = equals;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common__ = __webpack_require__(1);
 /* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -2967,7 +3018,91 @@ const forEach = (function() {
 
 
 /***/ }),
-/* 8 */
+/* 9 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+class Shader {
+    constructor(gl, vertexSourceCode, fragmentSourceCode) {
+        this.gl = gl;
+        let vertexShader = getShader(gl, vertexSourceCode, gl.VERTEX_SHADER);
+        let fragmentShader = getShader(gl, fragmentSourceCode, gl.FRAGMENT_SHADER);
+        this.ID = gl.createProgram();
+        gl.attachShader(this.ID, vertexShader);
+        gl.attachShader(this.ID, fragmentShader);
+        gl.linkProgram(this.ID);
+        if (!gl.getProgramParameter(this.ID, gl.LINK_STATUS)) {
+            alert("Could not initialize shaders");
+        }
+    }
+    use() {
+        this.gl.useProgram(this.ID);
+    }
+    setBoolByName(name, value) {
+        this.gl.uniform1i(this.getUniformLocation(name), value ? 1 : 0);
+    }
+    setBool(id, value) {
+        this.gl.uniform1i(id, value ? 1 : 0);
+    }
+    setInt(id, value) {
+        this.gl.uniform1i(id, value);
+    }
+    setIntByName(name, value) {
+        this.gl.uniform1i(this.getUniformLocation(name), value);
+    }
+    setIntV(id, value) {
+        this.gl.uniform1iv(id, value);
+    }
+    setIntVByName(name, value) {
+        this.gl.uniform1iv(this.getUniformLocation(name), value);
+    }
+    setFloat(id, value) {
+        this.gl.uniform1f(id, value);
+    }
+    setFloatByName(name, value) {
+        this.gl.uniform1f(this.getUniformLocation(name), value);
+    }
+    getUniformLocation(name) {
+        var a = this.gl.getUniformLocation(this.ID, name);
+        return a;
+    }
+    setMat4(id, matrix) {
+        this.gl.uniformMatrix4fv(id, false, matrix);
+    }
+    setMat4ByName(name, matrix) {
+        this.gl.uniformMatrix4fv(this.getUniformLocation(name), false, matrix);
+    }
+    setVec3(id, vec) {
+        this.gl.uniform3fv(id, vec);
+    }
+    setVec3ByName(name, vec) {
+        this.gl.uniform3fv(this.getUniformLocation(name), vec);
+    }
+    setVec4(id, vec) {
+        this.gl.uniform4fv(id, vec);
+    }
+    setVec4ByName(name, vec) {
+        this.gl.uniform4fv(this.getUniformLocation(name), vec);
+    }
+}
+exports.Shader = Shader;
+function getShader(gl, sourceCode, type) {
+    let shader;
+    shader = gl.createShader(type);
+    gl.shaderSource(shader, sourceCode);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        alert(gl.getShaderInfoLog(shader));
+        return null;
+    }
+    return shader;
+}
+
+
+/***/ }),
+/* 10 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2999,6 +3134,7 @@ class Mesh {
 		self.has_materials = !!options.materials;
 		// maps material name to Material() instance
 		self.materials = {};
+		self.submesh = {};
 		// the list of unique vertex, normal, texture, attributes
 		self.vertices = [];
 		self.vertexNormals = [];
@@ -3097,7 +3233,7 @@ class Mesh {
 		unpacked.materialIndices = [];
 		unpacked.index = 0;
 		
-		let materials = [];
+		let submesh = [];
 		let currFaceCounter = 0;
 		let totalFaceCounter = 0;
 
@@ -3137,7 +3273,7 @@ class Mesh {
 					// new material we've never seen
 					
 					if(currFaceCounter !== 0)
-						materials.push({offset: totalFaceCounter, numItems: currFaceCounter});
+						submesh.push({offset: totalFaceCounter, numItems: currFaceCounter});
 					totalFaceCounter += currFaceCounter;
 					currFaceCounter = 0;
                     
@@ -3241,14 +3377,14 @@ class Mesh {
 				}
 			}
 		}
-		materials.push({offset: totalFaceCounter, numItems: currFaceCounter});
+		submesh.push({offset: totalFaceCounter, numItems: currFaceCounter});
 		
 		self.vertices = unpacked.verts;
 		self.vertexNormals = unpacked.norms;
 		self.textures = unpacked.textures;
 		self.vertexMaterialIndices = unpacked.materialIndices;
 		self.indices = unpacked.indices;
-		self.materials = materials;
+		self.submesh = submesh;
 
 		self.materialNames = materialNamesByIndex;
 		self.materialIndices = materialIndicesByName;
@@ -3434,6 +3570,7 @@ class Mesh {
 			const materialIndex = this.materialIndices[material.name]
 
 			// Put the material into the materialsByIndex object at the right
+			this.materials[name] = material;
 			// spot as determined when the obj file was parsed
 			this.materialsByIndex[materialIndex] = material;
 		}
@@ -3444,70 +3581,137 @@ class Mesh {
 
 
 /***/ }),
-/* 9 */
+/* 11 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
+const DEFAULT_EMISSION = 0.0;
+const DEFAULT_AMBIENT = 0.2;
+const DEFAULT_DIFFUSE = 0.8;
+const DEFAULT_SPECULAR = 0.0;
+const DEFAULT_SPECULAR_EXPONENT = 20.0;
+const DEFAULT_OPTICAL_DENSITY = 1.0;
+const DEFAULT_TRANSMISSION_FILTER = 1.0;
+const DEFAULT_BUMP_MULTIPLIER = 1.0;
+
+
+const ILLUMINATION_CONSTANT = 0;
+const ILLUMINATION_PHONG_NO_SPECULAR = 1;
+const ILLUMINATION_PHONG = 2;
+
+const CHANNEL_UNSPECIFIED = 0;
+
 /**
  * The Material class.
  */
 class Material {
-  /**
-   * Constructor
-   * @param {String} name the unique name of the material
-   */
-  constructor(name) {
-    // the unique material ID.
-    this.name = name;
-    // The values for the following attibutes
-    // are an array of R, G, B normalized values.
-    // Ka - Ambient Reflectivity
-    this.ambient = [0, 0, 0];
-    // Kd - Defuse Reflectivity
-    this.diffuse = [0, 0, 0];
-    // Ks
-    this.specular = [0, 0, 0];
-    // Ke
-    this.emissive = [0, 0, 0];
-    // Tf
-    this.transmissionFilter = [0, 0, 0];
-    // d
-    this.dissolve = 0;
-    // valid range is between 0 and 1000
-    this.specularExponent = 0;
-    // either d or Tr; valid values are normalized
-    this.transparency = 0;
-    // illum - the enum of the illumination model to use
-    this.illumination = 0;
-    // Ni - Set to "normal" (air).
-    this.refractionIndex = 1;
-    // sharpness
-    this.sharpness = 0;
-    // map_Kd
-    this.mapDiffuse = null;
-    // map_Ka
-    this.mapAmbient = null;
-    // map_Ks
-    this.mapSpecular = null;
-    // map_Ns
-    this.mapSpecularExponent = null;
-    // map_d
-    this.mapDissolve = null;
-    // map_aat
-    this.antiAliasing = false;
-    // map_bump or bump
-    this.mapBump = null;
-    // disp
-    this.mapDisplacement = null;
-    // decal
-    this.mapDecal = null;
-    // map_Ke
-    this.mapEmissive = null;
-    // refl - when the reflection type is a cube, there will be multiple refl
-    //        statements for each side of the cube. If it's a spherical
-    //        reflection, there should only ever be one.
-    this.mapReflections = [];
-  }
+	/**
+	 * Constructor
+	 * @param {String} name the unique name of the material
+	 */
+	constructor(name) {
+		// the unique material ID.
+		this.name = name;
+
+		// illum - the enum of the illumination model to use
+		this.illumination = ILLUMINATION_PHONG;
+
+		// Ka - Ambient Reflectivity
+		this.ambient = [DEFAULT_AMBIENT, DEFAULT_AMBIENT, DEFAULT_AMBIENT];
+		// map_Ka
+		this.mapAmbient = null;
+
+		// Kd - Defuse Reflectivity
+		this.diffuse = [DEFAULT_DIFFUSE, DEFAULT_DIFFUSE, DEFAULT_DIFFUSE];
+		// map_Kd
+		this.mapDiffuse = null;
+		
+		// Kd - Defuse Reflectivity
+		this.transparency = 1.0;
+		// map_Kd
+		this.mapTransparency = null;
+		
+		// Ks
+		this.specular = [DEFAULT_SPECULAR, DEFAULT_SPECULAR, DEFAULT_SPECULAR];
+		// map_Ks
+		this.mapSpecular = null;
+		// for specular exponent maps
+		// map_Ns
+		this.mapSpecularExponent = null;
+		// Ns
+		// valid range is between 0 and 1000
+		this.specularExponent = DEFAULT_SPECULAR_EXPONENT;
+
+		// Ke
+		this.emissive = [DEFAULT_EMISSION, DEFAULT_EMISSION, DEFAULT_EMISSION];
+		// map_Ke
+		this.mapEmissive = null;
+		// Tf
+		this.transmissionFilter = [DEFAULT_TRANSMISSION_FILTER, DEFAULT_TRANSMISSION_FILTER, DEFAULT_TRANSMISSION_FILTER];
+		
+		
+		// either d or Tr; valid values are normalized
+		// Tr is 1 - d
+		// d
+		this.dissolve = 0;
+		// map_d
+		this.mapDissolve = null;
+
+		// Ni - Set to "normal" (air).
+		this.refractionIndex = DEFAULT_OPTICAL_DENSITY;
+		// sharpness
+		this.sharpness = 0;
+		// map_aat
+		this.antiAliasing = false;
+		// map_bump or bump
+		this.mapBump = null;
+		// disp
+		this.mapDisplacement = null;
+		// decal
+		this.mapDecal = null;
+		// refl - when the reflection type is a cube, there will be multiple refl
+		//        statements for each side of the cube. If it's a spherical
+		//        reflection, there should only ever be one.
+		this.mapReflections = [];
+		
+		this.isTextureActive = new Array(6);
+		
+		//To hold webgl texture ids
+		this.textureIds = [];
+	}
+
+
+	updateActiveTextures(){
+		if(this.mapTransparency != null)
+			this.isTextureActive[0] = true;
+		else
+			this.isTextureActive[0] = false;
+
+		if(this.mapEmissive != null)
+			this.isTextureActive[1] = true;
+		else
+			this.isTextureActive[1] = false;
+
+		if(this.mapAmbient != null)
+			this.isTextureActive[2] = true;
+		else
+			this.isTextureActive[2] = false;
+
+		if(this.mapDiffuse != null)
+			this.isTextureActive[3] = true;
+		else
+			this.isTextureActive[3] = false;
+
+		if(this.mapSpecular != null)
+			this.isTextureActive[4] = true;
+		else
+			this.isTextureActive[4] = false;
+
+		if(this.mapSpecularExponent != null)
+			this.isTextureActive[5] = true;
+		else
+			this.isTextureActive[5] = false;
+	}
 }
 /* harmony export (immutable) */ __webpack_exports__["a"] = Material;
 
@@ -3517,664 +3721,681 @@ class Material {
  * http://paulbourke.net/dataformats/mtl/
  */
 class MaterialLibrary {
-  /**
-   * Constructs the Material Parser
-   * @param {String} mtlData the MTL file contents
-   */
-  constructor(mtlData) {
-    this.data = mtlData;
-    this.currentMaterial = null;
-    this.materials = {};
+	/**
+	 * Constructs the Material Parser
+	 * @param {String} mtlData the MTL file contents
+	 */
+	constructor(mtlData) {
+		this.data = mtlData;
+		this.currentMaterial = null;
+		this.materials = {};
 
-    this.parse();
-  }
+		this.parse();
+		
+		for (var key in this.materials) {
+			this.materials[key].updateActiveTextures();
+		}
+		
+	}
 
-  /* eslint-disable camelcase */
-  /* the function names here disobey camelCase conventions
-     to make parsing/routing easier. see the parse function
-     documentation for more information. */
+	/* eslint-disable camelcase */
 
-  /**
-   * Creates a new Material object and adds to the registry.
-   * @param {string[]} tokens the tokens associated with the directive
-   */
-  parse_newmtl(tokens) {
-    let name = tokens[0];
-    // console.info('Parsing new Material:', name);
+	/* the function names here disobey camelCase conventions
+	   to make parsing/routing easier. see the parse function
+	   documentation for more information. */
 
-    this.currentMaterial = new Material(name);
-    this.materials[name] = this.currentMaterial;
-  }
+	/**
+	 * Creates a new Material object and adds to the registry.
+	 * @param {string[]} tokens the tokens associated with the directive
+	 */
+	parse_newmtl(tokens) {
+		let name = tokens[0];
+		// console.info('Parsing new Material:', name);
 
-  /**
-   * See the documenation for parse_Ka below for a better understanding.
-   *
-   * Given a list of possible color tokens, returns an array of R, G, and B
-   * color values.
-   *
-   * @param {string[]} tokens the tokens associated with the directive
-   * @return {*} a 3 element array containing the R, G, and B values
-   * of the color.
-   */
-  parseColor(tokens) {
-    if (tokens[0] == 'spectral') {
-      console.error(
-        'The MTL parser does not support spectral curve files. You will ' +
-        'need to convert the MTL colors to either RGB or CIEXYZ.'
-      );
-      return;
-    }
+		this.currentMaterial = new Material(name);
+		this.materials[name] = this.currentMaterial;
+	}
 
-    if (tokens[0] == 'xyz') {
-      console.warn('TODO: convert XYZ to RGB');
-      return;
-    }
+	/**
+	 * See the documenation for parse_Ka below for a better understanding.
+	 *
+	 * Given a list of possible color tokens, returns an array of R, G, and B
+	 * color values.
+	 *
+	 * @param {string[]} tokens the tokens associated with the directive
+	 * @return {*} a 3 element array containing the R, G, and B values
+	 * of the color.
+	 */
+	parseColor(tokens) {
+		if (tokens[0] == 'spectral') {
+			console.error(
+				'The MTL parser does not support spectral curve files. You will ' +
+				'need to convert the MTL colors to either RGB or CIEXYZ.'
+			);
+			return;
+		}
 
-    // from my understanding of the spec, RGB values at this point
-    // will either be 3 floats or exactly 1 float, so that's the check
-    // that i'm going to perform here
-    if (tokens.length == 3) {
-      return tokens.map(parseFloat);
-    }
+		if (tokens[0] == 'xyz') {
+			console.warn('TODO: convert XYZ to RGB');
+			return;
+		}
 
-    // Since tokens at this point has a length of 3, we're going to assume
-    // it's exactly 1, skipping the check for 2.
-    let value = parseFloat(tokens[0]);
-    // in this case, all values are equivalent
-    return [value, value, value];
-  }
+		// from my understanding of the spec, RGB values at this point
+		// will either be 3 floats or exactly 1 float, so that's the check
+		// that i'm going to perform here
+		if (tokens.length == 3) {
+			return tokens.map(parseFloat);
+		}
 
-  /**
-   * Parse the ambient reflectivity
-   *
-   * A Ka directive can take one of three forms:
-   *   - Ka r g b
-   *   - Ka spectral file.rfl
-   *   - Ka xyz x y z
-   * These three forms are mutually exclusive in that only one
-   * declaration can exist per material. It is considered a syntax
-   * error otherwise.
-   *
-   * The "Ka" form specifies the ambient reflectivity using RGB values.
-   * The "g" and "b" values are optional. If only the "r" value is
-   * specified, then the "g" and "b" values are assigned the value of
-   * "r". Values are normally in the range 0.0 to 1.0. Values outside
-   * of this range increase or decrease the reflectivity accordingly.
-   *
-   * The "Ka spectral" form specifies the ambient reflectivity using a
-   * spectral curve. "file.rfl" is the name of the ".rfl" file containing
-   * the curve data. "factor" is an optional argument which is a multiplier
-   * for the values in the .rfl file and defaults to 1.0 if not specified.
-   *
-   * The "Ka xyz" form specifies the ambient reflectivity using CIEXYZ values.
-   * "x y z" are the values of the CIEXYZ color space. The "y" and "z" arguments
-   * are optional and take on the value of the "x" component if only "x" is
-   * specified. The "x y z" values are normally in the range of 0.0 to 1.0 and
-   * increase or decrease ambient reflectivity accordingly outside of that
-   * range.
-   *
-   * @param {string[]} tokens the tokens associated with the directive
-   */
-  parse_Ka(tokens) {
-    this.currentMaterial.ambient = this.parseColor(tokens);
-  }
+		// Since tokens at this point has a length of 3, we're going to assume
+		// it's exactly 1, skipping the check for 2.
+		let value = parseFloat(tokens[0]);
+		// in this case, all values are equivalent
+		return [value, value, value];
+	}
 
-  /**
-   * Diffuse Reflectivity
-   *
-   * Similar to the Ka directive. Simply replace "Ka" with "Kd" and the rules
-   * are the same
-   *
-   * @param {string[]} tokens the tokens associated with the directive
-   */
-  parse_Kd(tokens) {
-    this.currentMaterial.diffuse = this.parseColor(tokens);
-  }
+	/**
+	 * Parse the ambient reflectivity
+	 *
+	 * A Ka directive can take one of three forms:
+	 *   - Ka r g b
+	 *   - Ka spectral file.rfl
+	 *   - Ka xyz x y z
+	 * These three forms are mutually exclusive in that only one
+	 * declaration can exist per material. It is considered a syntax
+	 * error otherwise.
+	 *
+	 * The "Ka" form specifies the ambient reflectivity using RGB values.
+	 * The "g" and "b" values are optional. If only the "r" value is
+	 * specified, then the "g" and "b" values are assigned the value of
+	 * "r". Values are normally in the range 0.0 to 1.0. Values outside
+	 * of this range increase or decrease the reflectivity accordingly.
+	 *
+	 * The "Ka spectral" form specifies the ambient reflectivity using a
+	 * spectral curve. "file.rfl" is the name of the ".rfl" file containing
+	 * the curve data. "factor" is an optional argument which is a multiplier
+	 * for the values in the .rfl file and defaults to 1.0 if not specified.
+	 *
+	 * The "Ka xyz" form specifies the ambient reflectivity using CIEXYZ values.
+	 * "x y z" are the values of the CIEXYZ color space. The "y" and "z" arguments
+	 * are optional and take on the value of the "x" component if only "x" is
+	 * specified. The "x y z" values are normally in the range of 0.0 to 1.0 and
+	 * increase or decrease ambient reflectivity accordingly outside of that
+	 * range.
+	 *
+	 * @param {string[]} tokens the tokens associated with the directive
+	 */
+	parse_Ka(tokens) {
+		this.currentMaterial.ambient = this.parseColor(tokens);
+	}
 
-  /**
-   * Spectral Reflectivity
-   *
-   * Similar to the Ka directive. Simply replace "Ks" with "Kd" and the rules
-   * are the same
-   *
-   * @param {string[]} tokens the tokens associated with the directive
-   */
-  parse_Ks(tokens) {
-    this.currentMaterial.specular = this.parseColor(tokens);
-  }
+	/**
+	 * Diffuse Reflectivity
+	 *
+	 * Similar to the Ka directive. Simply replace "Ka" with "Kd" and the rules
+	 * are the same
+	 *
+	 * @param {string[]} tokens the tokens associated with the directive
+	 */
+	parse_Kd(tokens) {
+		this.currentMaterial.diffuse = this.parseColor(tokens);
+	}
 
-  /**
-   * Emissive
-   *
-   * The amount and color of light emitted by the object.
-   *
-   * @param {string[]} tokens the tokens associated with the directive
-   */
-  parse_Ke(tokens) {
-    this.currentMaterial.emissive = this.parseColor(tokens);
-  }
+	/**
+	 * Spectral Reflectivity
+	 *
+	 * Similar to the Ka directive. Simply replace "Ks" with "Kd" and the rules
+	 * are the same
+	 *
+	 * @param {string[]} tokens the tokens associated with the directive
+	 */
+	parse_Ks(tokens) {
+		this.currentMaterial.specular = this.parseColor(tokens);
+	}
 
-  /**
-   * Transmission Filter
-   *
-   * Any light passing through the object is filtered by the transmission
-   * filter, which only allows specific colors to pass through. For example, Tf
-   * 0 1 0 allows all of the green to pass through and filters out all of the
-   * red and blue.
-   *
-   * Similar to the Ka directive. Simply replace "Ks" with "Tf" and the rules
-   * are the same
-   *
-   * @param {string[]} tokens the tokens associated with the directive
-   */
-  parse_Tf(tokens) {
-    this.currentMaterial.transmissionFilter = this.parseColor(tokens);
-  }
+	/**
+	 * Emissive
+	 *
+	 * The amount and color of light emitted by the object.
+	 *
+	 * @param {string[]} tokens the tokens associated with the directive
+	 */
+	parse_Ke(tokens) {
+		this.currentMaterial.emissive = this.parseColor(tokens);
+	}
 
-  /**
-   * Specifies the dissolve for the current material.
-   *
-   * Statement: d [-halo] `factor`
-   *
-   * Example: "d 0.5"
-   *
-   * The factor is the amount this material dissolves into the background. A
-   * factor of 1.0 is fully opaque. This is the default when a new material is
-   * created. A factor of 0.0 is fully dissolved (completely transparent).
-   *
-   * Unlike a real transparent material, the dissolve does not depend upon
-   * material thickness nor does it have any spectral character. Dissolve works
-   * on all illumination models.
-   *
-   * The dissolve statement allows for an optional "-halo" flag which indicates
-   * that a dissolve is dependent on the surface orientation relative to the
-   * viewer. For example, a sphere with the following dissolve, "d -halo 0.0",
-   * will be fully dissolved at its center and will appear gradually more opaque
-   * toward its edge.
-   *
-   * "factor" is the minimum amount of dissolve applied to the material. The
-   * amount of dissolve will vary between 1.0 (fully opaque) and the specified
-   * "factor". The formula is:
-   *
-   *    dissolve = 1.0 - (N*v)(1.0-factor)
-   *
-   * @param {string[]} tokens the tokens associated with the directive
-   */
-  parse_d(tokens) {
-    // this ignores the -halo option as I can't find any documentation on what
-    // it's supposed to be.
-    this.currentMaterial.dissolve = parseFloat(tokens.pop());
-  }
+	/**
+	 * Transmission Filter
+	 *
+	 * Any light passing through the object is filtered by the transmission
+	 * filter, which only allows specific colors to pass through. For example, Tf
+	 * 0 1 0 allows all of the green to pass through and filters out all of the
+	 * red and blue.
+	 *
+	 * Similar to the Ka directive. Simply replace "Ks" with "Tf" and the rules
+	 * are the same
+	 *
+	 * @param {string[]} tokens the tokens associated with the directive
+	 */
+	parse_Tf(tokens) {
+		this.currentMaterial.transmissionFilter = this.parseColor(tokens);
+	}
 
-  /**
-   * The "illum" statement specifies the illumination model to use in the
-   * material. Illumination models are mathematical equations that represent
-   * various material lighting and shading effects.
-   *
-   * The illumination number can be a number from 0 to 10. The following are
-   * the list of illumination enumerations and their summaries:
-   * 0. Color on and Ambient off
-   * 1. Color on and Ambient on
-   * 2. Highlight on
-   * 3. Reflection on and Ray trace on
-   * 4. Transparency: Glass on, Reflection: Ray trace on
-   * 5. Reflection: Fresnel on and Ray trace on
-   * 6. Transparency: Refraction on, Reflection: Fresnel off and Ray trace on
-   * 7. Transparency: Refraction on, Reflection: Fresnel on and Ray trace on
-   * 8. Reflection on and Ray trace off
-   * 9. Transparency: Glass on, Reflection: Ray trace off
-   * 10. Casts shadows onto invisible surfaces
-   *
-   * Example: "illum 2" to specify the "Highlight on" model
-   *
-   * @param {string[]} tokens the tokens associated with the directive
-   */
-  parse_illum(tokens) {
-    this.currentMaterial.illumination = parseInt(tokens[0]);
-  }
+	/**
+	 * Specifies the dissolve for the current material.
+	 *
+	 * Statement: d [-halo] `factor`
+	 *
+	 * Example: "d 0.5"
+	 *
+	 * The factor is the amount this material dissolves into the background. A
+	 * factor of 1.0 is fully opaque. This is the default when a new material is
+	 * created. A factor of 0.0 is fully dissolved (completely transparent).
+	 *
+	 * Unlike a real transparent material, the dissolve does not depend upon
+	 * material thickness nor does it have any spectral character. Dissolve works
+	 * on all illumination models.
+	 *
+	 * The dissolve statement allows for an optional "-halo" flag which indicates
+	 * that a dissolve is dependent on the surface orientation relative to the
+	 * viewer. For example, a sphere with the following dissolve, "d -halo 0.0",
+	 * will be fully dissolved at its center and will appear gradually more opaque
+	 * toward its edge.
+	 *
+	 * "factor" is the minimum amount of dissolve applied to the material. The
+	 * amount of dissolve will vary between 1.0 (fully opaque) and the specified
+	 * "factor". The formula is:
+	 *
+	 *    dissolve = 1.0 - (N*v)(1.0-factor)
+	 *
+	 * @param {string[]} tokens the tokens associated with the directive
+	 */
+	parse_d(tokens) {
+		// this ignores the -halo option as I can't find any documentation on what
+		// it's supposed to be.
+		this.currentMaterial.transparency = 1.0 - parseFloat(tokens.pop());
+	}
 
-  /**
-   * Optical Density (AKA Index of Refraction)
-   *
-   * Statement: Ni `index`
-   *
-   * Example: Ni 1.0
-   *
-   * Specifies the optical density for the surface. `index` is the value
-   * for the optical density. The values can range from 0.001 to 10.  A value of
-   * 1.0 means that light does not bend as it passes through an object.
-   * Increasing the optical_density increases the amount of bending. Glass has
-   * an index of refraction of about 1.5. Values of less than 1.0 produce
-   * bizarre results and are not recommended
-   *
-   * @param {string[]} tokens the tokens associated with the directive
-   */
-  parse_Ni(tokens) {
-    this.currentMaterial.refractionIndex = parseFloat(tokens[0]);
-  }
+	parse_Tr(tokens) {
+		// this ignores the -halo option as I can't find any documentation on what
+		// it's supposed to be.
+		this.currentMaterial.transparency = parseFloat(tokens.pop());
+	}
 
-  /**
-   * Specifies the specular exponent for the current material. This defines the
-   * focus of the specular highlight.
-   *
-   * Statement: Ns `exponent`
-   *
-   * Example: "Ns 250"
-   *
-   * `exponent` is the value for the specular exponent. A high exponent results
-   * in a tight, concentrated highlight. Ns Values normally range from 0 to
-   * 1000.
-   *
-   * @param {string[]} tokens the tokens associated with the directive
-   */
-  parse_Ns(tokens) {
-    this.currentMaterial.specularExponent = parseInt(tokens[0]);
-  }
+	/**
+	 * The "illum" statement specifies the illumination model to use in the
+	 * material. Illumination models are mathematical equations that represent
+	 * various material lighting and shading effects.
+	 *
+	 * The illumination number can be a number from 0 to 10. The following are
+	 * the list of illumination enumerations and their summaries:
+	 * 0. Color on and Ambient off
+	 * 1. Color on and Ambient on
+	 * 2. Highlight on
+	 * 3. Reflection on and Ray trace on
+	 * 4. Transparency: Glass on, Reflection: Ray trace on
+	 * 5. Reflection: Fresnel on and Ray trace on
+	 * 6. Transparency: Refraction on, Reflection: Fresnel off and Ray trace on
+	 * 7. Transparency: Refraction on, Reflection: Fresnel on and Ray trace on
+	 * 8. Reflection on and Ray trace off
+	 * 9. Transparency: Glass on, Reflection: Ray trace off
+	 * 10. Casts shadows onto invisible surfaces
+	 *
+	 * Example: "illum 2" to specify the "Highlight on" model
+	 *
+	 * @param {string[]} tokens the tokens associated with the directive
+	 */
+	parse_illum(tokens) {
+		this.currentMaterial.illumination = parseInt(tokens[0]);
+	}
 
-  /**
-   * Specifies the sharpness of the reflections from the local reflection map.
-   *
-   * Statement: sharpness `value`
-   *
-   * Example: "sharpness 100"
-   *
-   * If a material does not have a local reflection map defined in its material
-   * defintions, sharpness will apply to the global reflection map defined in
-   * PreView.
-   *
-   * `value` can be a number from 0 to 1000. The default is 60. A high value
-   * results in a clear reflection of objects in the reflection map.
-   *
-   * Tip: sharpness values greater than 100 introduce aliasing effects in
-   * flat surfaces that are viewed at a sharp angle.
-   *
-   * @param {string[]} tokens the tokens associated with the directive
-   */
-  parse_sharpness(tokens) {
-    this.currentMaterial.sharpness = parseInt(tokens[0]);
-  }
+	/**
+	 * Optical Density (AKA Index of Refraction)
+	 *
+	 * Statement: Ni `index`
+	 *
+	 * Example: Ni 1.0
+	 *
+	 * Specifies the optical density for the surface. `index` is the value
+	 * for the optical density. The values can range from 0.001 to 10.  A value of
+	 * 1.0 means that light does not bend as it passes through an object.
+	 * Increasing the optical_density increases the amount of bending. Glass has
+	 * an index of refraction of about 1.5. Values of less than 1.0 produce
+	 * bizarre results and are not recommended
+	 *
+	 * @param {string[]} tokens the tokens associated with the directive
+	 */
+	parse_Ni(tokens) {
+		this.currentMaterial.refractionIndex = parseFloat(tokens[0]);
+	}
 
-  /**
-   * Parses the -cc flag and updates the options object with the values.
-   *
-   * @param {string[]} values the values passed to the -cc flag
-   * @param {Object} options the Object of all image options
-   */
-  parse_cc(values, options) {
-    options.colorCorrection = values[0] == 'on';
-  }
+	/**
+	 * Specifies the specular exponent for the current material. This defines the
+	 * focus of the specular highlight.
+	 *
+	 * Statement: Ns `exponent`
+	 *
+	 * Example: "Ns 250"
+	 *
+	 * `exponent` is the value for the specular exponent. A high exponent results
+	 * in a tight, concentrated highlight. Ns Values normally range from 0 to
+	 * 1000.
+	 *
+	 * @param {string[]} tokens the tokens associated with the directive
+	 */
+	parse_Ns(tokens) {
+		this.currentMaterial.specularExponent = parseInt(tokens[0]);
+	}
 
-  /**
-   * Parses the -blendu flag and updates the options object with the values.
-   *
-   * @param {string[]} values the values passed to the -blendu flag
-   * @param {Object} options the Object of all image options
-   */
-  parse_blendu(values, options) {
-    options.horizontalBlending = values[0] == 'on';
-  }
+	/**
+	 * Specifies the sharpness of the reflections from the local reflection map.
+	 *
+	 * Statement: sharpness `value`
+	 *
+	 * Example: "sharpness 100"
+	 *
+	 * If a material does not have a local reflection map defined in its material
+	 * defintions, sharpness will apply to the global reflection map defined in
+	 * PreView.
+	 *
+	 * `value` can be a number from 0 to 1000. The default is 60. A high value
+	 * results in a clear reflection of objects in the reflection map.
+	 *
+	 * Tip: sharpness values greater than 100 introduce aliasing effects in
+	 * flat surfaces that are viewed at a sharp angle.
+	 *
+	 * @param {string[]} tokens the tokens associated with the directive
+	 */
+	parse_sharpness(tokens) {
+		this.currentMaterial.sharpness = parseInt(tokens[0]);
+	}
 
-  /**
-   * Parses the -blendv flag and updates the options object with the values.
-   *
-   * @param {string[]} values the values passed to the -blendv flag
-   * @param {Object} options the Object of all image options
-   */
-  parse_blendv(values, options) {
-    options.verticalBlending = values[0] == 'on';
-  }
+	/**
+	 * Parses the -cc flag and updates the options object with the values.
+	 *
+	 * @param {string[]} values the values passed to the -cc flag
+	 * @param {Object} options the Object of all image options
+	 */
+	parse_cc(values, options) {
+		options.colorCorrection = values[0] == 'on';
+	}
 
-  /**
-   * Parses the -boost flag and updates the options object with the values.
-   *
-   * @param {string[]} values the values passed to the -boost flag
-   * @param {Object} options the Object of all image options
-   */
-  parse_boost(values, options) {
-    options.boostMipMapSharpness = parseFloat(values[0]);
-  }
+	/**
+	 * Parses the -blendu flag and updates the options object with the values.
+	 *
+	 * @param {string[]} values the values passed to the -blendu flag
+	 * @param {Object} options the Object of all image options
+	 */
+	parse_blendu(values, options) {
+		options.horizontalBlending = values[0] == 'on';
+	}
 
-  /**
-   * Parses the -mm flag and updates the options object with the values.
-   *
-   * @param {string[]} values the values passed to the -mm flag
-   * @param {Object} options the Object of all image options
-   */
-  parse_mm(values, options) {
-    options.modifyTextureMap.brightness = parseFloat(values[0]);
-    options.modifyTextureMap.contrast = parseFloat(values[1]);
-  }
+	/**
+	 * Parses the -blendv flag and updates the options object with the values.
+	 *
+	 * @param {string[]} values the values passed to the -blendv flag
+	 * @param {Object} options the Object of all image options
+	 */
+	parse_blendv(values, options) {
+		options.verticalBlending = values[0] == 'on';
+	}
 
-  /**
-   * Parses and sets the -o, -s, and -t  u, v, and w values
-   *
-   * @param {string[]} values the values passed to the -o, -s, -t flag
-   * @param {Object} option the Object of either the -o, -s, -t option
-   * @param {Integer} defaultValue the Object of all image options
-   */
-  parse_ost(values, option, defaultValue) {
-    while (values.length < 3) {
-      values.push(defaultValue);
-    }
+	/**
+	 * Parses the -boost flag and updates the options object with the values.
+	 *
+	 * @param {string[]} values the values passed to the -boost flag
+	 * @param {Object} options the Object of all image options
+	 */
+	parse_boost(values, options) {
+		options.boostMipMapSharpness = parseFloat(values[0]);
+	}
 
-    option.u = parseFloat(values[0]);
-    option.v = parseFloat(values[1]);
-    option.w = parseFloat(values[2]);
-  }
+	/**
+	 * Parses the -mm flag and updates the options object with the values.
+	 *
+	 * @param {string[]} values the values passed to the -mm flag
+	 * @param {Object} options the Object of all image options
+	 */
+	parse_mm(values, options) {
+		options.modifyTextureMap.brightness = parseFloat(values[0]);
+		options.modifyTextureMap.contrast = parseFloat(values[1]);
+	}
 
-  /**
-   * Parses the -o flag and updates the options object with the values.
-   *
-   * @param {string[]} values the values passed to the -o flag
-   * @param {Object} options the Object of all image options
-   */
-  parse_o(values, options) {
-    this.parse_ost(values, options.offset, 0);
-  }
+	/**
+	 * Parses and sets the -o, -s, and -t  u, v, and w values
+	 *
+	 * @param {string[]} values the values passed to the -o, -s, -t flag
+	 * @param {Object} option the Object of either the -o, -s, -t option
+	 * @param {Integer} defaultValue the Object of all image options
+	 */
+	parse_ost(values, option, defaultValue) {
+		while (values.length < 3) {
+			values.push(defaultValue);
+		}
 
-  /**
-   * Parses the -s flag and updates the options object with the values.
-   *
-   * @param {string[]} values the values passed to the -s flag
-   * @param {Object} options the Object of all image options
-   */
-  parse_s(values, options) {
-    this.parse_ost(values, options.scale, 1);
-  }
+		option.u = parseFloat(values[0]);
+		option.v = parseFloat(values[1]);
+		option.w = parseFloat(values[2]);
+	}
 
-  /**
-   * Parses the -t flag and updates the options object with the values.
-   *
-   * @param {string[]} values the values passed to the -t flag
-   * @param {Object} options the Object of all image options
-   */
-  parse_t(values, options) {
-    this.parse_ost(values, options.turbulence, 0);
-  }
+	/**
+	 * Parses the -o flag and updates the options object with the values.
+	 *
+	 * @param {string[]} values the values passed to the -o flag
+	 * @param {Object} options the Object of all image options
+	 */
+	parse_o(values, options) {
+		this.parse_ost(values, options.offset, 0);
+	}
 
-  /**
-   * Parses the -texres flag and updates the options object with the values.
-   *
-   * @param {string[]} values the values passed to the -texres flag
-   * @param {Object} options the Object of all image options
-   */
-  parse_texres(values, options) {
-    options.textureResolution = parseFloat(values[0]);
-  }
+	/**
+	 * Parses the -s flag and updates the options object with the values.
+	 *
+	 * @param {string[]} values the values passed to the -s flag
+	 * @param {Object} options the Object of all image options
+	 */
+	parse_s(values, options) {
+		this.parse_ost(values, options.scale, 1);
+	}
 
-  /**
-   * Parses the -clamp flag and updates the options object with the values.
-   *
-   * @param {string[]} values the values passed to the -clamp flag
-   * @param {Object} options the Object of all image options
-   */
-  parse_clamp(values, options) {
-    options.clamp = values[0] == 'on';
-  }
+	/**
+	 * Parses the -t flag and updates the options object with the values.
+	 *
+	 * @param {string[]} values the values passed to the -t flag
+	 * @param {Object} options the Object of all image options
+	 */
+	parse_t(values, options) {
+		this.parse_ost(values, options.turbulence, 0);
+	}
 
-  /**
-   * Parses the -bm flag and updates the options object with the values.
-   *
-   * @param {string[]} values the values passed to the -bm flag
-   * @param {Object} options the Object of all image options
-   */
-  parse_bm(values, options) {
-    options.bumpMultiplier = parseFloat(values[0]);
-  }
+	/**
+	 * Parses the -texres flag and updates the options object with the values.
+	 *
+	 * @param {string[]} values the values passed to the -texres flag
+	 * @param {Object} options the Object of all image options
+	 */
+	parse_texres(values, options) {
+		options.textureResolution = parseFloat(values[0]);
+	}
 
-  /**
-   * Parses the -imfchan flag and updates the options object with the values.
-   *
-   * @param {string[]} values the values passed to the -imfchan flag
-   * @param {Object} options the Object of all image options
-   */
-  parse_imfchan(values, options) {
-    options.imfChan = values[0];
-  }
+	/**
+	 * Parses the -clamp flag and updates the options object with the values.
+	 *
+	 * @param {string[]} values the values passed to the -clamp flag
+	 * @param {Object} options the Object of all image options
+	 */
+	parse_clamp(values, options) {
+		options.clamp = values[0] == 'on';
+	}
 
-  /**
-   * This only exists for relection maps and denotes the type of reflection.
-   *
-   * @param {string[]} values the values passed to the -type flag
-   * @param {Object} options the Object of all image options
-   */
-  parse_type(values, options) {
-    options.reflectionType = values[0];
-  }
+	/**
+	 * Parses the -bm flag and updates the options object with the values.
+	 *
+	 * @param {string[]} values the values passed to the -bm flag
+	 * @param {Object} options the Object of all image options
+	 */
+	parse_bm(values, options) {
+		options.bumpMultiplier = parseFloat(values[0]);
+	}
 
-  /**
-   * Parses the texture's options and returns an options object with the info
-   *
-   * @param {string[]} tokens all of the option tokens to pass to the texture
-   * @return {Object} a complete object of objects to apply to the texture
-   */
-  parseOptions(tokens) {
-    let options = {
-      colorCorrection: false,
-      horizontalBlending: true,
-      verticalBlending: true,
-      boostMipMapSharpness: 0,
-      modifyTextureMap: {
-        brightness: 0,
-        contrast: 1,
-      },
-      offset: {u: 0, v: 0, w: 0},
-      scale: {u: 1, v: 1, w: 1},
-      turbulence: {u: 0, v: 0, w: 0},
-      clamp: false,
-      textureResolution: null,
-      bumpMultiplier: 1,
-      imfChan: null,
-    };
+	/**
+	 * Parses the -imfchan flag and updates the options object with the values.
+	 *
+	 * @param {string[]} values the values passed to the -imfchan flag
+	 * @param {Object} options the Object of all image options
+	 */
+	parse_imfchan(values, options) {
+		options.imfChan = values[0];
+	}
 
-    let option;
-    let values;
-    let optionsToValues = {};
+	/**
+	 * This only exists for relection maps and denotes the type of reflection.
+	 *
+	 * @param {string[]} values the values passed to the -type flag
+	 * @param {Object} options the Object of all image options
+	 */
+	parse_type(values, options) {
+		options.reflectionType = values[0];
+	}
 
-    tokens.reverse();
+	/**
+	 * Parses the texture's options and returns an options object with the info
+	 *
+	 * @param {string[]} tokens all of the option tokens to pass to the texture
+	 * @return {Object} a complete object of objects to apply to the texture
+	 */
+	parseOptions(tokens) {
+		let options = {
+			colorCorrection: false,
+			horizontalBlending: true,
+			verticalBlending: true,
+			boostMipMapSharpness: 0,
+			modifyTextureMap: {
+				brightness: 0,
+				contrast: 1,
+			},
+			offset: {u: 0, v: 0, w: 0},
+			scale: {u: 1, v: 1, w: 1},
+			turbulence: {u: 0, v: 0, w: 0},
+			clamp: false,
+			textureResolution: null,
+			bumpMultiplier: 1,
+			imfChan: null,
+		};
 
-    while (tokens.length) {
-      const token = tokens.pop();
+		let option;
+		let values;
+		let optionsToValues = {};
 
-      if (token.startsWith('-')) {
-        option = token.substr(1);
-        optionsToValues[option] = [];
-      } else {
-        optionsToValues[option].push(token);
-      }
-    }
+		tokens.reverse();
 
-    for (option in optionsToValues) {
-      if (!optionsToValues.hasOwnProperty(option)){
-        continue;
-      }
-      values = optionsToValues[option];
-      let optionMethod = this[`parse_${option}`];
-      if (optionMethod) {
-        optionMethod.bind(this)(values, options);
-      }
-    }
+		while (tokens.length) {
+			const token = tokens.pop();
 
-    return options;
-  }
+			if (token.startsWith('-')) {
+				option = token.substr(1);
+				optionsToValues[option] = [];
+			} else {
+				optionsToValues[option].push(token);
+			}
+		}
 
-  /**
-   * Parses the given texture map line.
-   *
-   * @param {string[]} tokens all of the tokens representing the texture
-   * @return {Object} a complete object of objects to apply to the texture
-   */
-  parseMap(tokens) {
-    // according to wikipedia:
-    // (https://en.wikipedia.org/wiki/Wavefront_.obj_file#Vendor_specific_alterations)
-    // there is at least one vendor that places the filename before the options
-    // rather than after (which is to spec). All options start with a '-'
-    // so if the first token doesn't start with a '-', we're going to assume
-    // it's the name of the map file.
-    let filename;
-    let options;
-    if (!tokens[0].startsWith('-')) {
-      [filename, ...options] = tokens;
-    } else {
-      filename = tokens.pop();
-      options = tokens;
-    }
+		for (option in optionsToValues) {
+			if (!optionsToValues.hasOwnProperty(option)) {
+				continue;
+			}
+			values = optionsToValues[option];
+			let optionMethod = this[`parse_${option}`];
+			if (optionMethod) {
+				optionMethod.bind(this)(values, options);
+			}
+		}
 
-    options = this.parseOptions(options);
-    options['filename'] = filename;
-    return options;
-  }
+		return options;
+	}
 
-  /**
-   * Parses the ambient map.
-   *
-   * @param {string[]} tokens list of tokens for the map_Ka direcive
-   */
-  parse_map_Ka(tokens) {
-    this.currentMaterial.mapAmbient = this.parseMap(tokens);
-  }
+	/**
+	 * Parses the given texture map line.
+	 *
+	 * @param {string[]} tokens all of the tokens representing the texture
+	 * @return {Object} a complete object of objects to apply to the texture
+	 */
+	parseMap(tokens) {
+		// according to wikipedia:
+		// (https://en.wikipedia.org/wiki/Wavefront_.obj_file#Vendor_specific_alterations)
+		// there is at least one vendor that places the filename before the options
+		// rather than after (which is to spec). All options start with a '-'
+		// so if the first token doesn't start with a '-', we're going to assume
+		// it's the name of the map file.
+		let filename;
+		let options;
+		if (!tokens[0].startsWith('-')) {
+			[filename, ...options] = tokens;
+		} else {
+			filename = tokens.pop();
+			options = tokens;
+		}
 
-  /**
-   * Parses the diffuse map.
-   *
-   * @param {string[]} tokens list of tokens for the map_Kd direcive
-   */
-  parse_map_Kd(tokens) {
-    this.currentMaterial.mapDiffuse = this.parseMap(tokens);
-  }
+		options = this.parseOptions(options);
+		options['filename'] = filename;
+		return options;
+	}
 
-  /**
-   * Parses the specular map.
-   *
-   * @param {string[]} tokens list of tokens for the map_Ks direcive
-   */
-  parse_map_Ks(tokens) {
-    this.currentMaterial.mapSpecular = this.parseMap(tokens);
-  }
+	/**
+	 * Parses the ambient map.
+	 *
+	 * @param {string[]} tokens list of tokens for the map_Ka direcive
+	 */
+	parse_map_Ka(tokens) {
+		this.currentMaterial.mapAmbient = this.parseMap(tokens);
+	}
 
-  /**
-   * Parses the emissive map.
-   *
-   * @param {string[]} tokens list of tokens for the map_Ke direcive
-   */
-  parse_map_Ke(tokens) {
-    this.currentMaterial.mapEmissive = this.parseMap(tokens);
-  }
+	/**
+	 * Parses the diffuse map.
+	 *
+	 * @param {string[]} tokens list of tokens for the map_Kd direcive
+	 */
+	parse_map_Kd(tokens) {
+		this.currentMaterial.mapDiffuse = this.parseMap(tokens);
+	}
 
-  /**
-   * Parses the specular exponent map.
-   *
-   * @param {string[]} tokens list of tokens for the map_Ns direcive
-   */
-  parse_map_Ns(tokens) {
-    this.currentMaterial.mapSpecularExponent = this.parseMap(tokens);
-  }
+	/**
+	 * Parses the specular map.
+	 *
+	 * @param {string[]} tokens list of tokens for the map_Ks direcive
+	 */
+	parse_map_Ks(tokens) {
+		this.currentMaterial.mapSpecular = this.parseMap(tokens);
+	}
 
-  /**
-   * Parses the dissolve map.
-   *
-   * @param {string[]} tokens list of tokens for the map_d direcive
-   */
-  parse_map_d(tokens) {
-    this.currentMaterial.mapDissolve = this.parseMap(tokens);
-  }
+	/**
+	 * Parses the emissive map.
+	 *
+	 * @param {string[]} tokens list of tokens for the map_Ke direcive
+	 */
+	parse_map_Ke(tokens) {
+		this.currentMaterial.mapEmissive = this.parseMap(tokens);
+	}
 
-  /**
-   * Parses the anti-aliasing option.
-   *
-   * @param {string[]} tokens list of tokens for the map_aat direcive
-   */
-  parse_map_aat(tokens) {
-    this.currentMaterial.antiAliasing = tokens[0] == 'on';
-  }
+	/**
+	 * Parses the specular exponent map.
+	 *
+	 * @param {string[]} tokens list of tokens for the map_Ns direcive
+	 */
+	parse_map_Ns(tokens) {
+		this.currentMaterial.mapSpecularExponent = this.parseMap(tokens);
+	}
 
-  /**
-   * Parses the bump map.
-   *
-   * @param {string[]} tokens list of tokens for the map_bump direcive
-   */
-  parse_map_bump(tokens) {
-    this.currentMaterial.mapBump = this.parseMap(tokens);
-  }
+	/**
+	 * Parses the dissolve map.
+	 *
+	 * @param {string[]} tokens list of tokens for the map_d direcive
+	 */
+	parse_map_d(tokens) {
+		this.currentMaterial.mapTransparency = this.parseMap(tokens);
+	}
 
-  /**
-   * Parses the bump map.
-   *
-   * @param {string[]} tokens list of tokens for the bump direcive
-   */
-  parse_bump(tokens) {
-    this.parse_map_bump(tokens);
-  }
+	parse_map_Tr(tokens) {
+		this.currentMaterial.mapTransparency = this.parseMap(tokens);
+	}
+	/**
+	 * Parses the anti-aliasing option.
+	 *
+	 * @param {string[]} tokens list of tokens for the map_aat direcive
+	 */
+	parse_map_aat(tokens) {
+		this.currentMaterial.antiAliasing = tokens[0] == 'on';
+	}
 
-  /**
-   * Parses the disp map.
-   *
-   * @param {string[]} tokens list of tokens for the disp direcive
-   */
-  parse_disp(tokens) {
-    this.currentMaterial.mapDisplacement = this.parseMap(tokens);
-  }
+	/**
+	 * Parses the bump map.
+	 *
+	 * @param {string[]} tokens list of tokens for the map_bump direcive
+	 */
+	parse_map_bump(tokens) {
+		this.currentMaterial.mapBump = this.parseMap(tokens);
+	}
 
-  /**
-   * Parses the decal map.
-   *
-   * @param {string[]} tokens list of tokens for the map_decal direcive
-   */
-  parse_decal(tokens) {
-    this.currentMaterial.mapDecal = this.parseMap(tokens);
-  }
+	/**
+	 * Parses the bump map.
+	 *
+	 * @param {string[]} tokens list of tokens for the bump direcive
+	 */
+	parse_bump(tokens) {
+		this.parse_map_bump(tokens);
+	}
 
-  /**
-   * Parses the refl map.
-   *
-   * @param {string[]} tokens list of tokens for the refl direcive
-   */
-  parse_refl(tokens) {
-    this.currentMaterial.mapReflections.push(this.parseMap(tokens));
-  }
+	/**
+	 * Parses the disp map.
+	 *
+	 * @param {string[]} tokens list of tokens for the disp direcive
+	 */
+	parse_disp(tokens) {
+		this.currentMaterial.mapDisplacement = this.parseMap(tokens);
+	}
 
-  /**
-   * Parses the MTL file.
-   * 
-   * Iterates line by line parsing each MTL directive.
-   * 
-   * This function expects the first token in the line
-   * to be a valid MTL directive. That token is then used
-   * to try and run a method on this class. parse_[directive]
-   * E.g., the `newmtl` directive would try to call the method
-   * parse_newmtl. Each parsing function takes in the remaining
-   * list of tokens and updates the currentMaterial class with
-   * the attributes provided.
-   */
-  parse() {
-    let lines = this.data.split(/\r?\n/);
-    for (let line of lines) {
-      line = line.trim();
-      if (!line || line.startsWith('#')) {
-        continue;
-      }
+	/**
+	 * Parses the decal map.
+	 *
+	 * @param {string[]} tokens list of tokens for the map_decal direcive
+	 */
+	parse_decal(tokens) {
+		this.currentMaterial.mapDecal = this.parseMap(tokens);
+	}
 
-      let tokens = line.split(/\s/);
-      let directive;
-      [directive, ...tokens] = tokens;
+	/**
+	 * Parses the refl map.
+	 *
+	 * @param {string[]} tokens list of tokens for the refl direcive
+	 */
+	parse_refl(tokens) {
+		this.currentMaterial.mapReflections.push(this.parseMap(tokens));
+	}
 
-      let parseMethod = this[`parse_${directive}`];
+	/**
+	 * Parses the MTL file.
+	 *
+	 * Iterates line by line parsing each MTL directive.
+	 *
+	 * This function expects the first token in the line
+	 * to be a valid MTL directive. That token is then used
+	 * to try and run a method on this class. parse_[directive]
+	 * E.g., the `newmtl` directive would try to call the method
+	 * parse_newmtl. Each parsing function takes in the remaining
+	 * list of tokens and updates the currentMaterial class with
+	 * the attributes provided.
+	 */
+	parse() {
+		let lines = this.data.split(/\r?\n/);
+		for (let line of lines) {
+			line = line.trim();
+			if (!line || line.startsWith('#')) {
+				continue;
+			}
 
-      if (!parseMethod) {
-        console.warn(`Don't know how to parse the directive: "${directive}"`);
-        continue;
-      }
+			let tokens = line.split(/\s/);
+			let directive;
+			[directive, ...tokens] = tokens;
 
-      // console.log(`Parsing "${directive}" with tokens: ${tokens}`);
-      parseMethod.bind(this)(tokens);
-    }
+			let parseMethod = this[`parse_${directive}`];
 
-    // some cleanup. These don't need to be exposed as public data.
-    delete this.data;
-    this.currentMaterial = null;
-  }
+			if (!parseMethod) {
+				console.warn(`Don't know how to parse the directive: "${directive}"`);
+				continue;
+			}
 
-  /* eslint-enable camelcase*/
+			// console.log(`Parsing "${directive}" with tokens: ${tokens}`);
+			parseMethod.bind(this)(tokens);
+		}
+		
+		// some cleanup. These don't need to be exposed as public data.
+		delete this.data;
+		
+		this.currentMaterial = null;
+	}
+
+	
+	/* eslint-enable camelcase*/
 }
 /* harmony export (immutable) */ __webpack_exports__["b"] = MaterialLibrary;
 ;
@@ -4183,7 +4404,337 @@ class MaterialLibrary {
 
 
 /***/ }),
-/* 10 */
+/* 12 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const gl_matrix_1 = __webpack_require__(0);
+const basicmodel_1 = __webpack_require__(2);
+const meshlessmodel_1 = __webpack_require__(29);
+const Random = __webpack_require__(30);
+const noisefield_1 = __webpack_require__(31);
+const entity_1 = __webpack_require__(5);
+var Terrain;
+(function (Terrain) {
+    Terrain[Terrain["RED_ROCK"] = 0] = "RED_ROCK";
+    Terrain[Terrain["LEAFY"] = 1] = "LEAFY";
+    Terrain[Terrain["ICY"] = 2] = "ICY";
+    Terrain[Terrain["SANDY"] = 3] = "SANDY";
+    Terrain[Terrain["GREY_ROCK"] = 4] = "GREY_ROCK";
+})(Terrain = exports.Terrain || (exports.Terrain = {}));
+class Disk extends entity_1.Entity {
+    constructor(diskModel, type, radius, x, y, z) {
+        super(gl_matrix_1.vec3.fromValues(x, y, z), gl_matrix_1.vec3.fromValues(radius, 1, radius), gl_matrix_1.vec3.fromValues(0, 0, 0), diskModel.mesh.name, entity_1.Model_Type.BASIC);
+        if (!diskModel.initialized)
+            throw "DiskModel was not initialized";
+        this.diskModel = diskModel;
+        this.radius = radius;
+        this.type = type;
+        this.initialized = false;
+    }
+    init(gl) {
+        this.generateHeightMapModels(gl);
+        this.heightMapModel.init(gl);
+        let corner = this.radius * Math.SQRT2 / 2;
+        let scale = gl_matrix_1.vec3.fromValues(corner * 2 / this.heightMapSize, 1, corner * 2 / this.heightMapSize);
+        let position = gl_matrix_1.vec3.fromValues(this.position[0], this.position[1] + 0.0001, this.position[2]);
+        this.heightMapEntity = new entity_1.Entity(position, scale, this.forward, this.heightMapModel.name, entity_1.Model_Type.MESHLESS);
+        Disk.height_map_model_gen_count++;
+        this.initialized = true;
+    }
+    generateHeightMapModels(gl) {
+        switch (this.type) {
+            case Terrain.RED_ROCK:
+                this.heightMapSize = 16;
+                this.initRedRockHeightMap();
+                break;
+            case Terrain.LEAFY:
+                this.heightMapSize = 32;
+                this.initLeafyHeightMap();
+                break;
+            case Terrain.ICY:
+                this.heightMapSize = 48;
+                this.initIcyHeightMap();
+                break;
+            case Terrain.SANDY:
+                this.heightMapSize = 64;
+                this.initSandyHeightMap();
+                break;
+            case Terrain.GREY_ROCK:
+                this.heightMapSize = 80;
+                this.initGreyRockHeightMap();
+                break;
+        }
+        this.generateHeightMapModel(gl);
+    }
+    generateHeightMapModel(gl) {
+        let vert_buffer_size = (this.heightMapSize + 1) * (this.heightMapSize + 1);
+        let verts = new Float32Array(vert_buffer_size * 8);
+        let count = 0;
+        for (let x = 0; x < this.heightMapSize + 1; x++) {
+            for (let z = 0; z < this.heightMapSize + 1; z++) {
+                //Position
+                verts[count++] = x - (this.heightMapSize / 2);
+                verts[count++] = this.heightMap[x][z];
+                verts[count++] = z - (this.heightMapSize / 2);
+                //Texture coords
+                verts[count++] = x / 16.0;
+                verts[count++] = z / 16.0;
+                //Normals
+                verts[count++] = 0;
+                verts[count++] = 0;
+                verts[count++] = 0;
+            }
+        }
+        let index_buffer_size = this.heightMapSize * (this.heightMapSize) * 6;
+        let indices = new Uint16Array(index_buffer_size);
+        count = 0;
+        //Create triangles using indices which reference vertices in the triangle strip
+        for (let i = 0; i < vert_buffer_size - (this.heightMapSize + 1); i += (this.heightMapSize + 1)) {
+            for (let j = 0; j < this.heightMapSize; j++) {
+                const v = i + j;
+                //0,1,2
+                indices[count++] = v + (this.heightMapSize + 1);
+                indices[count++] = v;
+                indices[count++] = v + (this.heightMapSize + 1) + 1;
+                //2,1,3
+                indices[count++] = v + (this.heightMapSize + 1) + 1;
+                indices[count++] = v;
+                indices[count++] = v + 1;
+            }
+        }
+        //Calculate the normals. For each faces normal we add it to the normals of the vertices used.
+        //Normals will be normalized in fragment shader
+        for (let i = 0; i < index_buffer_size - 2; i += 3) {
+            const i1 = indices[i] * 8;
+            const i2 = indices[i + 1] * 8;
+            const i3 = indices[i + 2] * 8;
+            //Find normal using cross product
+            // // (v2 - v1) cross (v3 - v1)
+            let norm = new Array(3);
+            const ax = verts[i2] - verts[i1], ay = verts[i2 + 1] - verts[i1 + 1], az = verts[i2 + 2] - verts[i1 + 2];
+            const bx = verts[i3] - verts[i1], by = verts[i3 + 1] - verts[i1 + 1], bz = verts[i3 + 2] - verts[i1 + 2];
+            norm[0] = ay * bz - az * by;
+            norm[1] = az * bx - ax * bz;
+            norm[2] = ax * by - ay * bx;
+            //Add to the existing normals
+            verts[i1 + 5] += norm[0];
+            verts[i1 + 6] += norm[1];
+            verts[i1 + 7] += norm[2];
+            verts[i2 + 5] += norm[0];
+            verts[i2 + 6] += norm[1];
+            verts[i2 + 7] += norm[2];
+            verts[i3 + 5] += norm[0];
+            verts[i3 + 6] += norm[1];
+            verts[i3 + 7] += norm[2];
+        }
+        this.heightMapModel = new meshlessmodel_1.MeshlessModel(verts, indices, this.diskModel.mesh.materialsByIndex[2]);
+    }
+    initRedRockHeightMap() {
+        this.heightMap = [];
+        let heights = [];
+        heights.push(0, 0);
+        for (let i = 2; i <= this.heightMapSize / 2; i++) {
+            let a = heights[i - 1];
+            heights.push(Math.round((a + Math.random() * (3) - 1) * 1e1) / 1e1);
+        }
+        for (let x = 0; x <= this.heightMapSize; x++) {
+            this.heightMap[x] = [];
+            let max = x > this.heightMapSize / 2 ? this.heightMapSize - x : x;
+            for (let z = 0; z <= this.heightMapSize; z++) {
+                if (z > this.heightMapSize - max)
+                    max--;
+                let a = z;
+                if (a > max)
+                    a = max;
+                this.heightMap[x].push(heights[a]);
+            }
+        }
+    }
+    initSandyHeightMap() {
+        this.heightMap = [];
+        let ns = new noisefield_1.Noisefield(16, 8, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF));
+        let xz_6 = new Array(this.heightMapSize + 1);
+        let pow_divisor = (1.0 - Math.pow(0.5, 6));
+        for (let x = 0; x <= this.heightMapSize; x++) {
+            let ux = x / this.heightMapSize;
+            xz_6[x] = Math.max(Math.pow(ux, 6), Math.pow(1.0 - ux, 6));
+        }
+        for (let x = 0; x <= this.heightMapSize; x++) {
+            this.heightMap[x] = [];
+            for (let z = 0; z <= this.heightMapSize; z++) {
+                let h = ns.perlineNoise(z, x);
+                let f = (1 - Math.max(xz_6[x], xz_6[z])) / pow_divisor;
+                this.heightMap[x].push(h * f);
+            }
+        }
+    }
+    initGreyRockHeightMap() {
+        this.heightMap = [];
+        let ns = [
+            new noisefield_1.Noisefield(32, 1.0, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF)),
+            new noisefield_1.Noisefield(16, 7.0, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF)),
+            new noisefield_1.Noisefield(8, 5.0, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF)),
+            new noisefield_1.Noisefield(4, 3.5, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF)),
+            new noisefield_1.Noisefield(2, 2.5, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF)),
+        ];
+        for (let x = 0; x <= this.heightMapSize; x++) {
+            this.heightMap[x] = [];
+            for (let z = 0; z <= this.heightMapSize; z++) {
+                let h = ns[0].perlineNoise(z, x)
+                    + ns[1].perlineNoise(z, x)
+                    + ns[2].perlineNoise(z, x)
+                    + ns[3].perlineNoise(z, x)
+                    + ns[4].perlineNoise(z, x);
+                let ux = x / this.heightMapSize;
+                let uy = z / this.heightMapSize;
+                let f = (1 - Math.max(Math.max(Math.pow(ux, 6), Math.pow(1.0 - ux, 6)), Math.max(Math.pow(uy, 6), Math.pow(1.0 - uy, 6)))) / (1.0 - Math.pow(0.5, 6));
+                this.heightMap[x].push(h * f);
+            }
+        }
+    }
+    initIcyHeightMap() {
+        let points = [];
+        let h = this.heightMapSize / 2;
+        for (let i = 0; i < 200; i++) {
+            let d1 = Math.random() * h;
+            let d2 = Math.random() * h;
+            let d3 = Math.random() * h;
+            let d4 = Math.random() * h;
+            let d = Math.max(d1, d2, d3, d4);
+            let a = Math.random() * Math.PI * 2;
+            let x = (h + Math.cos(a) * d);
+            let z = (h + Math.sin(a) * d);
+            let m = (h - d) * 0.7;
+            let y = Math.random() * (m + m) - m;
+            points.push([x, y, z]);
+        }
+        this.heightMap = new Array(this.heightMapSize + 1);
+        for (let x = 0; x <= this.heightMapSize; x++) {
+            this.heightMap[x] = new Array(this.heightMapSize + 1);
+            for (let z = 0; z <= this.heightMapSize; z++) {
+                let min = 0, max = 0;
+                for (let i = 0; i < points.length; i++) {
+                    let x2 = (points[i][0] - x) * (points[i][0] - x);
+                    let z2 = (points[i][2] - z) * (points[i][2] - z);
+                    let distance = Math.sqrt(x2 + z2);
+                    max = Math.max(max, points[i][1] - distance);
+                    min = Math.min(min, points[i][1] + distance);
+                }
+                this.heightMap[x][z] = max + min;
+            }
+        }
+    }
+    initLeafyHeightMap() {
+        //Math.random() * (max - min) + min;
+        let LL = Math.random() * (2) - 1;
+        let LC = Math.random() * (2) - 1;
+        let LR = Math.random() * (2) - 1;
+        let RI = Math.random() * (2) - 1;
+        let RM = Math.random() * (2) - 1;
+        let RO = Math.random() * (2) - 1;
+        let a1 = Random.randi(7);
+        let a2 = Random.randi(7);
+        let ARM_COUNT = a1 < a2 ? a1 : a2;
+        let ARM_RADIANS = Math.random() * (Math.PI * 2);
+        let AI = Math.random();
+        let AM = Math.random();
+        let AO = Math.random();
+        if (Math.random() > 0.5) {
+            AI = -AI;
+            AM = -AM;
+            AO = -AO;
+        }
+        this.heightMap = new Array(this.heightMapSize + 1);
+        for (let x = 0; x <= this.heightMapSize; x++) {
+            this.heightMap[x] = new Array(this.heightMapSize + 1);
+            for (let z = 0; z <= this.heightMapSize; z++) {
+                let ux = x / this.heightMapSize;
+                let uy = z / this.heightMapSize;
+                let x2 = ux * 2 - 1;
+                let y2 = uy * 2 - 1;
+                let dist = Math.min(Math.sqrt(x2 * x2 + y2 * y2), 1);
+                let radians = Math.atan2(y2, x2);
+                let ll = Math.pow(ux, 4) * (1 - ux) * 12;
+                let lc = (Math.cos(Math.PI * x2) + 1) * 0.5;
+                let lr = Math.pow((1 - ux), 4) * ux * 12;
+                let lsum = ll * LL + lc * LC + lr * LR;
+                let ri = Math.pow(Math.max(1 - dist, 0), 2);
+                let rm = Math.sin(Math.PI * Math.min(Math.pow(dist, 0.8) * (4 / 3), 1));
+                let ro = Math.max(Math.sin(Math.PI * Math.pow(dist, 1.6)), 0);
+                let rsum = ri * RI + rm * RM + ro * RO;
+                let ai = (Math.sqrt(dist) - dist) * 4;
+                let am = Math.pow(dist, 2) * Math.pow((1 - dist), 2) * 16;
+                let ao = (Math.sqrt(1 - dist) - (1 - dist)) * 4;
+                let asum = ai * AI + am * AM + ao * AO;
+                let non_arm_height = lsum * rsum;
+                let arm_radians = radians * ARM_COUNT + ARM_RADIANS;
+                let arm_magnitude = (Math.sin(arm_radians) + 1.0) * 0.5;
+                let arm_height = arm_magnitude * asum;
+                this.heightMap[x][z] = non_arm_height * 5 + arm_height * 3;
+            }
+        }
+    }
+    draw(gl, view_matrix, projection_matrix) {
+        this.drawDiskModel(gl, view_matrix, projection_matrix);
+        this.drawHeightMapModel(gl, view_matrix, projection_matrix);
+    }
+    drawDiskModel(gl, view_matrix, projection_matrix) {
+        let model = gl_matrix_1.mat4.create();
+        //Center the squares in the disk
+        let pos = gl_matrix_1.vec3.fromValues(this.position[0], this.position[1], this.position[2]);
+        gl_matrix_1.mat4.translate(model, model, pos);
+        gl_matrix_1.mat4.scale(model, model, gl_matrix_1.vec3.fromValues(this.radius, 1, this.radius));
+        basicmodel_1.BasicModel.setMVPMatrices(model, view_matrix, projection_matrix);
+        this.diskModel.draw(gl);
+    }
+    drawHeightMapModel(gl, view_matrix, projection_matrix) {
+        let model = gl_matrix_1.mat4.create();
+        //Center the squares in the disk
+        let pos = gl_matrix_1.vec3.fromValues(this.position[0], this.position[1], this.position[2]);
+        let corner = this.radius * Math.SQRT2 / 2;
+        pos[1] += 0.00001;
+        gl_matrix_1.mat4.translate(model, model, pos);
+        gl_matrix_1.mat4.scale(model, model, gl_matrix_1.vec3.fromValues(corner * 2 / this.heightMapSize, 1, corner * 2 / this.heightMapSize));
+        basicmodel_1.BasicModel.setMVPMatrices(model, view_matrix, projection_matrix);
+        this.heightMapModel.draw(gl);
+    }
+}
+Disk.height_map_model_gen_count = 0;
+exports.Disk = Disk;
+
+
+/***/ }),
+/* 13 */
+/***/ (function(module, exports) {
+
+var g;
+
+// This works in non-strict mode
+g = (function() {
+	return this;
+})();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || Function("return this")() || (1,eval)("this");
+} catch(e) {
+	// This works if the window reference is available
+	if(typeof window === "object")
+		g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
+
+
+/***/ }),
+/* 14 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4197,18 +4748,24 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const gl_matrix_1 = __webpack_require__(2);
-const shader_1 = __webpack_require__(16);
-const camera_1 = __webpack_require__(17);
-const player_1 = __webpack_require__(18);
-const world_1 = __webpack_require__(24);
-const skybox_1 = __webpack_require__(32);
-let MainLoop = __webpack_require__(34);
+const gl_matrix_1 = __webpack_require__(0);
+const shader_1 = __webpack_require__(9);
+const camera_1 = __webpack_require__(20);
+const player_1 = __webpack_require__(21);
+const world_1 = __webpack_require__(28);
+const skybox_1 = __webpack_require__(35);
+const basicmodel_1 = __webpack_require__(2);
+const Renderer_1 = __webpack_require__(37);
+const basicmodelshader_1 = __webpack_require__(38);
+const assert = __webpack_require__(39);
+let MainLoop = __webpack_require__(44);
 let document = window.document;
 let canvas;
 let gl;
 let shader;
 let instancedShader;
+let basicModelShader;
+let basicModelRenderer;
 const playerOrigin = gl_matrix_1.vec3.fromValues(0, 0.8, 0);
 const playerOriginRotation = gl_matrix_1.vec3.fromValues(1, 0, 0);
 let keys = [];
@@ -4297,8 +4854,24 @@ class Main {
             let w = Date.now();
             this.world = new world_1.World(gl, _worldData, _worldMeshes, _worldMat);
             console.log("world gen time: " + (Date.now() - w) / 1000 + "s");
-            shader = yield new shader_1.Shader(gl, __webpack_require__(35), __webpack_require__(36));
-            instancedShader = yield new shader_1.Shader(gl, __webpack_require__(37), __webpack_require__(38));
+            shader = yield new shader_1.Shader(gl, __webpack_require__(45), __webpack_require__(46));
+            // instancedShader = await new Shader(gl, require('../src/shaders/instanced.vert'), require("../src/shaders/instanced.frag"));
+            basicModelShader = yield new basicmodelshader_1.BasicModelShader(gl, __webpack_require__(47), __webpack_require__(48));
+            basicModelRenderer = new Renderer_1.Renderer();
+            basicModelRenderer.init(basicModelShader);
+            basicModelRenderer.addBasicModel(this.player.model);
+            basicModelRenderer.addEntityToRenderList(this.player);
+            basicModelRenderer.addBasicModel(this.world.diskAModel);
+            basicModelRenderer.addBasicModel(this.world.diskBModel);
+            basicModelRenderer.addBasicModel(this.world.diskCModel);
+            basicModelRenderer.addBasicModel(this.world.diskDModel);
+            basicModelRenderer.addBasicModel(this.world.diskEModel);
+            this.world.disks.forEach(disk => {
+                assert(disk.initialized);
+                basicModelRenderer.addEntityToRenderList(disk);
+                basicModelRenderer.addMeshlessModel(disk.heightMapModel);
+                basicModelRenderer.addEntityToRenderList(disk.heightMapEntity);
+            });
             loading.remove();
             let end = Date.now();
             console.log("total time: " + (end - start) / 1000 + "s");
@@ -4320,11 +4893,12 @@ class Main {
     initBuffers() {
         playerCamera.front = this.player.forward;
         shader.use();
-        shader.setInt("texture1", 0);
-        instancedShader.use();
-        instancedShader.setInt("material.diffuse", 0);
+        shader.setIntByName("texture1", 0);
+        basicModelShader.use();
+        // instancedShader.setInt("material.diffuse", 0);
         // instancedShader.setInt("material.specular", 1);
         // instancedShader.setInt("material.emission", 2);
+        basicmodel_1.BasicModel.initWithShader(gl, basicModelShader);
     }
     /**
      * @param {Number} delta
@@ -4389,54 +4963,41 @@ class Main {
         playerCamera.position[0] -= 2 * this.player.forward[0];
         playerCamera.position[2] -= 2 * this.player.forward[2];
         //Setup view and projection
-        let projection = gl_matrix_1.mat4.create();
-        let view = activeCamera.getViewMatrix();
-        gl_matrix_1.mat4.perspective(projection, gl_matrix_1.glMatrix.toRadian(80), canvas.width / canvas.height, 0.1, 10000);
-        let viewProjection = gl_matrix_1.mat4.multiply(projection, projection, view);
+        let projection_matrix = gl_matrix_1.mat4.create();
+        gl_matrix_1.mat4.identity(projection_matrix);
+        let view_matrix = activeCamera.getViewMatrix();
+        gl_matrix_1.mat4.perspective(projection_matrix, gl_matrix_1.glMatrix.toRadian(80), canvas.width / canvas.height, 0.1, 10000);
         let model = gl_matrix_1.mat4.create();
         //Draw Skybox
         gl.disable(gl.DEPTH_TEST);
         shader.use();
         gl_matrix_1.mat4.translate(model, model, activeCamera.position);
-        shader.setFloat("ambient", 1.0);
-        shader.setMat4("model", model);
-        shader.setMat4("viewProjection", viewProjection);
+        shader.setFloatByName("ambient", 1.0);
+        shader.setMat4ByName("model", model);
+        let viewProjection = gl_matrix_1.mat4.create();
+        viewProjection = gl_matrix_1.mat4.multiply(viewProjection, projection_matrix, view_matrix);
+        shader.setMat4ByName("viewProjection", viewProjection);
         this.skybox.draw(gl);
-        instancedShader.use();
+        basicModelShader.use();
         // directional light
-        instancedShader.setVec3("dirLight.direction", [-0.45, -1.0, -0.7]);
-        instancedShader.setVec3("dirLight.ambient", [1.0, 1.0, 1.0]);
-        instancedShader.setVec3("dirLight.diffuse", [1.0, 1.0, 1.0]);
-        instancedShader.setVec3("dirLight.specular", [0.0, 0.0, 0.0]);
+        basicModelShader.setBoolByName("lights[0].is_enabled", true);
+        basicModelShader.setVec4ByName("lights[0].position", [0.34, 0.83, 0.44, 0.0]);
+        basicModelShader.setVec3ByName("lights[0].ambient", [1.0, 1.0, 1.0]);
+        basicModelShader.setVec3ByName("lights[0].diffuse", [1.0, 1.0, 1.0]);
+        basicModelShader.setVec3ByName("lights[0].specular", [1.0, 1.0, 1.0]);
         //Setup player point light
-        instancedShader.setVec3("playerLight.position", [this.player.position[0], this.player.position[1], this.player.position[2]]);
-        instancedShader.setVec3("playerLight.ambient", [0.05, 0.05, 0.05]);
-        instancedShader.setVec3("playerLight.diffuse", [0.1, 0.1, 0.1]);
-        instancedShader.setVec3("playerLight.specular", [0.0, 0.0, 0.0]);
-        instancedShader.setFloat("playerLight.constant", 0.4);
-        instancedShader.setFloat("playerLight.linear", 0.09);
-        instancedShader.setFloat("playerLight.quadratic", 0.032);
-        instancedShader.setVec3("viewPos", playerCamera.position);
-        // material properties
-        instancedShader.setFloat("material.shininess", 64.0);
-        //Draw Disk
+        // basicModelShader.setBool("lights[1].is_enabled", true);
+        // basicModelShader.setVec4("lights[1].position", [this.player.position[0], this.player.position[1], this.player.position[2], 1.0]);
+        // basicModelShader.setVec3("lights[1].ambient", [0.05, 0.05, 0.05]);
+        // basicModelShader.setVec3("lights[1].diffuse", [0.1, 0.1, 0.1]);
+        // basicModelShader.setVec3("lights[1].specular", [0.0, 0.0, 0.0]);
+        // basicModelShader.setVec3("lights[1].attenuation", [0.4, 0.09, 0.032]);
+        basicModelShader.setVec3(basicModelShader.uniforms.camera_pos, activeCamera.position);
+        // //Draw Disk
         gl.enable(gl.DEPTH_TEST);
-        model = gl_matrix_1.mat4.create();
-        instancedShader.use();
-        instancedShader.setMat4("viewProjection", viewProjection);
-        instancedShader.setMat4("model", model);
-        this.world.draw(gl, instancedShader);
-        //Draws Player in front of camera, always facing away from camera
-        instancedShader.use();
-        instancedShader.setMat4("viewProjection", viewProjection);
-        model = gl_matrix_1.mat4.create();
-        //Move player model to its position
-        gl_matrix_1.mat4.translate(model, model, this.player.position);
-        //Rotate model to face away from camera
-        gl_matrix_1.mat4.rotateY(model, model, Math.atan2(this.player.forward[0], this.player.forward[2]) - Math.PI / 2);
-        instancedShader.setMat4("model", model);
-        //shader.setFloat("ambient", 0.75);
-        this.player.draw(gl);
+        // this.world.draw(gl, view_matrix, projection_matrix);
+        basicModelRenderer.render(gl, view_matrix, projection_matrix);
+        // this.player.draw(gl, view_matrix, projection_matrix);
     }
     end(fps, panic) {
         fpsCounter.textContent = Math.round(fps) + ' FPS';
@@ -4485,7 +5046,7 @@ new Main();
 
 
 /***/ }),
-/* 11 */
+/* 15 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -4514,7 +5075,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (immutable) */ __webpack_exports__["equals"] = equals;
 /* harmony export (immutable) */ __webpack_exports__["multiplyScalar"] = multiplyScalar;
 /* harmony export (immutable) */ __webpack_exports__["multiplyScalarAndAdd"] = multiplyScalarAndAdd;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common__ = __webpack_require__(1);
 /* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -4955,7 +5516,7 @@ const sub = subtract;
 
 
 /***/ }),
-/* 12 */
+/* 16 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -4983,7 +5544,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (immutable) */ __webpack_exports__["multiplyScalarAndAdd"] = multiplyScalarAndAdd;
 /* harmony export (immutable) */ __webpack_exports__["exactEquals"] = exactEquals;
 /* harmony export (immutable) */ __webpack_exports__["equals"] = equals;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common__ = __webpack_require__(1);
 /* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -5457,7 +6018,7 @@ const sub = subtract;
 
 
 /***/ }),
-/* 13 */
+/* 17 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5506,7 +6067,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (immutable) */ __webpack_exports__["multiplyScalarAndAdd"] = multiplyScalarAndAdd;
 /* harmony export (immutable) */ __webpack_exports__["exactEquals"] = exactEquals;
 /* harmony export (immutable) */ __webpack_exports__["equals"] = equals;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common__ = __webpack_require__(1);
 /* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -7195,7 +7756,7 @@ const sub = subtract;
 
 
 /***/ }),
-/* 14 */
+/* 18 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -7215,10 +7776,10 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (immutable) */ __webpack_exports__["fromMat3"] = fromMat3;
 /* harmony export (immutable) */ __webpack_exports__["fromEuler"] = fromEuler;
 /* harmony export (immutable) */ __webpack_exports__["str"] = str;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common__ = __webpack_require__(0);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__mat3__ = __webpack_require__(5);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__vec3__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__vec4__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common__ = __webpack_require__(1);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__mat3__ = __webpack_require__(6);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__vec3__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__vec4__ = __webpack_require__(8);
 /* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -7886,7 +8447,7 @@ const setAxes = (function() {
 
 
 /***/ }),
-/* 15 */
+/* 19 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -7925,7 +8486,7 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (immutable) */ __webpack_exports__["str"] = str;
 /* harmony export (immutable) */ __webpack_exports__["exactEquals"] = exactEquals;
 /* harmony export (immutable) */ __webpack_exports__["equals"] = equals;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common__ = __webpack_require__(0);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common__ = __webpack_require__(1);
 /* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -8529,73 +9090,14 @@ const forEach = (function() {
 
 
 /***/ }),
-/* 16 */
+/* 20 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-class Shader {
-    constructor(gl, vertexSourceCode, fragmentSourceCode) {
-        this.gl = gl;
-        let vertexShader = getShader(gl, vertexSourceCode, gl.VERTEX_SHADER);
-        let fragmentShader = getShader(gl, fragmentSourceCode, gl.FRAGMENT_SHADER);
-        this.ID = gl.createProgram();
-        gl.attachShader(this.ID, vertexShader);
-        gl.attachShader(this.ID, fragmentShader);
-        gl.linkProgram(this.ID);
-        if (!gl.getProgramParameter(this.ID, gl.LINK_STATUS)) {
-            alert("Could not initialize shaders");
-        }
-    }
-    use() {
-        this.gl.useProgram(this.ID);
-    }
-    setBool(name, value) {
-        this.gl.uniform1i(this.getUniformLocation(name), value);
-    }
-    setInt(name, value) {
-        this.gl.uniform1i(this.getUniformLocation(name), value);
-    }
-    setFloat(name, value) {
-        this.gl.uniform1f(this.getUniformLocation(name), value);
-    }
-    getUniformLocation(name) {
-        return this.gl.getUniformLocation(this.ID, name);
-    }
-    setMat4(name, matrix) {
-        this.gl.uniformMatrix4fv(this.getUniformLocation(name), false, matrix);
-    }
-    setVec3(name, vec) {
-        this.gl.uniform3fv(this.getUniformLocation(name), vec);
-    }
-    setVec4(name, vec) {
-        this.gl.uniform4fv(this.getUniformLocation(name), vec);
-    }
-}
-exports.Shader = Shader;
-function getShader(gl, sourceCode, type) {
-    let shader;
-    shader = gl.createShader(type);
-    gl.shaderSource(shader, sourceCode);
-    gl.compileShader(shader);
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        alert(gl.getShaderInfoLog(shader));
-        return null;
-    }
-    return shader;
-}
-
-
-/***/ }),
-/* 17 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-const gl_matrix_1 = __webpack_require__(2);
-const gl_matrix_2 = __webpack_require__(2);
+const gl_matrix_1 = __webpack_require__(0);
+const gl_matrix_2 = __webpack_require__(0);
 const YAW = 90.0;
 const PITCH = 0.0;
 const SPEED = 20.0;
@@ -8709,7 +9211,7 @@ exports.Camera = Camera;
 
 
 /***/ }),
-/* 18 */
+/* 21 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -8723,11 +9225,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const gl_matrix_1 = __webpack_require__(2);
-const playermodel_1 = __webpack_require__(19);
-const index_js_1 = __webpack_require__(1);
-const index_js_2 = __webpack_require__(1);
-let OBJ = __webpack_require__(1);
+const gl_matrix_1 = __webpack_require__(0);
+const playermodel_1 = __webpack_require__(22);
+const index_js_1 = __webpack_require__(3);
+const index_js_2 = __webpack_require__(3);
+const basicmodel_1 = __webpack_require__(2);
+const entity_1 = __webpack_require__(5);
+let OBJ = __webpack_require__(3);
 const SPEED = 20;
 var Player_Movement;
 (function (Player_Movement) {
@@ -8736,13 +9240,13 @@ var Player_Movement;
     Player_Movement[Player_Movement["LEFT"] = 2] = "LEFT";
     Player_Movement[Player_Movement["RIGHT"] = 3] = "RIGHT";
 })(Player_Movement = exports.Player_Movement || (exports.Player_Movement = {}));
-class Player {
+class Player extends entity_1.Entity {
     constructor(gl, mesh, pos) {
+        super(pos, null, gl_matrix_1.vec3.fromValues(1, 0, 0), mesh.name, entity_1.Model_Type.BASIC);
         this.model = new playermodel_1.PlayerModel(mesh);
+        this.model.rotation_offset = gl_matrix_1.vec3.fromValues(0, 0, -Math.PI / 2);
         this.model.init(gl);
-        this.position = gl_matrix_1.vec3.fromValues(pos[0], pos[1], pos[2]);
         this.up = gl_matrix_1.vec3.fromValues(0, 1, 0);
-        this.forward = gl_matrix_1.vec3.fromValues(1, 0, 0);
     }
     rotate(angle) {
         gl_matrix_1.vec3.rotateY(this.forward, this.forward, [0, 0, 0], angle * 2);
@@ -8772,7 +9276,14 @@ class Player {
             gl_matrix_1.vec3.add(this.position, this.position, velocity);
         }
     }
-    draw(gl) {
+    draw(gl, view_matrix, projection_matrix) {
+        //Draws Player in front of camera, always facing away from camera
+        let model = gl_matrix_1.mat4.create();
+        //Move player model to its position
+        gl_matrix_1.mat4.translate(model, model, this.position);
+        //Rotate model to face away from camera
+        gl_matrix_1.mat4.rotateY(model, model, Math.atan2(this.forward[0], this.forward[2]) - Math.PI / 2);
+        basicmodel_1.BasicModel.setMVPMatrices(model, view_matrix, projection_matrix);
         this.model.draw(gl);
     }
     static loadMesh() {
@@ -8787,10 +9298,10 @@ class Player {
         });
     }
     static load() {
-        let a = new index_js_1.Mesh(__webpack_require__(21));
-        let b = new index_js_2.MaterialLibrary(__webpack_require__(22));
+        let a = new index_js_1.Mesh(__webpack_require__(25));
+        let b = new index_js_2.MaterialLibrary(__webpack_require__(26));
         a.addMaterialLibrary(b);
-        let c = __webpack_require__(23);
+        let c = __webpack_require__(27);
         let image = new Image();
         image.src = 'data:image/jpeg;base64,' + c;
         a.materialsByIndex[0].mapDiffuse.texture = image;
@@ -8801,42 +9312,30 @@ exports.Player = Player;
 
 
 /***/ }),
-/* 19 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const basicmodel_1 = __webpack_require__(3);
+const basicmodel_1 = __webpack_require__(2);
 class PlayerModel extends basicmodel_1.BasicModel {
     constructor(mesh) {
         super(mesh);
     }
     init(gl) {
         super.init(gl);
-        if (!this.initTexture(gl, 0)) {
-            console.warn("Player model texture 0 wasn't downloaded");
-        }
-    }
-    draw(gl) {
-        gl.bindVertexArray(this.VAO);
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.mesh.indexBuffer);
-        this.textures.forEach((texture, index) => {
-            let is = this.mesh.vertexBuffer.itemSize;
-            let material = this.mesh.materials[index];
-            let byteSize = 2;
-            gl.bindTexture(gl.TEXTURE_2D, texture);
-            gl.drawElements(gl.TRIANGLES, is * material.numItems, gl.UNSIGNED_SHORT, material.offset * is * byteSize);
-        });
-        gl.bindVertexArray(null);
+        this.initAllTextures(gl);
+        // if (!this.initTexture(gl, 0)) {
+        //     console.warn("Player model texture 0 wasn't downloaded")
+        // }
     }
 }
 exports.PlayerModel = PlayerModel;
 
 
 /***/ }),
-/* 20 */
+/* 23 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -8845,8 +9344,8 @@ exports.PlayerModel = PlayerModel;
 /* harmony export (immutable) */ __webpack_exports__["b"] = downloadMeshes;
 /* harmony export (immutable) */ __webpack_exports__["e"] = initMeshBuffers;
 /* harmony export (immutable) */ __webpack_exports__["a"] = deleteMeshBuffers;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__mesh__ = __webpack_require__(8);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__material__ = __webpack_require__(9);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__mesh__ = __webpack_require__(10);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__material__ = __webpack_require__(11);
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__layout__ = __webpack_require__(4);
 
 
@@ -9193,25 +9692,43 @@ function deleteMeshBuffers ( gl, mesh ) {
 
 
 /***/ }),
-/* 21 */
+/* 24 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+class Guid {
+    static newGuid() {
+        return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+            var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+        });
+    }
+}
+exports.Guid = Guid;
+
+
+/***/ }),
+/* 25 */
 /***/ (function(module, exports) {
 
 module.exports = "mtllib cbabe.mtl\r\n\r\no cbabe_stand\nv 0.111469 0.411396 -0.156979\nv 0.054011 0.418736 -0.143162\nv 0.082740 0.323439 -0.184605\nv 0.054011 0.301469 -0.184605\nv 0.121049 0.506667 -0.115536\nv 0.063591 0.521348 -0.115536\nv 0.111469 0.411396 -0.184605\nv 0.054011 0.426051 -0.212231\nv 0.121049 0.557973 -0.136258\nv 0.073161 0.565313 -0.163884\nv 0.082740 0.330780 -0.198423\nv 0.054011 0.338095 -0.226049\nv 0.101900 0.264819 -0.198423\nv 0.073161 0.242823 -0.191509\nv 0.168937 0.118216 -0.239867\nv 0.140208 0.103561 -0.239867\nv 0.063591 0.279474 -0.246771\nv 0.101900 0.279474 -0.219145\nv 0.140208 0.125556 -0.274397\nv 0.168937 0.125556 -0.260589\nv -0.003456 0.433391 -0.163884\nv 0.006123 0.433391 -0.198423\nv 0.006123 0.301469 -0.205327\nv 0.006123 0.316124 -0.219145\nv 0.015703 0.543318 -0.122440\nv 0.044432 0.565313 -0.163884\nv 0.006123 0.433391 -0.198423\nv 0.006123 0.316124 -0.219145\nv 0.015703 0.543318 -0.122440\nv 0.121049 0.103561 -0.246771\nv 0.044432 0.235508 -0.212231\nv 0.121049 0.110901 -0.267493\nv 0.044432 0.257478 -0.239867\nv 0.121049 0.110901 -0.267493\nv 0.044432 0.257478 -0.239867\nv 0.111469 0.411396 0.174581\nv 0.082740 0.338095 0.202207\nv 0.054011 0.418736 0.153859\nv 0.054011 0.308784 0.202207\nv 0.121049 0.506667 0.119319\nv 0.063591 0.521348 0.119319\nv 0.111469 0.418736 0.202207\nv 0.121049 0.557973 0.146945\nv 0.054011 0.426051 0.222929\nv 0.073161 0.565313 0.174581\nv 0.073161 0.345435 0.222929\nv 0.044432 0.338095 0.236747\nv 0.121049 0.294129 0.216025\nv 0.226405 0.176862 0.264373\nv 0.101900 0.257478 0.216025\nv 0.216825 0.162207 0.264373\nv 0.073161 0.301469 0.264373\nv 0.197666 0.176862 0.298912\nv 0.111469 0.308784 0.243651\nv 0.226405 0.191517 0.291998\nv -0.003456 0.426051 0.167667\nv 0.015703 0.294129 0.222929\nv -0.003456 0.433391 0.195303\nv 0.015703 0.316124 0.229833\nv 0.015703 0.543318 0.126223\nv 0.044432 0.565313 0.160763\nv -0.003456 0.433391 0.195303\nv 0.015703 0.316124 0.229833\nv 0.015703 0.543318 0.126223\nv 0.188096 0.147552 0.278190\nv 0.063591 0.242823 0.229833\nv 0.188096 0.162207 0.298912\nv 0.054011 0.264819 0.257468\nv 0.188096 0.162207 0.298912\nv 0.054011 0.264819 0.257468\nv -0.070494 0.191517 0.133137\nv -0.089653 0.191517 0.153859\nv -0.118382 0.206173 0.070971\nv -0.127962 0.206173 0.077875\nv -0.070494 0.272134 0.070971\nv -0.099233 0.279474 0.077875\nv -0.041765 0.264819 0.126223\nv -0.051345 0.264819 0.146945\nv -0.108812 0.206173 0.008796\nv -0.127962 0.206173 0.008796\nv -0.089653 0.272134 0.008796\nv -0.099233 0.279474 0.008796\nv -0.032185 0.184202 0.153859\nv -0.032185 0.184202 0.174581\nv -0.003456 0.250163 0.140041\nv -0.003456 0.250163 0.160763\nv -0.041765 0.264819 -0.115536\nv -0.051345 0.264819 -0.136258\nv -0.070494 0.272134 -0.060274\nv -0.099233 0.279474 -0.074092\nv -0.118382 0.206173 -0.060274\nv -0.127962 0.206173 -0.067178\nv -0.051345 0.176862 -0.136258\nv -0.051345 0.169522 -0.156979\nv -0.003456 0.250163 -0.129344\nv -0.003456 0.250163 -0.150066\nv -0.003456 0.184202 -0.150066\nv 0.006123 0.184202 -0.170788\nv 0.025272 0.088906 -0.170788\nv -0.003456 0.066911 -0.136258\nv 0.025272 0.118216 -0.163884\nv 0.073161 0.000949 -0.177701\nv 0.054011 -0.086982 -0.136258\nv 0.101900 -0.021021 -0.177701\nv 0.015703 -0.321540 0.209111\nv -0.032185 -0.438807 0.195303\nv -0.041765 -0.306860 0.195303\nv -0.099233 -0.394817 0.160763\nv -0.060924 -0.299545 0.222929\nv -0.118382 -0.380161 0.195303\nv -0.041765 -0.299545 0.271277\nv -0.099233 -0.402157 0.278190\nv -0.041765 0.323439 0.077875\nv 0.006123 0.316124 0.105501\nv -0.070494 0.125556 0.126223\nv 0.006123 0.484697 0.105501\nv 0.015703 0.374745 0.098597\nv 0.054011 0.462702 0.119319\nv 0.015703 0.543318 0.126223\nv 0.063591 0.521348 0.119319\nv -0.003456 0.492012 0.098597\nv -0.032185 0.374745 0.064057\nv -0.108812 0.125556 0.008796\nv -0.118382 0.125556 0.022614\nv -0.060924 0.059595 0.050249\nv -0.099233 0.088906 0.008796\nv -0.041765 0.037600 0.070971\nv -0.070494 0.081591 0.133137\nv -0.041765 0.132897 0.181485\nv 0.044432 0.565313 0.160763\nv 0.015703 0.557973 0.119319\nv -0.041765 0.323439 0.008796\nv 0.044432 0.037600 0.070971\nv 0.044432 0.044940 0.064057\nv 0.025272 0.587309 0.008796\nv 0.015703 0.565313 0.008796\nv 0.044432 0.587309 0.119319\nv 0.044432 -0.123632 0.140041\nv -0.032185 -0.116317 0.112415\nv -0.070494 -0.079667 0.153859\nv -0.041765 -0.021021 0.216025\nv 0.101900 0.609279 0.050249\nv 0.054011 0.616619 0.043336\nv 0.082740 0.601964 0.112415\nv 0.073161 0.565313 0.174581\nv 0.054011 0.616619 0.008796\nv -0.032185 0.382085 0.008796\nv -0.013036 0.484697 0.008796\nv 0.216825 -0.284890 -0.074092\nv 0.168937 -0.284890 -0.101718\nv 0.188096 -0.409472 -0.080996\nv 0.111469 -0.380161 -0.108622\nv 0.168937 -0.284890 -0.143162\nv 0.111469 -0.372846 -0.150066\nv 0.216825 -0.277550 -0.163884\nv 0.188096 -0.394817 -0.191509\nv -0.041765 0.323439 -0.067178\nv 0.006123 0.316124 -0.094814\nv -0.032185 0.110901 -0.143162\nv 0.054011 0.462702 -0.108622\nv 0.015703 0.374745 -0.087900\nv 0.006123 0.484697 -0.094814\nv 0.015703 0.543318 -0.122440\nv 0.063591 0.521348 -0.115536\nv -0.032185 0.374745 -0.060274\nv -0.003456 0.492012 -0.087900\nv -0.118382 0.125556 -0.005012\nv -0.003456 0.030285 -0.067178\nv -0.051345 0.044940 -0.074092\nv 0.015703 0.557973 -0.108622\nv 0.044432 0.565313 -0.163884\nv 0.044432 0.059595 -0.018830\nv 0.044432 0.587309 -0.108622\nv 0.130629 -0.094322 -0.039552\nv 0.063591 -0.116317 -0.067178\nv 0.101900 0.609279 -0.039552\nv 0.082740 0.601964 -0.108622\nv 0.054011 0.616619 -0.039552\nv 0.073161 0.565313 -0.163884\nv 0.101900 -0.702651 -0.191509\nv 0.188096 -0.394817 -0.191509\nv 0.140208 -0.680656 -0.184605\nv 0.235985 -0.409472 -0.156979\nv 0.111469 -0.380161 -0.108622\nv 0.111469 -0.372846 -0.150066\nv 0.044432 -0.680656 -0.129344\nv 0.044432 -0.680656 -0.177701\nv 0.178517 -0.805263 -0.108622\nv 0.101900 -0.805263 -0.108622\nv 0.178517 -0.805263 -0.205327\nv 0.101900 -0.805263 -0.205327\nv 0.235985 -0.805263 -0.108622\nv 0.235985 -0.805263 -0.205327\nv 0.283873 -0.805263 -0.122440\nv 0.283873 -0.805263 -0.191509\nv 0.006123 -0.797923 -0.129344\nv 0.006123 -0.797923 -0.184605\nv 0.178517 -0.731962 -0.191509\nv 0.255134 -0.753957 -0.198423\nv 0.283873 -0.805263 -0.122440\nv 0.283873 -0.805263 -0.191509\nv 0.255134 -0.753957 -0.115536\nv 0.255134 -0.753957 -0.198423\nv 0.140208 -0.680656 -0.184605\nv 0.235985 -0.409472 -0.156979\nv 0.140208 -0.687996 -0.136258\nv 0.245554 -0.416812 -0.115536\nv 0.178517 -0.731962 -0.122440\nv 0.178517 -0.731962 -0.191509\nv 0.006123 -0.797923 -0.129344\nv 0.044432 -0.680656 -0.129344\nv 0.006123 -0.797923 -0.184605\nv 0.044432 -0.680656 -0.177701\nv 0.140208 -0.687996 -0.136258\nv 0.245554 -0.416812 -0.115536\nv 0.101900 -0.702651 -0.122440\nv 0.188096 -0.409472 -0.080996\nv 0.111469 -0.380161 -0.108622\nv 0.044432 -0.680656 -0.129344\nv 0.178517 -0.731962 -0.122440\nv 0.178517 -0.805263 -0.108622\nv 0.255134 -0.753957 -0.115536\nv 0.235985 -0.805263 -0.108622\nv 0.283873 -0.805263 -0.122440\nv 0.101900 -0.805263 -0.108622\nv 0.006123 -0.797923 -0.129344\nv 0.178517 -0.731962 -0.122440\nv 0.255134 -0.753957 -0.115536\nv 0.178517 -0.731962 -0.191509\nv 0.255134 -0.753957 -0.198423\nv -0.233318 -0.695311 0.216025\nv -0.175850 -0.680656 0.243651\nv -0.099233 -0.402157 0.278190\nv -0.041765 -0.438807 0.285094\nv -0.099233 -0.394817 0.160763\nv -0.223738 -0.673341 0.126223\nv -0.118382 -0.380161 0.195303\nv -0.262047 -0.666001 0.167667\nv -0.118382 -0.805263 0.222929\nv -0.185430 -0.790608 0.291998\nv -0.185430 -0.805263 0.160763\nv -0.262047 -0.790608 0.229833\nv -0.089653 -0.805263 0.264373\nv -0.156691 -0.797923 0.333442\nv -0.060924 -0.805263 0.305816\nv -0.108812 -0.797923 0.347260\nv -0.262047 -0.797923 0.112415\nv -0.309935 -0.790608 0.153859\nv -0.175850 -0.724647 0.278190\nv -0.118382 -0.746617 0.340356\nv -0.060924 -0.805263 0.305816\nv -0.060924 -0.761297 0.278190\nv -0.108812 -0.797923 0.347260\nv -0.118382 -0.746617 0.340356\nv -0.175850 -0.680656 0.243651\nv -0.156691 -0.695311 0.209111\nv -0.041765 -0.438807 0.285094\nv -0.013036 -0.446122 0.257468\nv -0.118382 -0.731962 0.222929\nv -0.175850 -0.724647 0.278190\nv -0.262047 -0.797923 0.112415\nv -0.309935 -0.790608 0.153859\nv -0.223738 -0.673341 0.126223\nv -0.262047 -0.666001 0.167667\nv -0.156691 -0.695311 0.209111\nv -0.175850 -0.702651 0.167667\nv -0.013036 -0.446122 0.257468\nv -0.032185 -0.438807 0.195303\nv -0.099233 -0.394817 0.160763\nv -0.223738 -0.673341 0.126223\nv -0.118382 -0.731962 0.222929\nv -0.060924 -0.761297 0.278190\nv -0.118382 -0.805263 0.222929\nv -0.089653 -0.805263 0.264373\nv -0.060924 -0.805263 0.305816\nv -0.185430 -0.805263 0.160763\nv -0.262047 -0.797923 0.112415\nv -0.118382 -0.731962 0.222929\nv -0.175850 -0.724647 0.278190\nv -0.060924 -0.761297 0.278190\nv -0.118382 -0.746617 0.340356\nv 0.140208 0.638614 0.050249\nv 0.121049 0.594624 0.043336\nv 0.140208 0.623959 0.029527\nv 0.140208 0.638614 -0.039552\nv 0.140208 0.623959 -0.018830\nv 0.121049 0.594624 -0.039552\nv 0.101900 0.609279 0.050249\nv 0.101900 0.609279 -0.039552\nv 0.178517 -0.021021 -0.122440\nv 0.274293 -0.284890 -0.143162\nv 0.101900 -0.021021 -0.177701\nv -0.041765 -0.299545 0.271277\nv 0.006123 -0.314200 0.291998\nv -0.041765 -0.021021 0.216025\nv 0.111469 0.132897 -0.101718\nv 0.054011 0.103561 -0.170788\nv 0.054011 -0.050356 0.236747\nv -0.041765 0.132897 0.181485\nv 0.130629 0.579968 0.008796\nv 0.159357 0.616619 0.008796\nv 0.121049 0.506667 0.119319\nv 0.130629 0.528663 0.091693\nv 0.121049 0.557973 0.146945\nv 0.121049 0.565313 -0.094814\nv 0.130629 0.528663 -0.087900\nv 0.121049 0.557973 -0.136258\nv 0.111469 0.396741 0.084779\nv 0.130629 0.396741 0.008796\nv 0.159357 0.404081 0.084779\nv 0.111469 0.396741 -0.080996\nv 0.159357 0.404081 -0.074092\nv 0.054011 0.162207 0.064057\nv 0.073161 0.154867 0.070971\nv 0.054011 0.162207 0.091693\nv 0.063591 0.154867 0.098597\nv 0.073161 0.235508 0.084779\nv 0.082740 0.228168 0.091693\nv 0.073161 0.228168 0.008796\nv 0.101900 0.228168 0.008796\nv 0.063591 0.154867 0.008796\nv 0.073161 0.154867 0.008796\nv 0.063591 0.176862 -0.074092\nv 0.073161 0.162207 -0.087900\nv 0.054011 0.162207 -0.053370\nv 0.073161 0.154867 -0.060274\nv 0.073161 0.235508 -0.074092\nv 0.082740 0.228168 -0.087900\nv -0.003456 0.250163 0.140041\nv -0.003456 0.250163 0.160763\nv -0.032185 0.184202 0.153859\nv -0.032185 0.184202 0.174581\nv -0.003456 0.184202 -0.150066\nv 0.006123 0.184202 -0.170788\nv -0.003456 0.250163 -0.129344\nv -0.003456 0.250163 -0.150066\nv 0.054011 0.110901 0.167667\nv 0.054011 0.081591 0.029527\nv 0.063591 0.081591 0.008796\nv 0.054011 0.081591 -0.025734\nv 0.082740 0.015605 -0.177701\nv 0.025272 0.118216 -0.163884\nv -0.041765 -0.438807 0.285094\nv -0.099233 -0.402157 0.278190\nv -0.013036 -0.446122 0.257468\nv 0.044432 -0.328856 0.264373\nv -0.032185 -0.438807 0.195303\nv 0.015703 -0.321540 0.209111\nv 0.073161 0.286789 0.070971\nv 0.006123 0.316124 0.105501\nv 0.015703 0.374745 0.098597\nv 0.111469 0.433391 0.119319\nv 0.168937 0.492012 0.084779\nv 0.140208 0.470042 0.119319\nv 0.178517 0.440706 0.084779\nv 0.130629 0.418736 0.112415\nv 0.054011 0.462702 0.119319\nv 0.121049 0.557973 0.070971\nv 0.121049 0.572653 0.105501\nv 0.101900 0.074251 0.126223\nv 0.044432 0.059595 0.015710\nv 0.101900 0.352775 0.070971\nv 0.111469 0.352775 0.008796\nv 0.054011 0.059595 0.008796\nv 0.082740 -0.094322 0.195303\nv 0.044432 -0.123632 0.140041\nv 0.082740 0.601964 0.112415\nv 0.044432 0.037600 0.070971\nv 0.063591 0.521348 0.119319\nv 0.073161 0.565313 0.174581\nv 0.178517 0.440706 0.008796\nv 0.168937 0.484697 0.008796\nv 0.130629 0.550658 0.008796\nv 0.140208 0.514007 0.008796\nv 0.044432 0.044940 0.064057\nv 0.082740 0.286789 0.008796\nv 0.159357 0.411396 0.008796\nv 0.235985 -0.409472 -0.156979\nv 0.188096 -0.394817 -0.191509\nv 0.216825 -0.277550 -0.163884\nv 0.245554 -0.416812 -0.115536\nv 0.274293 -0.284890 -0.108622\nv 0.188096 -0.409472 -0.080996\nv 0.216825 -0.284890 -0.074092\nv 0.006123 0.316124 -0.094814\nv 0.073161 0.286789 -0.067178\nv 0.111469 0.433391 -0.108622\nv 0.015703 0.374745 -0.087900\nv 0.178517 0.440706 -0.080996\nv 0.140208 0.470042 -0.115536\nv 0.168937 0.492012 -0.080996\nv 0.130629 0.418736 -0.108622\nv 0.121049 0.506667 -0.115536\nv 0.054011 0.462702 -0.108622\nv 0.121049 0.557973 -0.060274\nv 0.111469 0.110901 -0.032648\nv 0.044432 0.059595 -0.005012\nv 0.101900 0.352775 -0.060274\nv 0.188096 -0.043016 -0.060274\nv 0.130629 -0.094322 -0.039552\nv 0.082740 0.601964 -0.108622\nv 0.044432 0.059595 -0.018830\nv 0.063591 0.521348 -0.115536\nv 0.073161 0.565313 -0.163884\nv 0.101900 0.609279 0.050249\nv 0.140208 0.638614 0.050249\nv 0.168937 0.631274 0.050249\nv 0.178517 0.653270 0.057153\nv 0.159357 0.594624 0.050249\nv 0.168937 0.631274 -0.039552\nv 0.178517 0.660585 -0.046456\nv 0.140208 0.638614 -0.039552\nv 0.159357 0.594624 -0.039552\nv 0.101900 0.609279 -0.039552\nv 0.054011 0.616619 0.043336\nv 0.054011 0.616619 0.140041\nv 0.054011 0.616619 -0.122440\nv 0.054011 0.616619 -0.039552\nv 0.159357 0.763196 0.105501\nv 0.168937 0.799847 0.070971\nv 0.073161 0.792532 0.105501\nv 0.015703 0.748541 -0.080996\nv 0.054011 0.689920 -0.115536\nv -0.013036 0.697235 -0.080996\nv 0.054011 0.689920 0.140041\nv 0.025272 0.653270 0.140041\nv -0.013036 0.697235 0.091693\nv 0.063591 0.741226 0.133137\nv 0.140208 0.733886 0.112415\nv 0.130629 0.704575 -0.101718\nv 0.063591 0.741226 -0.094814\nv 0.140208 0.726546 -0.094814\nv 0.121049 0.667925 0.126223\nv 0.130629 0.704575 0.119319\nv 0.159357 0.660585 0.112415\nv 0.178517 0.689920 0.105501\nv 0.188096 0.741226 0.091693\nv 0.188096 0.711890 0.105501\nv 0.015703 0.748541 0.084779\nv 0.159357 0.594624 0.119319\nv 0.197666 0.755881 0.064057\nv 0.121049 0.667925 -0.108622\nv 0.178517 0.689920 -0.087900\nv 0.168937 0.653270 -0.094814\nv 0.159357 0.763196 -0.087900\nv 0.188096 0.733886 -0.080996\nv 0.073161 0.792532 -0.080996\nv 0.188096 0.711890 -0.080996\nv 0.159357 0.594624 -0.094814\nv 0.197666 0.763196 -0.053370\nv 0.025272 0.653270 -0.122440\nv 0.168937 0.792532 -0.060274\nv 0.197666 0.755881 0.064057\nv 0.226405 0.770536 0.036432\nv 0.168937 0.799847 0.070971\nv 0.073161 0.792532 -0.080996\nv 0.082740 0.836497 0.008796\nv 0.168937 0.792532 -0.039552\nv 0.168937 0.792532 -0.060274\nv 0.188096 0.807187 0.008796\nv 0.226405 0.777851 -0.005012\nv 0.197666 0.763196 -0.032648\nv 0.073161 0.792532 0.105501\nv 0.226405 0.777851 0.008796\nv 0.197666 0.763196 -0.053370\nv -0.013036 0.697235 0.091693\nv -0.041765 0.719231 0.008796\nv -0.013036 0.689920 0.008796\nv 0.025272 0.653270 0.140041\nv 0.015703 0.653270 0.008796\nv 0.054011 0.616619 0.140041\nv 0.054011 0.616619 0.008796\nv -0.013036 0.697235 -0.080996\nv 0.025272 0.653270 -0.122440\nv 0.054011 0.616619 -0.122440\nv 0.015703 0.748541 0.084779\nv 0.015703 0.799847 0.008796\nv 0.073161 0.792532 0.105501\nv 0.082740 0.836497 0.008796\nv 0.015703 0.748541 -0.080996\nv 0.073161 0.792532 -0.080996\nv 0.197666 0.059595 -0.267493\nv 0.197666 0.044940 -0.232953\nv 0.226405 0.000949 -0.253675\nv 0.216825 0.015605 -0.232953\nv 0.140208 0.125556 -0.274397\nv 0.140208 0.044940 -0.288215\nv 0.159357 -0.013706 -0.267493\nv 0.159357 -0.013706 -0.246771\nv 0.130629 0.030285 -0.253675\nv 0.168937 -0.050356 -0.239867\nv 0.168937 -0.050356 -0.246771\nv 0.235985 -0.035676 -0.232953\nv 0.226405 -0.028361 -0.226049\nv 0.121049 0.110901 -0.267493\nv 0.121049 0.103561 -0.246771\nv 0.168937 0.125556 -0.260589\nv 0.159357 -0.013706 -0.246771\nv 0.216825 0.015605 -0.232953\nv 0.197666 0.044940 -0.232953\nv 0.130629 0.030285 -0.253675\nv 0.216825 0.081591 -0.226049\nv 0.235985 0.037600 -0.226049\nv 0.226405 0.030285 -0.226049\nv 0.140208 0.103561 -0.239867\nv 0.226405 -0.028361 -0.226049\nv 0.168937 -0.050356 -0.239867\nv 0.168937 0.118216 -0.239867\nv 0.121049 0.103561 -0.246771\nv 0.283873 0.140212 0.305816\nv 0.312602 0.103561 0.291998\nv 0.283873 0.125556 0.250555\nv 0.312602 0.103561 0.271277\nv 0.235985 0.103561 0.319634\nv 0.197666 0.176862 0.298912\nv 0.274293 0.059595 0.305816\nv 0.255134 0.059595 0.285094\nv 0.235985 0.088906 0.285094\nv 0.293442 0.030285 0.278190\nv 0.293442 0.030285 0.285094\nv 0.350910 0.074251 0.271277\nv 0.341331 0.074251 0.264373\nv 0.188096 0.162207 0.298912\nv 0.188096 0.147552 0.278190\nv 0.226405 0.191517 0.291998\nv 0.283873 0.125556 0.250555\nv 0.312602 0.103561 0.271277\nv 0.255134 0.059595 0.285094\nv 0.293442 0.132897 0.250555\nv 0.235985 0.088906 0.285094\nv 0.283873 0.162207 0.250555\nv 0.303022 0.125556 0.222929\nv 0.303022 0.118216 0.222929\nv 0.216825 0.162207 0.264373\nv 0.341331 0.074251 0.264373\nv 0.293442 0.030285 0.278190\nv 0.226405 0.176862 0.264373\nv 0.188096 0.147552 0.278190\nv 0.178517 0.616619 -0.005012\nv 0.140208 0.623959 -0.018830\nv 0.168937 0.631274 -0.032648\nv 0.178517 0.616619 0.022614\nv 0.168937 0.631274 0.043336\nv 0.140208 0.623959 0.029527\nv 0.188096 0.623959 0.022614\nv 0.178517 0.653270 0.057153\nv 0.178517 0.660585 -0.046456\nv 0.188096 0.623959 -0.018830\nv 0.159357 0.594624 0.050249\nv 0.168937 0.631274 0.050249\nv 0.159357 0.587309 0.070971\nv 0.178517 0.660585 0.070971\nv 0.159357 0.594624 -0.039552\nv 0.159357 0.587309 -0.060274\nv 0.168937 0.631274 -0.039552\nv 0.101900 0.609279 -0.039552\nv 0.054011 0.616619 -0.122440\nv 0.197666 0.660585 -0.025734\nv 0.197666 0.704575 0.036432\nv 0.188096 0.682580 0.057153\nv 0.197666 0.689920 0.036432\nv 0.197666 0.675265 0.036432\nv 0.197666 0.719231 0.043336\nv 0.216825 0.726546 0.015710\nv 0.216825 0.733886 0.022614\nv 0.197666 0.660585 0.022614\nv 0.216825 0.660585 0.015710\nv 0.197666 0.675265 0.015710\nv 0.197666 0.660585 0.022614\nv 0.216825 0.653270 0.015710\nv 0.216825 0.675265 0.015710\nv 0.197666 0.660585 0.036432\nv 0.159357 0.616619 0.008796\nv 0.178517 0.616619 0.008796\nv 0.197666 0.653270 0.015710\nv 0.188096 0.623959 0.008796\nv 0.197666 0.653270 0.008796\nv 0.216825 0.660585 0.008796\nv 0.216825 0.653270 0.008796\nv 0.216825 0.697235 0.015710\nv 0.197666 0.689920 0.015710\nv 0.216825 0.733886 0.008796\nv 0.216825 0.719231 0.008796\nv 0.216825 0.689920 0.008796\nv 0.216825 0.697235 0.008796\nv 0.216825 0.689920 0.008796\nv 0.140208 0.638614 0.050249\nv 0.197666 0.704575 0.050249\nv 0.216825 0.675265 0.008796\nv 0.197666 0.689920 -0.025734\nv 0.188096 0.682580 -0.053370\nv 0.197666 0.704575 -0.025734\nv 0.197666 0.675265 -0.025734\nv 0.216825 0.726546 -0.005012\nv 0.197666 0.726546 -0.039552\nv 0.216825 0.741226 -0.025734\nv 0.197666 0.675265 -0.005012\nv 0.216825 0.660585 0.001892\nv 0.197666 0.660585 -0.005012\nv 0.197666 0.660585 -0.005012\nv 0.216825 0.653270 0.001892\nv 0.216825 0.675265 0.001892\nv 0.197666 0.653270 0.001892\nv 0.216825 0.697235 0.001892\nv 0.197666 0.689920 0.001892\nv 0.216825 0.689920 0.001892\nv 0.140208 0.638614 -0.039552\nv 0.197666 0.704575 -0.046456\nv 0.159357 0.594624 -0.094814\nv 0.178517 0.660585 -0.060274\nv 0.101900 0.609279 0.050249\nv 0.197666 0.689920 -0.060274\nv 0.197666 0.733886 -0.053370\nv 0.197666 0.763196 -0.053370\nv 0.216825 0.748541 -0.025734\nv 0.226405 0.777851 -0.005012\nv 0.226405 0.777851 0.008796\nv 0.188096 0.711890 -0.080996\nv 0.188096 0.733886 -0.080996\nv 0.188096 0.711890 -0.060274\nv 0.197666 0.763196 -0.032648\nv 0.216825 0.733886 0.057153\nv 0.226405 0.770536 0.036432\nv 0.197666 0.755881 0.064057\nv 0.226405 0.741226 0.036432\nv 0.226405 0.748541 0.015710\nv 0.197666 0.711890 0.070971\nv 0.188096 0.711890 0.105501\nv 0.197666 0.689920 0.070971\nv 0.178517 0.689920 0.105501\nv 0.188096 0.741226 0.091693\nv 0.159357 0.660585 0.112415\nv 0.159357 0.594624 0.119319\nv 0.054011 0.616619 0.140041\nv 0.178517 0.689920 -0.087900\nv 0.168937 0.653270 -0.094814\nv 0.101900 0.154867 -0.163884\nv 0.101900 0.154867 -0.205327\nv 0.025272 0.118216 -0.163884\nv -0.013036 0.103561 -0.212231\nv -0.013036 0.096246 -0.170788\nv 0.121049 0.096246 -0.219145\nv 0.121049 0.096246 -0.170788\nv 0.006123 0.044940 -0.219145\nv 0.006123 0.037600 -0.170788\nv 0.044432 -0.043016 -0.226049\nv 0.044432 -0.050356 -0.177701\nv 0.073161 -0.123632 -0.232953\nv 0.082740 -0.123632 -0.191509\nv 0.121049 -0.094322 -0.232953\nv 0.130629 -0.101662 -0.184605\nv 0.111469 -0.013706 -0.226049\nv 0.111469 -0.013706 -0.177701\nv 0.101900 -0.021021 -0.177701\nv 0.082740 0.015605 -0.177701\nv 0.073161 0.000949 -0.177701\nv 0.054011 0.103561 -0.170788\nv 0.025272 0.088906 -0.170788\nv 0.197666 0.059595 -0.267493\nv 0.168937 0.125556 -0.260589\nv 0.216825 0.059595 -0.260589\nv 0.216825 0.088906 -0.253675\nv 0.216825 0.081591 -0.226049\nv 0.168937 0.118216 -0.239867\nv 0.235985 0.037600 -0.226049\nv 0.235985 0.037600 -0.239867\nv 0.226405 0.030285 -0.239867\nv 0.197666 0.044940 -0.232953\nv 0.197666 0.044940 -0.232953\nv 0.226405 0.030285 -0.226049\nv 0.283873 0.140212 0.305816\nv 0.293442 0.147552 0.298912\nv 0.226405 0.191517 0.291998\nv 0.283873 0.169522 0.278190\nv 0.283873 0.162207 0.250555\nv 0.226405 0.176862 0.264373\nv 0.303022 0.125556 0.222929\nv 0.303022 0.125556 0.236747\nv 0.303022 0.118216 0.243651\nv 0.293442 0.132897 0.250555\nv 0.283873 0.125556 0.250555\nv 0.303022 0.118216 0.222929\nvt 0.132813 0.562500\nvt 0.074219 0.558594\nvt 0.125000 0.660156\nvt 0.066406 0.664063\nvt 0.128906 0.441406\nvt 0.074219 0.441406\nvt 0.152344 0.570313\nvt 0.226563 0.570313\nvt 0.171875 0.453125\nvt 0.222656 0.460938\nvt 0.148438 0.652344\nvt 0.234375 0.644531\nvt 0.117188 0.714844\nvt 0.066406 0.718750\nvt 0.101563 0.847656\nvt 0.062500 0.847656\nvt 0.238281 0.695313\nvt 0.156250 0.703125\nvt 0.246094 0.843750\nvt 0.148438 0.843750\nvt 0.019531 0.562500\nvt 0.003906 0.566406\nvt 0.015625 0.656250\nvt 0.000000 0.652344\nvt 0.019531 0.441406\nvt 0.269531 0.457031\nvt 0.292969 0.566406\nvt 0.289063 0.652344\nvt 0.289063 0.441406\nvt 0.031250 0.847656\nvt 0.027344 0.714844\nvt 0.292969 0.839844\nvt 0.292969 0.703125\nvt 0.011719 0.839844\nvt 0.007813 0.703125\nvt 0.128906 0.558594\nvt 0.125000 0.652344\nvt 0.070313 0.554688\nvt 0.066406 0.660156\nvt 0.125000 0.441406\nvt 0.066406 0.437500\nvt 0.152344 0.566406\nvt 0.171875 0.449219\nvt 0.230469 0.566406\nvt 0.226563 0.457031\nvt 0.144531 0.648438\nvt 0.230469 0.640625\nvt 0.117188 0.707031\nvt 0.105469 0.839844\nvt 0.066406 0.710938\nvt 0.066406 0.843750\nvt 0.234375 0.691406\nvt 0.253906 0.835938\nvt 0.156250 0.699219\nvt 0.148438 0.835938\nvt 0.019531 0.554688\nvt 0.019531 0.652344\nvt 0.007813 0.558594\nvt 0.003906 0.648438\nvt 0.019531 0.445313\nvt 0.269531 0.453125\nvt 0.289063 0.562500\nvt 0.289063 0.644531\nvt 0.289063 0.441406\nvt 0.035156 0.839844\nvt 0.027344 0.707031\nvt 0.289063 0.839844\nvt 0.289063 0.699219\nvt 0.007813 0.839844\nvt 0.007813 0.703125\nvt 0.796875 0.328125\nvt 0.785156 0.328125\nvt 0.839844 0.328125\nvt 0.835938 0.328125\nvt 0.839844 0.273438\nvt 0.835938 0.273438\nvt 0.804688 0.273438\nvt 0.792969 0.273438\nvt 0.882813 0.328125\nvt 0.882813 0.328125\nvt 0.882813 0.273438\nvt 0.882813 0.273438\nvt 0.781250 0.328125\nvt 0.769531 0.328125\nvt 0.792969 0.273438\nvt 0.781250 0.273438\nvt 0.960938 0.273438\nvt 0.972656 0.273438\nvt 0.921875 0.273438\nvt 0.929688 0.273438\nvt 0.921875 0.328125\nvt 0.925781 0.328125\nvt 0.968750 0.328125\nvt 0.976563 0.328125\nvt 0.968750 0.273438\nvt 0.980469 0.273438\nvt 0.980469 0.328125\nvt 0.992188 0.328125\nvt 0.984375 0.398438\nvt 0.960938 0.398438\nvt 0.984375 0.378906\nvt 0.980469 0.464844\nvt 0.949219 0.507813\nvt 0.980469 0.484375\nvt 0.863281 0.687500\nvt 0.871094 0.773438\nvt 0.847656 0.683594\nvt 0.847656 0.773438\nvt 0.820313 0.683594\nvt 0.820313 0.769531\nvt 0.804688 0.683594\nvt 0.796875 0.769531\nvt 0.835938 0.234375\nvt 0.816406 0.226563\nvt 0.792969 0.367188\nvt 0.816406 0.113281\nvt 0.820313 0.183594\nvt 0.808594 0.117188\nvt 0.800781 0.070313\nvt 0.800781 0.082031\nvt 0.820313 0.109375\nvt 0.843750 0.191406\nvt 0.882813 0.375000\nvt 0.871094 0.378906\nvt 0.847656 0.394531\nvt 0.882813 0.402344\nvt 0.851563 0.417969\nvt 0.800781 0.398438\nvt 0.777344 0.378906\nvt 0.789063 0.039063\nvt 0.808594 0.062500\nvt 0.882813 0.230469\nvt 0.878906 0.410156\nvt 0.882813 0.410156\nvt 0.882813 0.039063\nvt 0.882813 0.058594\nvt 0.808594 0.035156\nvt 0.875000 0.535156\nvt 0.855469 0.523438\nvt 0.812500 0.507813\nvt 0.785156 0.484375\nvt 0.855469 0.007813\nvt 0.855469 0.003906\nvt 0.812500 0.015625\nvt 0.785156 0.027344\nvt 0.882813 0.003906\nvt 0.882813 0.191406\nvt 0.882813 0.117188\nvt 0.898438 0.687500\nvt 0.914063 0.683594\nvt 0.890625 0.773438\nvt 0.914063 0.773438\nvt 0.941406 0.683594\nvt 0.941406 0.769531\nvt 0.957031 0.683594\nvt 0.964844 0.769531\nvt 0.925781 0.234375\nvt 0.945313 0.226563\nvt 0.968750 0.367188\nvt 0.953125 0.117188\nvt 0.941406 0.183594\nvt 0.945313 0.113281\nvt 0.960938 0.070313\nvt 0.960938 0.082031\nvt 0.917969 0.191406\nvt 0.941406 0.109375\nvt 0.890625 0.378906\nvt 0.910156 0.417969\nvt 0.914063 0.394531\nvt 0.953125 0.062500\nvt 0.972656 0.039063\nvt 0.882813 0.410156\nvt 0.953125 0.035156\nvt 0.886719 0.535156\nvt 0.906250 0.523438\nvt 0.906250 0.007813\nvt 0.949219 0.015625\nvt 0.906250 0.003906\nvt 0.976563 0.027344\nvt 0.953125 0.945313\nvt 0.953125 0.785156\nvt 0.933594 0.929688\nvt 0.929688 0.785156\nvt 0.992188 0.785156\nvt 0.992188 0.785156\nvt 0.984375 0.941406\nvt 0.984375 0.941406\nvt 0.914063 0.996094\nvt 0.953125 0.996094\nvt 0.914063 0.996094\nvt 0.953125 0.996094\nvt 0.890625 0.996094\nvt 0.890625 0.996094\nvt 0.871094 0.996094\nvt 0.871094 0.996094\nvt 0.992188 0.996094\nvt 0.992188 0.996094\nvt 0.914063 0.960938\nvt 0.878906 0.972656\nvt 0.597656 0.855469\nvt 0.656250 0.855469\nvt 0.589844 0.785156\nvt 0.664063 0.785156\nvt 0.726563 0.960938\nvt 0.718750 0.785156\nvt 0.683594 0.960938\nvt 0.687500 0.785156\nvt 0.671875 0.996094\nvt 0.730469 0.996094\nvt 0.257813 0.894531\nvt 0.261719 0.855469\nvt 0.328125 0.894531\nvt 0.324219 0.855469\nvt 0.800781 0.929688\nvt 0.800781 0.789063\nvt 0.824219 0.945313\nvt 0.820313 0.789063\nvt 0.859375 0.789063\nvt 0.851563 0.941406\nvt 0.781250 0.960938\nvt 0.781250 0.996094\nvt 0.746094 0.972656\nvt 0.757813 0.996094\nvt 0.738281 0.996094\nvt 0.824219 0.996094\nvt 0.859375 0.996094\nvt 0.585938 0.871094\nvt 0.582031 0.996094\nvt 0.660156 0.871094\nvt 0.664063 0.996094\nvt 0.953125 0.945313\nvt 0.933594 0.929688\nvt 0.953125 0.785156\nvt 0.929688 0.785156\nvt 0.992188 0.785156\nvt 0.984375 0.941406\nvt 0.992188 0.785156\nvt 0.984375 0.941406\nvt 0.914063 0.996094\nvt 0.914063 0.996094\nvt 0.953125 0.996094\nvt 0.953125 0.996094\nvt 0.890625 0.996094\nvt 0.890625 0.996094\nvt 0.871094 0.996094\nvt 0.871094 0.996094\nvt 0.992188 0.996094\nvt 0.992188 0.996094\nvt 0.914063 0.960938\nvt 0.878906 0.972656\nvt 0.656250 0.855469\nvt 0.664063 0.785156\nvt 0.593750 0.855469\nvt 0.585938 0.785156\nvt 0.679688 0.960938\nvt 0.718750 0.960938\nvt 0.683594 0.785156\nvt 0.714844 0.785156\nvt 0.730469 0.996094\nvt 0.671875 0.996094\nvt 0.328125 0.894531\nvt 0.257813 0.894531\nvt 0.324219 0.855469\nvt 0.261719 0.855469\nvt 0.800781 0.929688\nvt 0.824219 0.945313\nvt 0.800781 0.789063\nvt 0.820313 0.789063\nvt 0.859375 0.789063\nvt 0.851563 0.941406\nvt 0.781250 0.960938\nvt 0.746094 0.972656\nvt 0.781250 0.996094\nvt 0.757813 0.996094\nvt 0.738281 0.996094\nvt 0.824219 0.996094\nvt 0.859375 0.996094\nvt 0.660156 0.867188\nvt 0.585938 0.867188\nvt 0.664063 0.996094\nvt 0.582031 0.996094\nvt 0.621094 0.003906\nvt 0.621094 0.035156\nvt 0.632813 0.011719\nvt 0.671875 0.003906\nvt 0.660156 0.011719\nvt 0.671875 0.035156\nvt 0.621094 0.031250\nvt 0.671875 0.031250\nvt 0.714844 0.515625\nvt 0.707031 0.695313\nvt 0.750000 0.496094\nvt 0.570313 0.691406\nvt 0.585938 0.695313\nvt 0.546875 0.496094\nvt 0.710938 0.402344\nvt 0.750000 0.410156\nvt 0.578125 0.515625\nvt 0.539063 0.390625\nvt 0.648438 0.039063\nvt 0.648438 0.015625\nvt 0.570313 0.093750\nvt 0.589844 0.074219\nvt 0.558594 0.058594\nvt 0.710938 0.054688\nvt 0.703125 0.074219\nvt 0.734375 0.058594\nvt 0.593750 0.167969\nvt 0.648438 0.164063\nvt 0.597656 0.156250\nvt 0.699219 0.167969\nvt 0.695313 0.156250\nvt 0.609375 0.343750\nvt 0.605469 0.343750\nvt 0.593750 0.343750\nvt 0.585938 0.343750\nvt 0.597656 0.289063\nvt 0.589844 0.289063\nvt 0.644531 0.289063\nvt 0.644531 0.289063\nvt 0.648438 0.343750\nvt 0.648438 0.343750\nvt 0.699219 0.343750\nvt 0.707031 0.343750\nvt 0.683594 0.343750\nvt 0.687500 0.343750\nvt 0.699219 0.289063\nvt 0.703125 0.289063\nvt 0.558594 0.289063\nvt 0.546875 0.289063\nvt 0.546875 0.343750\nvt 0.535156 0.343750\nvt 0.746094 0.343750\nvt 0.761719 0.343750\nvt 0.734375 0.289063\nvt 0.750000 0.289063\nvt 0.582031 0.402344\nvt 0.628906 0.402344\nvt 0.648438 0.398438\nvt 0.664063 0.402344\nvt 0.750000 0.472656\nvt 0.750000 0.390625\nvt 0.585938 0.777344\nvt 0.562500 0.773438\nvt 0.613281 0.777344\nvt 0.613281 0.695313\nvt 0.636719 0.777344\nvt 0.628906 0.691406\nvt 0.601563 0.250000\nvt 0.582031 0.242188\nvt 0.585938 0.199219\nvt 0.574219 0.144531\nvt 0.593750 0.089844\nvt 0.570313 0.109375\nvt 0.593750 0.125000\nvt 0.574219 0.148438\nvt 0.574219 0.136719\nvt 0.605469 0.058594\nvt 0.585938 0.054688\nvt 0.628906 0.414063\nvt 0.640625 0.414063\nvt 0.605469 0.199219\nvt 0.648438 0.203125\nvt 0.648438 0.417969\nvt 0.621094 0.535156\nvt 0.640625 0.542969\nvt 0.578125 0.039063\nvt 0.644531 0.425781\nvt 0.566406 0.101563\nvt 0.550781 0.046875\nvt 0.648438 0.125000\nvt 0.648438 0.097656\nvt 0.648438 0.058594\nvt 0.648438 0.082031\nvt 0.648438 0.421875\nvt 0.648438 0.250000\nvt 0.648438 0.152344\nvt 0.707031 0.777344\nvt 0.730469 0.773438\nvt 0.722656 0.691406\nvt 0.683594 0.777344\nvt 0.679688 0.695313\nvt 0.656250 0.777344\nvt 0.664063 0.691406\nvt 0.710938 0.242188\nvt 0.691406 0.250000\nvt 0.718750 0.144531\nvt 0.707031 0.199219\nvt 0.699219 0.125000\nvt 0.722656 0.109375\nvt 0.699219 0.089844\nvt 0.718750 0.148438\nvt 0.722656 0.093750\nvt 0.722656 0.136719\nvt 0.687500 0.058594\nvt 0.667969 0.414063\nvt 0.656250 0.414063\nvt 0.687500 0.199219\nvt 0.671875 0.535156\nvt 0.656250 0.542969\nvt 0.718750 0.039063\nvt 0.648438 0.425781\nvt 0.726563 0.101563\nvt 0.742188 0.046875\nvt 0.394531 0.769531\nvt 0.355469 0.710938\nvt 0.324219 0.710938\nvt 0.320313 0.664063\nvt 0.332031 0.777344\nvt 0.332031 0.710938\nvt 0.324219 0.660156\nvt 0.355469 0.710938\nvt 0.335938 0.773438\nvt 0.394531 0.769531\nvt 0.441406 0.757813\nvt 0.441406 0.757813\nvt 0.441406 0.757813\nvt 0.441406 0.757813\nvt 0.367188 0.500000\nvt 0.359375 0.437500\nvt 0.453125 0.468750\nvt 0.500000 0.558594\nvt 0.453125 0.640625\nvt 0.527344 0.652344\nvt 0.453125 0.640625\nvt 0.480469 0.707031\nvt 0.527344 0.652344\nvt 0.453125 0.562500\nvt 0.367188 0.554688\nvt 0.371094 0.601563\nvt 0.453125 0.562500\nvt 0.367188 0.554688\nvt 0.378906 0.660156\nvt 0.371094 0.589844\nvt 0.339844 0.660156\nvt 0.328125 0.613281\nvt 0.320313 0.527344\nvt 0.320313 0.570313\nvt 0.500000 0.554688\nvt 0.335938 0.769531\nvt 0.308594 0.488281\nvt 0.378906 0.660156\nvt 0.320313 0.609375\nvt 0.335938 0.671875\nvt 0.367188 0.496094\nvt 0.320313 0.531250\nvt 0.453125 0.464844\nvt 0.320313 0.574219\nvt 0.335938 0.773438\nvt 0.316406 0.484375\nvt 0.480469 0.707031\nvt 0.359375 0.449219\nvt 0.359375 0.804688\nvt 0.378906 0.789063\nvt 0.359375 0.875000\nvt 0.445313 0.996094\nvt 0.394531 0.988281\nvt 0.417969 0.871094\nvt 0.433594 0.875000\nvt 0.394531 0.847656\nvt 0.406250 0.789063\nvt 0.414063 0.816406\nvt 0.335938 0.996094\nvt 0.394531 0.789063\nvt 0.429688 0.816406\nvt 0.355469 0.675781\nvt 0.421875 0.648438\nvt 0.421875 0.687500\nvt 0.308594 0.730469\nvt 0.421875 0.734375\nvt 0.312500 0.777344\nvt 0.421875 0.777344\nvt 0.488281 0.675781\nvt 0.527344 0.730469\nvt 0.523438 0.777344\nvt 0.355469 0.585938\nvt 0.421875 0.511719\nvt 0.339844 0.503906\nvt 0.421875 0.437500\nvt 0.492188 0.585938\nvt 0.488281 0.500000\nvt 0.125000 0.992188\nvt 0.117188 0.996094\nvt 0.050781 0.992188\nvt 0.066406 0.996094\nvt 0.246094 0.941406\nvt 0.136719 0.906250\nvt 0.054688 0.910156\nvt 0.070313 0.906250\nvt 0.132813 0.902344\nvt 0.015625 0.910156\nvt 0.007813 0.910156\nvt 0.003906 0.996094\nvt 0.011719 0.996094\nvt 0.246094 0.914063\nvt 0.238281 0.914063\nvt 0.246094 0.972656\nvt 0.324219 0.972656\nvt 0.273438 0.972656\nvt 0.273438 0.953125\nvt 0.324219 0.949219\nvt 0.261719 0.937500\nvt 0.257813 0.964844\nvt 0.261719 0.968750\nvt 0.300781 0.910156\nvt 0.273438 0.996094\nvt 0.320313 0.992188\nvt 0.281250 0.910156\nvt 0.316406 0.910156\nvt 0.128906 0.988281\nvt 0.054688 0.992188\nvt 0.121094 0.996094\nvt 0.066406 0.996094\nvt 0.140625 0.902344\nvt 0.250000 0.941406\nvt 0.058594 0.906250\nvt 0.074219 0.906250\nvt 0.136719 0.902344\nvt 0.019531 0.910156\nvt 0.011719 0.910156\nvt 0.000000 0.992188\nvt 0.007813 0.996094\nvt 0.250000 0.914063\nvt 0.242188 0.914063\nvt 0.250000 0.972656\nvt 0.304688 0.953125\nvt 0.308594 0.972656\nvt 0.257813 0.972656\nvt 0.308594 0.953125\nvt 0.257813 0.949219\nvt 0.316406 0.933594\nvt 0.320313 0.964844\nvt 0.316406 0.964844\nvt 0.281250 0.910156\nvt 0.304688 0.996094\nvt 0.261719 0.996094\nvt 0.296875 0.910156\nvt 0.261719 0.910156\nvt 0.300781 0.363281\nvt 0.304688 0.359375\nvt 0.343750 0.339844\nvt 0.238281 0.363281\nvt 0.195313 0.339844\nvt 0.234375 0.359375\nvt 0.234375 0.335938\nvt 0.171875 0.277344\nvt 0.367188 0.273438\nvt 0.304688 0.335938\nvt 0.187500 0.425781\nvt 0.187500 0.339844\nvt 0.136719 0.429688\nvt 0.136719 0.269531\nvt 0.347656 0.425781\nvt 0.402344 0.425781\nvt 0.347656 0.339844\nvt 0.351563 0.417969\nvt 0.523438 0.402344\nvt 0.324219 0.265625\nvt 0.218750 0.171875\nvt 0.171875 0.210938\nvt 0.214844 0.199219\nvt 0.214844 0.238281\nvt 0.199219 0.132813\nvt 0.246094 0.121094\nvt 0.242188 0.105469\nvt 0.238281 0.253906\nvt 0.257813 0.253906\nvt 0.250000 0.234375\nvt 0.242188 0.265625\nvt 0.253906 0.269531\nvt 0.261719 0.230469\nvt 0.218750 0.265625\nvt 0.269531 0.371094\nvt 0.269531 0.367188\nvt 0.253906 0.273438\nvt 0.269531 0.339844\nvt 0.269531 0.273438\nvt 0.269531 0.253906\nvt 0.269531 0.269531\nvt 0.253906 0.171875\nvt 0.257813 0.195313\nvt 0.269531 0.093750\nvt 0.269531 0.125000\nvt 0.261719 0.195313\nvt 0.269531 0.171875\nvt 0.269531 0.199219\nvt 0.191406 0.339844\nvt 0.187500 0.164063\nvt 0.269531 0.226563\nvt 0.324219 0.199219\nvt 0.375000 0.210938\nvt 0.324219 0.171875\nvt 0.324219 0.238281\nvt 0.300781 0.121094\nvt 0.355469 0.121094\nvt 0.320313 0.082031\nvt 0.289063 0.234375\nvt 0.281250 0.253906\nvt 0.300781 0.253906\nvt 0.296875 0.265625\nvt 0.285156 0.269531\nvt 0.277344 0.230469\nvt 0.285156 0.273438\nvt 0.285156 0.171875\nvt 0.285156 0.195313\nvt 0.277344 0.195313\nvt 0.347656 0.339844\nvt 0.367188 0.160156\nvt 0.468750 0.421875\nvt 0.390625 0.273438\nvt 0.187500 0.414063\nvt 0.394531 0.199219\nvt 0.378906 0.109375\nvt 0.386719 0.042969\nvt 0.324219 0.062500\nvt 0.300781 0.007813\nvt 0.273438 0.003906\nvt 0.445313 0.160156\nvt 0.433594 0.101563\nvt 0.398438 0.152344\nvt 0.335938 0.035156\nvt 0.167969 0.105469\nvt 0.210938 0.015625\nvt 0.152344 0.046875\nvt 0.218750 0.070313\nvt 0.253906 0.054688\nvt 0.148438 0.148438\nvt 0.078125 0.156250\nvt 0.136719 0.191406\nvt 0.074219 0.210938\nvt 0.105469 0.097656\nvt 0.058594 0.273438\nvt 0.042969 0.417969\nvt 0.003906 0.402344\nvt 0.457031 0.207031\nvt 0.460938 0.289063\nvt 0.460938 0.789063\nvt 0.460938 0.789063\nvt 0.531250 0.789063\nvt 0.578125 0.789063\nvt 0.578125 0.789063\nvt 0.457031 0.847656\nvt 0.457031 0.847656\nvt 0.578125 0.847656\nvt 0.578125 0.847656\nvt 0.578125 0.921875\nvt 0.578125 0.921875\nvt 0.578125 0.996094\nvt 0.578125 0.996094\nvt 0.527344 0.992188\nvt 0.527344 0.992188\nvt 0.507813 0.921875\nvt 0.511719 0.921875\nvt 0.527344 0.917969\nvt 0.515625 0.894531\nvt 0.539063 0.894531\nvt 0.515625 0.816406\nvt 0.539063 0.812500\nvt 0.070313 0.859375\nvt 0.250000 0.851563\nvt 0.074219 0.863281\nvt 0.125000 0.863281\nvt 0.125000 0.890625\nvt 0.242188 0.875000\nvt 0.015625 0.902344\nvt 0.011719 0.882813\nvt 0.003906 0.882813\nvt 0.062500 0.894531\nvt 0.058594 0.898438\nvt 0.007813 0.902344\nvt 0.070313 0.859375\nvt 0.070313 0.863281\nvt 0.250000 0.855469\nvt 0.125000 0.867188\nvt 0.125000 0.886719\nvt 0.242188 0.875000\nvt 0.015625 0.902344\nvt 0.011719 0.882813\nvt 0.003906 0.882813\nvt 0.058594 0.894531\nvt 0.058594 0.894531\nvt 0.007813 0.902344\nvn 0.7602 -0.3498 0.5474\nvn -0.1280 -0.3285 0.9358\nvn 0.7190 -0.1646 0.6751\nvn -0.1595 -0.2326 0.9594\nvn 0.8311 -0.2196 0.5108\nvn -0.1659 -0.2419 0.9560\nvn 0.8614 -0.0319 -0.5069\nvn 0.1138 0.2228 -0.9682\nvn 0.7334 0.1578 -0.6612\nvn 0.2893 0.2782 -0.9159\nvn 0.9178 0.0764 -0.3897\nvn 0.1876 0.2141 -0.9586\nvn 0.7188 0.1067 0.6869\nvn -0.1016 -0.2815 0.9542\nvn 0.6837 0.0735 0.7260\nvn -0.0652 -0.3552 0.9325\nvn -0.0033 0.2852 -0.9584\nvn 0.8552 0.4090 -0.3183\nvn 0.0669 0.2323 -0.9703\nvn 0.8176 0.4602 -0.3460\nvn -0.9180 -0.0732 0.3897\nvn -0.9615 0.1046 -0.2542\nvn -0.8768 -0.3823 0.2915\nvn -0.9772 -0.1521 -0.1477\nvn -0.4634 -0.1932 0.8648\nvn -0.4140 0.3814 -0.8265\nvn -0.3170 0.2594 -0.9122\nvn -0.2212 0.1811 -0.9583\nvn -0.8464 0.3507 -0.4006\nvn -0.6776 -0.5475 0.4909\nvn -0.8064 -0.5041 0.3092\nvn -0.3391 0.0001 -0.9407\nvn -0.3611 0.0852 -0.9286\nvn -0.8716 -0.4551 -0.1822\nvn -0.8484 -0.4143 -0.3294\nvn 0.7949 -0.4012 -0.4551\nvn 0.8157 -0.1003 -0.5696\nvn -0.0348 -0.3975 -0.9169\nvn -0.0921 -0.3680 -0.9252\nvn 0.7987 -0.2759 -0.5347\nvn -0.1844 -0.2980 -0.9366\nvn 0.8125 0.0013 0.5829\nvn 0.7600 0.1576 0.6305\nvn -0.0131 0.2526 0.9674\nvn 0.0795 0.3171 0.9450\nvn 0.6147 0.3073 0.7264\nvn -0.1398 0.3041 0.9423\nvn 0.6279 0.3483 -0.6959\nvn 0.5862 0.1966 -0.7859\nvn 0.0393 -0.3264 -0.9444\nvn 0.0842 -0.3683 -0.9259\nvn -0.1300 0.3887 0.9121\nvn -0.0764 0.2725 0.9591\nvn 0.5650 0.7292 0.3860\nvn 0.6070 0.7038 0.3690\nvn -0.8097 -0.1939 -0.5539\nvn -0.8057 -0.5923 -0.0064\nvn -0.9999 -0.0052 0.0091\nvn -0.9076 -0.1799 0.3793\nvn -0.3996 -0.2484 -0.8824\nvn -0.5847 0.3892 0.7118\nvn -0.4422 0.3047 0.8436\nvn -0.3750 0.2058 0.9039\nvn -0.8130 0.4047 0.4185\nvn -0.4793 -0.8010 -0.3587\nvn -0.5770 -0.7065 -0.4097\nvn -0.2001 0.1307 0.9710\nvn -0.3816 0.0640 0.9221\nvn -0.6464 -0.6319 0.4276\nvn -0.7624 -0.6085 0.2200\nvn -0.5082 -0.7667 0.3923\nvn -0.6194 -0.4994 0.6057\nvn -0.5276 -0.8441 0.0954\nvn -0.8707 -0.4683 0.1502\nvn -0.3216 0.9341 0.1549\nvn -0.4909 0.8469 0.2044\nvn -0.0308 0.8996 0.4356\nvn -0.1849 0.7599 0.6231\nvn -0.7638 -0.6455 -0.0051\nvn -0.8261 -0.5635 0.0000\nvn 0.0134 0.9981 -0.0594\nvn -0.2972 0.9532 -0.0547\nvn -0.6127 -0.6386 0.4656\nvn -0.3790 -0.3594 0.8527\nvn 0.1493 0.8929 0.4247\nvn 0.0053 0.7521 0.6590\nvn -0.0612 0.9064 -0.4179\nvn -0.2850 0.7201 -0.6326\nvn -0.3397 0.9296 -0.1426\nvn -0.4991 0.8208 -0.2779\nvn -0.5240 -0.8484 -0.0751\nvn -0.8715 -0.4401 -0.2163\nvn -0.4118 -0.8555 -0.3139\nvn -0.3471 -0.7405 -0.5755\nvn 0.1949 0.8926 -0.4065\nvn -0.0251 0.6442 -0.7644\nvn 0.0128 -0.8325 -0.5538\nvn -0.1399 -0.3302 -0.9335\nvn -0.7462 -0.0369 -0.6647\nvn -0.6431 -0.4073 -0.6485\nvn -0.4835 -0.0396 -0.8744\nvn -0.4738 -0.2889 -0.8319\nvn -0.7806 -0.3774 -0.4982\nvn -0.3383 -0.3121 -0.8878\nvn 0.1903 -0.1654 -0.9677\nvn 0.4010 0.0291 -0.9156\nvn -0.2621 0.0149 -0.9649\nvn -0.0154 0.3762 -0.9264\nvn -0.9539 0.2946 -0.0560\nvn -0.7617 0.6139 -0.2071\nvn -0.8908 0.2871 0.3522\nvn -0.8191 0.4772 0.3183\nvn -0.7858 0.4142 0.4593\nvn -0.3694 0.3983 0.8396\nvn -0.9217 -0.0580 0.3834\nvn -0.5120 -0.1481 0.8461\nvn -0.5248 0.0484 0.8498\nvn -0.2411 -0.1199 0.9631\nvn -0.7615 0.1082 0.6390\nvn 0.1329 -0.0217 0.9909\nvn -0.8949 0.0918 0.4366\nvn -0.8968 0.1860 0.4013\nvn -0.9910 -0.1337 0.0002\nvn -0.9652 -0.2613 0.0014\nvn -0.8511 -0.2533 0.4598\nvn -0.7260 -0.6853 0.0571\nvn -0.5263 -0.6169 -0.5851\nvn -0.9889 -0.0405 0.1427\nvn -0.8842 0.2046 0.4198\nvn -0.4253 0.7813 0.4568\nvn -0.8570 0.4503 0.2505\nvn -0.9209 0.3897 0.0013\nvn 0.0241 -0.5648 -0.8248\nvn -0.0418 -0.8320 -0.5532\nvn -0.8351 0.5501 0.0041\nvn -0.9192 0.3937 0.0023\nvn -0.5175 0.7995 0.3050\nvn 0.2343 -0.3424 -0.9098\nvn -0.2960 -0.2939 -0.9088\nvn -0.9857 -0.0383 -0.1638\nvn -0.9307 0.0771 0.3574\nvn 0.1278 0.9796 0.1547\nvn -0.7470 0.6586 0.0910\nvn -0.1887 0.9219 0.3384\nvn -0.2300 0.8572 0.4608\nvn -0.7645 0.6446 0.0025\nvn -0.9840 0.1780 0.0020\nvn -0.9635 0.2676 0.0038\nvn -0.4944 -0.1446 0.8571\nvn -0.7855 -0.1165 0.6078\nvn -0.3601 0.0989 0.9276\nvn -0.6983 0.3976 0.5952\nvn -0.7611 0.0667 -0.6451\nvn -0.7523 0.5230 -0.4005\nvn -0.4125 0.0531 -0.9094\nvn -0.3910 0.3126 -0.8657\nvn -0.7923 0.4006 -0.4601\nvn -0.3694 0.3984 -0.8395\nvn -0.5608 -0.2379 -0.7930\nvn -0.2616 -0.1675 -0.9505\nvn -0.4689 0.0264 -0.8828\nvn -0.5179 -0.1747 -0.8374\nvn -0.8115 0.1547 -0.5634\nvn 0.0828 -0.1300 -0.9880\nvn -0.8711 0.1608 -0.4640\nvn -0.9059 0.0923 -0.4133\nvn -0.9695 -0.2282 0.0891\nvn -0.5650 -0.7881 0.2441\nvn -0.5817 -0.7771 -0.2405\nvn -0.8606 0.4779 -0.1762\nvn -0.3155 0.8698 -0.3793\nvn -0.3361 -0.8348 0.4360\nvn -0.5384 0.7938 -0.2827\nvn -0.3406 -0.2907 0.8941\nvn -0.7299 -0.4269 0.5337\nvn 0.1499 0.9780 -0.1451\nvn -0.2328 0.9026 -0.3619\nvn -0.7227 0.6843 -0.0966\nvn -0.1135 0.9014 -0.4178\nvn -0.0613 0.1001 -0.9931\nvn 0.0714 0.0296 -0.9970\nvn 0.1736 0.0377 -0.9841\nvn 0.5580 -0.1133 -0.8220\nvn -0.9758 0.2151 0.0379\nvn -0.8338 0.2298 -0.5018\nvn -0.9770 0.2130 0.0031\nvn -0.5599 0.1658 -0.8118\nvn 0.0000 -1.0000 0.0000\nvn -0.0354 -0.9994 0.0000\nvn 0.0000 -0.6382 -0.7698\nvn -0.0899 -0.6390 -0.7639\nvn 0.0719 -0.6342 -0.7698\nvn 0.1381 -0.8671 -0.4786\nvn -0.0764 -0.9971 0.0000\nvn -0.1923 -0.7613 -0.6193\nvn 0.0183 0.1640 -0.9863\nvn 0.0759 0.1051 -0.9915\nvn 0.8724 0.4887 0.0000\nvn 0.9903 0.1374 0.0208\nvn 0.9110 -0.3315 -0.2452\nvn 0.9719 0.2352 -0.0080\nvn 0.9049 -0.3311 -0.2676\nvn 0.7539 0.6569 0.0000\nvn 0.7776 0.6274 0.0399\nvn -0.9506 0.3105 0.0000\nvn 0.3150 0.0691 0.9466\nvn 0.4682 -0.2557 0.8458\nvn 0.0115 0.0557 0.9984\nvn 0.0736 -0.1607 0.9842\nvn -0.3218 -0.0310 0.9463\nvn -0.1208 -0.0040 0.9926\nvn 0.0266 0.2047 0.9785\nvn -0.0110 0.1755 0.9844\nvn 0.0918 0.1138 0.9892\nvn 0.1072 0.0934 0.9898\nvn 0.2771 0.0260 0.9604\nvn -0.0838 0.1462 0.9857\nvn -0.1671 0.0969 0.9811\nvn 0.2759 0.9611 0.0000\nvn -0.6632 0.2755 0.6959\nvn -0.4551 0.2367 0.8584\nvn -0.6224 0.1908 0.7590\nvn -0.1666 -0.0761 0.9831\nvn -0.7230 0.3936 -0.5678\nvn -0.6488 0.3874 -0.6550\nvn -0.8854 0.4461 -0.1306\nvn -0.9030 0.3747 0.2103\nvn -0.1091 -0.9915 0.0705\nvn -0.6417 -0.5594 0.5246\nvn -0.1125 -0.9896 0.0891\nvn -0.6440 -0.5130 0.5674\nvn -0.0652 -0.9962 0.0566\nvn -0.5402 -0.5271 0.6559\nvn -0.0951 -0.9933 0.0660\nvn -0.1849 -0.7963 0.5759\nvn -0.1174 -0.9911 0.0617\nvn -0.6125 -0.6897 0.3861\nvn -0.6184 0.3414 0.7078\nvn -0.4968 0.2593 0.8282\nvn 0.6314 0.4125 0.6565\nvn 0.6848 0.3299 0.6497\nvn 0.7088 0.2878 0.6440\nvn 0.7415 0.2234 0.6326\nvn 0.8526 -0.0961 0.5137\nvn 0.7936 0.1743 0.5829\nvn 0.5651 -0.4567 0.6870\nvn 0.5544 -0.4548 0.6970\nvn 0.5262 0.7204 0.4519\nvn 0.7123 0.5528 0.4323\nvn -0.6063 0.2694 -0.7482\nvn -0.6224 0.2857 -0.7287\nvn -0.6482 0.3129 -0.6941\nvn -0.6635 0.3294 -0.6717\nvn 0.9004 0.0717 -0.4290\nvn 0.6962 -0.0827 -0.7130\nvn 0.8478 -0.4288 -0.3121\nvn 0.6858 -0.3042 -0.6611\nvn 0.4230 -0.1254 -0.8974\nvn 0.5999 -0.1348 -0.7886\nvn 0.7084 0.0789 -0.7013\nvn 0.7579 -0.2176 -0.6149\nvn 0.7082 -0.0578 -0.7036\nvn 0.7737 -0.3370 -0.5364\nvn 0.6086 -0.0003 -0.7935\nvn 0.5665 -0.0350 -0.8233\nvn 0.2985 0.9360 0.1865\nvn 0.3016 0.9457 0.1208\nvn 0.3017 0.9461 0.1177\nvn 0.3033 0.9512 0.0557\nvn 0.6810 -0.3936 0.6175\nvn 0.8904 0.0312 0.4541\nvn 0.7845 -0.4266 0.4501\nvn 0.7152 -0.3115 -0.6256\nvn 0.8288 -0.4210 -0.3685\nvn 0.8604 0.1393 -0.4902\nvn 0.5745 0.4454 0.6866\nvn 0.4383 0.4834 -0.7577\nvn 0.8267 0.3753 -0.4192\nvn 0.8620 0.0831 -0.5001\nvn 0.5511 0.2747 -0.7879\nvn -0.3330 0.2111 0.9190\nvn 0.1964 0.0451 0.9795\nvn -0.1521 0.2187 0.9638\nvn 0.7521 0.6400 -0.1573\nvn 0.4548 0.5887 -0.6682\nvn 0.4460 0.1910 0.8744\nvn 0.1662 0.3858 0.9075\nvn 0.9779 -0.2037 0.0463\nvn 0.7856 -0.6157 0.0605\nvn 0.5386 0.1409 0.8307\nvn 0.9114 0.3700 0.1802\nvn 0.7805 0.5256 0.3384\nvn 0.8909 0.4428 -0.1013\nvn 0.9053 0.3806 -0.1883\nvn 0.8010 0.5164 -0.3027\nvn 0.3534 -0.7324 0.5819\nvn 0.6607 -0.7506 0.0075\nvn 0.5803 -0.7271 0.3668\nvn 0.3074 -0.7336 -0.6060\nvn 0.5895 -0.7454 -0.3113\nvn 0.5747 -0.8162 0.0600\nvn 0.4874 -0.8615 0.1422\nvn 0.4552 -0.8863 -0.0841\nvn 0.3518 -0.8567 0.3772\nvn 0.7548 0.5995 0.2662\nvn 0.8276 0.3716 0.4207\nvn 0.7280 0.6847 0.0330\nvn 0.8403 0.5408 0.0363\nvn 0.6603 -0.7488 0.0571\nvn 0.5470 -0.8365 0.0319\nvn -0.3601 0.9285 -0.0904\nvn 0.3706 -0.8036 -0.4657\nvn 0.5850 -0.7209 0.3716\nvn 0.4223 -0.8868 -0.1877\nvn 0.6985 0.6476 -0.3045\nvn 0.7944 0.3912 -0.4646\nvn 0.3923 0.8510 0.3491\nvn 0.6214 0.3448 0.7036\nvn 0.0150 -0.6222 0.7826\nvn 0.3481 -0.6393 0.6856\nvn 0.3521 -0.7275 -0.5888\nvn 0.7040 -0.4225 -0.5708\nvn 0.4250 0.8234 -0.3760\nvn 0.6488 0.5857 -0.4858\nvn 0.6131 0.5132 0.6006\nvn 0.9971 -0.0675 0.0351\nvn 0.9778 -0.1950 0.0766\nvn 0.6849 0.5793 0.4420\nvn 0.5549 0.2575 -0.7911\nvn 0.4231 0.5535 -0.7173\nvn 0.2978 -0.1665 0.9400\nvn -0.1732 0.0531 0.9834\nvn 0.8714 -0.4102 0.2689\nvn 0.9230 -0.2452 0.2965\nvn 0.8563 -0.3706 -0.3598\nvn 0.8343 -0.2854 -0.4715\nvn 0.8354 -0.0892 0.5423\nvn 0.4518 0.1382 0.8813\nvn 0.2216 -0.1678 0.9606\nvn 0.0462 -0.2969 0.9538\nvn 0.8407 0.4414 0.3137\nvn 0.4196 0.0432 0.9066\nvn 0.9030 -0.1654 0.3965\nvn 0.2105 -0.5205 0.8275\nvn -0.0431 -0.0844 0.9955\nvn 0.9842 0.1755 0.0222\nvn 0.8627 0.4843 0.1458\nvn 0.9533 0.2948 -0.0644\nvn 0.8839 0.2019 0.4218\nvn 0.7495 -0.3153 0.5821\nvn 0.9258 -0.3778 0.0099\nvn 0.7190 -0.6933 0.0485\nvn 0.9899 -0.1256 0.0660\nvn 0.8514 -0.2425 -0.4650\nvn 0.5611 0.7526 0.3446\nvn 0.6920 -0.5643 -0.4501\nvn 0.0000 0.0000 1.0000\nvn 0.4099 0.7567 0.5093\nvn 0.9824 -0.1865 -0.0003\nvn 0.8834 0.4686 -0.0030\nvn 0.9873 0.1583 0.0109\nvn 0.8469 0.5317 -0.0002\nvn -0.9999 -0.0037 0.0124\nvn 0.9587 -0.2840 0.0118\nvn 0.6870 -0.7266 -0.0025\nvn 0.7933 -0.1794 -0.5818\nvn 0.5112 -0.0230 -0.8591\nvn 0.3501 0.1181 -0.9292\nvn 0.8747 -0.2462 0.4174\nvn 0.8921 0.0185 0.4515\nvn 0.4987 -0.1559 0.8526\nvn 0.5147 -0.0345 0.8567\nvn 0.4121 0.1706 -0.8950\nvn 0.8150 -0.0620 -0.5761\nvn -0.1004 -0.2782 -0.9552\nvn 0.2037 -0.1713 -0.9639\nvn 0.8815 -0.1993 -0.4281\nvn 0.3605 0.0107 -0.9327\nvn 0.8406 0.4389 -0.3172\nvn 0.1691 -0.4929 -0.8535\nvn 0.5026 0.1089 -0.8576\nvn -0.0639 -0.1389 -0.9882\nvn 0.9845 0.1719 -0.0342\nvn 0.3461 0.6709 0.6558\nvn 0.3024 0.5530 -0.7764\nvn 0.7616 -0.3394 -0.5520\nvn 0.7807 0.2368 0.5783\nvn 0.3579 -0.0001 0.9337\nvn 0.6377 0.6973 -0.3272\nvn 0.5931 -0.5969 0.5403\nvn -0.0287 -0.1124 -0.9932\nvn 0.4273 0.7176 -0.5500\nvn -0.1217 -0.7939 -0.5957\nvn 0.0154 0.0603 -0.9980\nvn 0.0367 0.1436 -0.9890\nvn 0.0693 0.2712 -0.9600\nvn 0.0000 0.0000 -1.0000\nvn 0.0278 0.1090 0.9936\nvn 0.0542 0.2121 0.9757\nvn 0.0141 0.0552 0.9984\nvn -0.1144 -0.7468 0.6550\nvn -0.1515 -0.9884 0.0000\nvn 0.1123 -0.1951 0.9743\nvn 0.1331 -0.1733 -0.9758\nvn 0.4219 0.3391 0.8408\nvn 0.4927 0.5250 0.6940\nvn -0.1026 0.5268 0.8437\nvn -0.3009 0.3028 -0.9043\nvn -0.0777 0.2754 -0.9582\nvn -0.4081 0.3114 -0.8581\nvn -0.1505 0.1882 0.9705\nvn -0.2378 0.1864 0.9532\nvn -0.5096 0.3919 0.7660\nvn -0.2247 0.3064 0.9250\nvn 0.2787 0.1176 0.9531\nvn 0.1991 0.1937 -0.9606\nvn -0.0801 0.3211 -0.9436\nvn 0.1694 0.1603 -0.9724\nvn 0.2669 0.0652 0.9615\nvn 0.2644 0.0975 0.9594\nvn 0.3325 0.0752 0.9401\nvn 0.2641 -0.0454 0.9634\nvn 0.5252 0.4053 0.7483\nvn 0.2750 0.1733 0.9457\nvn -0.5818 0.3757 0.7213\nvn 0.2547 0.0421 0.9661\nvn 0.6949 0.4467 0.5635\nvn 0.2218 0.0567 -0.9734\nvn 0.3112 0.1291 -0.9415\nvn 0.2842 0.0255 -0.9584\nvn 0.3025 0.3713 -0.8778\nvn 0.4120 0.1750 -0.8942\nvn -0.0340 0.3407 -0.9395\nvn 0.2991 0.0811 -0.9507\nvn 0.2520 -0.0504 -0.9664\nvn 0.6033 0.4336 -0.6693\nvn -0.0937 0.2548 -0.9624\nvn 0.4076 0.5519 -0.7274\nvn 0.5930 0.2681 0.7592\nvn 0.6168 0.6702 0.4127\nvn 0.2347 0.9300 0.2829\nvn 0.1676 0.9065 -0.3874\nvn 0.2510 0.9680 -0.0008\nvn 0.4053 0.8681 -0.2864\nvn 0.3409 0.9401 0.0000\nvn 0.4092 0.9113 -0.0460\nvn 0.5836 0.7463 -0.3201\nvn 0.6803 0.5531 -0.4808\nvn 0.1611 0.9293 0.3323\nvn 0.6044 0.7893 0.1082\nvn 0.7144 0.6997 0.0000\nvn -0.9366 -0.2862 0.2021\nvn -0.9998 0.0123 0.0113\nvn -0.7531 -0.6578 0.0022\nvn -0.7715 -0.6356 0.0274\nvn -0.7465 -0.6653 0.0099\nvn -0.7869 -0.6170 0.0000\nvn -0.7022 -0.7117 0.0197\nvn -0.9480 -0.2561 -0.1890\nvn -0.7831 -0.6192 -0.0571\nvn -0.7643 -0.6434 -0.0434\nvn -0.7163 0.6031 0.3509\nvn -0.6364 0.7708 0.0292\nvn -0.6445 0.7181 0.2626\nvn -0.5538 0.8326 0.0077\nvn -0.7337 0.6016 -0.3158\nvn -0.5783 0.7554 -0.3081\nvn 0.5457 0.1324 -0.8274\nvn 0.8592 0.4857 0.1604\nvn 0.8178 0.0704 -0.5712\nvn 0.8690 0.4860 0.0925\nvn 0.0643 0.2124 -0.9750\nvn -0.3947 -0.1594 -0.9049\nvn -0.4193 -0.5098 -0.7512\nvn -0.9206 -0.3905 0.0000\nvn -0.8964 -0.3057 -0.3209\nvn -0.4196 -0.9055 0.0627\nvn -0.3883 -0.8000 -0.4574\nvn 0.8218 -0.5638 0.0820\nvn 0.4717 -0.1940 0.8601\nvn -0.7909 -0.0379 -0.6107\nvn -0.9662 -0.2083 -0.1520\nvn 0.4168 0.2723 -0.8672\nvn -0.2701 0.0233 0.9626\nvn -0.2239 -0.0132 0.9745\nvn -0.2180 -0.0620 0.9740\nvn -0.2820 -0.0959 0.9546\nvn -0.2598 -0.0458 0.9645\nvn -0.1695 0.0411 0.9846\nvn -0.1401 0.1835 0.9730\nvn -0.2156 -0.0621 0.9745\nvn -0.2662 0.0927 0.9594\nvn -0.2765 0.1006 0.9557\nvn -0.1106 0.0503 0.9926\nvn -0.3360 -0.1318 0.9326\nvn 0.4436 0.3271 0.8343\nvn 0.7035 0.3826 0.5989\nvn 0.7112 0.6916 -0.1259\nvn 0.6073 0.7935 -0.0368\nvn -0.3624 -0.3090 0.8793\nvn -0.0595 0.2505 0.9663\nvn -0.0595 -0.4741 0.8784\nvn -0.6291 -0.5439 0.5553\nvn -0.7185 -0.6128 0.3288\nvn 0.0808 -0.9961 -0.0341\nvn 0.0845 -0.8749 0.4769\nvn 0.9987 -0.0497 0.0108\nvn 0.5843 -0.0378 -0.8107\nvn -0.5400 -0.1483 0.8285\nvn -0.7779 -0.5323 0.3338\nvn 0.0620 0.3237 0.9441\nvn -0.6297 0.5485 -0.5500\nvn -0.0406 -0.2692 -0.9622\nvn -0.2156 -0.2247 -0.9503\nvn -0.7537 -0.1625 -0.6367\nvn -0.3667 -0.2821 -0.8865\nvn -0.4436 -0.1448 -0.8844\nvn -0.9481 -0.0779 -0.3081\nvn -0.9448 0.0000 -0.3276\nvn -0.2330 -0.1760 -0.9564\nvn -0.2567 -0.0240 -0.9662\nvn -0.2224 -0.0338 -0.9744\nvn -0.1619 0.0627 -0.9848\nvn -0.2692 -0.3265 -0.9060\nvn 0.2408 -0.9547 -0.1748\nvn -0.0597 -0.8906 -0.4508\nvn 0.1346 -0.6835 -0.7174\nvn 0.2852 -0.9023 0.3232\nvn 0.1752 -0.6999 0.6923\nvn -0.0876 -0.8714 0.4826\nvn 0.7588 -0.5828 0.2907\nvn 0.8310 -0.3794 0.4069\nvn 0.8184 -0.4302 -0.3809\nvn 0.6172 -0.6760 -0.4025\nvn 0.5637 -0.7789 -0.2749\nvn 0.9232 -0.3089 -0.2286\nvn 0.4611 -0.8826 -0.0913\nvn 0.9216 -0.3201 0.2194\nvn 0.5168 -0.8288 0.2146\nvn 0.4195 -0.9004 0.1155\nvn 0.9626 -0.2596 0.0778\nvn -0.2467 -0.9674 0.0569\nvn -0.2505 -0.9680 0.0145\nvn 0.9185 -0.1462 -0.3674\nvn 0.9196 -0.2051 0.3349\nvn 0.9265 -0.3715 0.0589\nvn 0.9767 0.0000 0.2146\nvn 0.9615 -0.0458 0.2709\nvn 0.8928 -0.4347 0.1177\nvn 0.9692 -0.0982 0.2257\nvn 0.7580 -0.6405 0.1227\nvn 0.4863 0.1144 0.8662\nvn 0.7891 0.0596 0.6113\nvn 0.7309 0.1535 0.6650\nvn 0.4543 -0.2556 0.8533\nvn 0.6335 -0.6068 0.4800\nvn 0.6610 0.1640 0.7322\nvn 0.9197 -0.1568 0.3598\nvn -0.1004 -0.9948 0.0177\nvn 0.3211 -0.9470 0.0000\nvn 0.6696 -0.6762 0.3072\nvn 0.8160 -0.5780 0.0000\nvn 0.5872 -0.8094 0.0000\nvn 1.0000 0.0000 0.0000\nvn 0.7071 -0.7071 0.0000\nvn 0.8086 -0.3375 0.4819\nvn 0.7427 -0.3182 0.5891\nvn 0.9673 -0.2422 -0.0753\nvn 0.3041 -0.0898 0.9484\nvn 0.7071 0.0000 0.7071\nvn -0.0219 -0.7296 0.6835\nvn 0.9837 -0.1754 -0.0394\nvn 1.0000 0.0000 0.0001\nvn 0.9861 0.0000 -0.1659\nvn 0.8996 -0.2462 0.3606\nvn 0.9330 -0.2190 -0.2855\nvn 0.9665 -0.0641 -0.2484\nvn 0.9688 -0.1308 -0.2102\nvn 0.8775 -0.3505 -0.3272\nvn 0.9199 -0.2181 -0.3258\nvn 0.8329 0.0713 -0.5488\nvn 0.8182 0.0000 -0.5749\nvn 0.7843 0.0000 0.6204\nvn 0.7349 -0.3871 0.5568\nvn 0.6335 -0.6068 -0.4800\nvn 0.6913 -0.6694 -0.2721\nvn 0.8712 -0.2042 -0.4465\nvn 0.6431 -0.1571 -0.7495\nvn 0.7438 0.0642 -0.6652\nvn -0.0011 -0.6875 -0.7262\nvn 0.9854 -0.0516 -0.1620\nvn 0.5367 -0.8175 -0.2087\nvn 0.9241 -0.3561 -0.1383\nvn -0.3111 -0.9408 -0.1346\nvn 0.9700 -0.2339 -0.0663\nvn 0.9062 -0.2256 -0.3577\nvn 0.8919 0.2386 -0.3841\nvn 0.8984 0.1111 -0.4249\nvn 0.9648 -0.1802 -0.1912\nvn 0.9913 -0.0991 -0.0867\nvn 0.9784 0.0353 -0.2037\nvn 0.9684 -0.1083 -0.2243\nvn 0.9660 0.1070 -0.2353\nvn 0.6456 0.7009 -0.3032\nvn 0.8848 -0.2777 0.3741\nvn 0.9603 0.0685 0.2705\nvn 0.6763 0.3937 0.6225\nvn 0.9124 -0.3892 0.1269\nvn 0.9644 -0.2286 -0.1328\nvn 0.9431 -0.3101 0.1194\nvn 0.8809 -0.1564 0.4466\nvn 0.9356 -0.3431 0.0834\nvn 0.8037 -0.4219 0.4196\nvn 0.7585 0.3330 0.5601\nvn 0.8959 -0.1606 0.4142\nvn 0.5238 -0.8217 0.2246\nvn -0.2641 -0.9644 0.0064\nvn 0.8480 -0.2879 -0.4449\nvn 0.9575 -0.1763 -0.2282\nvn 0.3208 0.7170 0.6188\nvn 0.3252 0.8052 -0.4959\nvn -0.3058 0.6119 0.7294\nvn -0.7421 0.3893 -0.5455\nvn -0.7776 0.2102 0.5925\nvn 0.7008 0.1752 -0.6915\nvn 0.7473 0.0372 0.6634\nvn -0.6723 -0.1732 -0.7197\nvn -0.6518 -0.2862 0.7022\nvn -0.6531 -0.2336 -0.7203\nvn -0.6185 -0.3769 0.6894\nvn -0.3793 -0.7339 -0.5634\nvn -0.2319 -0.8239 0.5170\nvn 0.6583 -0.2512 -0.7096\nvn 0.7516 -0.4047 0.5207\nvn 0.6718 0.0656 -0.7378\nvn 0.6427 -0.0547 0.7642\nvn 0.9466 0.3219 -0.0186\nvn 0.8538 0.4391 0.2795\nvn -0.0747 -0.1423 0.9870\nvn 0.1160 -0.1001 0.9882\nvn -0.0789 -0.1010 0.9917\nvn 0.3258 -0.2763 -0.9041\nvn 0.6155 0.7803 -0.1105\nvn 0.5669 -0.3163 -0.7606\nvn 0.7247 0.5430 -0.4243\nvn 0.7992 0.5810 0.1538\nvn 0.5576 0.7877 0.2618\nvn 0.9628 -0.2693 0.0197\nvn 0.8207 -0.2756 -0.5005\nvn -0.2276 -0.8491 -0.4766\nvn -0.2655 -0.8096 0.5234\nvn 0.0534 -0.3494 0.9354\nvn 0.0141 -0.9715 -0.2364\nvn 0.6005 -0.0314 0.7990\nvn 0.8385 0.0621 0.5413\nvn 0.3106 0.9415 -0.1309\nvn 0.6044 0.7917 0.0892\nvn 0.6477 0.7365 -0.1950\nvn 0.2114 0.8884 -0.4074\nvn 0.9846 0.1737 -0.0156\nvn 0.9771 0.2044 0.0587\nvn 0.1565 -0.7703 0.6182\nvn -0.1191 -0.9502 0.2879\nvn 0.6075 -0.7614 0.2261\nvn 0.9644 -0.2600 0.0467\nusemtl cbabe\ns 1\nf 1/1/1 2/2/2 3/3/3\nf 2/2/2 4/4/4 3/3/3\nf 1/1/1 5/5/5 2/2/2\nf 5/5/5 6/6/6 2/2/2\nf 7/7/7 8/8/8 9/9/9\nf 8/8/8 10/10/10 9/9/9\nf 11/11/11 12/12/12 7/7/7\nf 12/12/12 8/8/8 7/7/7\nf 1/1/1 7/7/7 5/5/5\nf 7/7/7 9/9/9 5/5/5\nf 1/1/1 3/3/3 7/7/7\nf 3/3/3 11/11/11 7/7/7\nf 13/13/13 14/14/14 15/15/15\nf 14/14/14 16/16/16 15/15/15\nf 13/13/13 3/3/3 14/14/14\nf 3/3/3 4/4/4 14/14/14\nf 17/17/17 18/18/18 19/19/19\nf 18/18/18 20/20/20 19/19/19\nf 17/17/17 12/12/12 18/18/18\nf 12/12/12 11/11/11 18/18/18\nf 18/18/18 13/13/13 20/20/20\nf 13/13/13 15/15/15 20/20/20\nf 18/18/18 11/11/11 13/13/13\nf 11/11/11 3/3/3 13/13/13\nf 21/21/21 22/22/22 23/23/23\nf 22/22/22 24/24/24 23/23/23\nf 2/2/2 21/21/21 4/4/4\nf 21/21/21 23/23/23 4/4/4\nf 6/6/6 25/25/25 2/2/2\nf 25/25/25 21/21/21 2/2/2\nf 10/10/10 8/8/8 26/26/26\nf 8/8/8 27/27/27 26/26/26\nf 8/8/8 12/12/12 27/27/27\nf 12/12/12 28/28/28 27/27/27\nf 26/26/26 27/27/27 29/29/29\nf 22/22/22 21/21/21 25/25/25\nf 16/16/16 14/14/14 30/30/30\nf 14/14/14 31/31/31 30/30/30\nf 4/4/4 23/23/23 14/14/14\nf 23/23/23 31/31/31 14/14/14\nf 32/32/32 33/33/33 19/19/19\nf 33/33/33 17/17/17 19/19/19\nf 28/28/28 12/12/12 33/33/33\nf 12/12/12 17/17/17 33/33/33\nf 30/30/30 31/31/31 34/34/34\nf 31/31/31 35/35/35 34/34/34\nf 23/23/23 24/24/24 31/31/31\nf 24/24/24 35/35/35 31/31/31\nf 36/36/36 37/37/37 38/38/38\nf 37/37/37 39/39/39 38/38/38\nf 36/36/36 38/38/38 40/40/40\nf 38/38/38 41/41/41 40/40/40\nf 42/42/42 43/43/43 44/44/44\nf 43/43/43 45/45/45 44/44/44\nf 46/46/46 42/42/42 47/47/47\nf 42/42/42 44/44/44 47/47/47\nf 36/36/36 40/40/40 42/42/42\nf 40/40/40 43/43/43 42/42/42\nf 36/36/36 42/42/42 37/37/37\nf 42/42/42 46/46/46 37/37/37\nf 48/48/48 49/49/49 50/50/50\nf 49/49/49 51/51/51 50/50/50\nf 48/48/48 50/50/50 37/37/37\nf 50/50/50 39/39/39 37/37/37\nf 52/52/52 53/53/53 54/54/54\nf 53/53/53 55/55/55 54/54/54\nf 52/52/52 54/54/54 47/47/47\nf 54/54/54 46/46/46 47/47/47\nf 54/54/54 55/55/55 48/48/48\nf 55/55/55 49/49/49 48/48/48\nf 54/54/54 48/48/48 46/46/46\nf 48/48/48 37/37/37 46/46/46\nf 56/56/56 57/57/57 58/58/58\nf 57/57/57 59/59/59 58/58/58\nf 38/38/38 39/39/39 56/56/56\nf 39/39/39 57/57/57 56/56/56\nf 41/41/41 38/38/38 60/60/60\nf 38/38/38 56/56/56 60/60/60\nf 45/45/45 61/61/61 44/44/44\nf 61/61/61 62/62/62 44/44/44\nf 44/44/44 62/62/62 47/47/47\nf 62/62/62 63/63/63 47/47/47\nf 61/61/61 64/64/64 62/62/62\nf 60/60/60 56/56/56 58/58/58\nf 51/51/51 65/65/65 50/50/50\nf 65/65/65 66/66/66 50/50/50\nf 39/39/39 50/50/50 57/57/57\nf 50/50/50 66/66/66 57/57/57\nf 67/67/67 53/53/53 68/68/68\nf 53/53/53 52/52/52 68/68/68\nf 63/63/63 68/68/68 47/47/47\nf 68/68/68 52/52/52 47/47/47\nf 65/65/65 69/69/69 66/66/66\nf 69/69/69 70/70/70 66/66/66\nf 57/57/57 66/66/66 59/59/59\nf 66/66/66 70/70/70 59/59/59\nf 71/71/71 72/72/72 73/73/73\nf 72/72/72 74/74/74 73/73/73\nf 75/75/75 76/76/76 77/77/77\nf 76/76/76 78/78/78 77/77/77\nf 73/73/73 74/74/74 79/79/79\nf 74/74/74 80/80/80 79/79/79\nf 81/81/81 82/82/82 75/75/75\nf 82/82/82 76/76/76 75/75/75\nf 83/83/83 84/84/84 71/71/71\nf 84/84/84 72/72/72 71/71/71\nf 77/77/77 78/78/78 85/85/85\nf 78/78/78 86/86/86 85/85/85\nf 87/87/87 88/88/88 89/89/89\nf 88/88/88 90/90/90 89/89/89\nf 91/91/91 92/92/92 93/93/93\nf 92/92/92 94/94/94 93/93/93\nf 89/89/89 90/90/90 81/81/81\nf 90/90/90 82/82/82 81/81/81\nf 79/79/79 80/80/80 91/91/91\nf 80/80/80 92/92/92 91/91/91\nf 95/95/95 96/96/96 87/87/87\nf 96/96/96 88/88/88 87/87/87\nf 93/93/93 94/94/94 97/97/97\nf 94/94/94 98/98/98 97/97/97\nf 99/99/99 100/100/100 101/101/101\nf 102/102/102 103/103/103 99/99/99\nf 103/103/103 100/100/100 99/99/99\nf 104/104/104 103/103/103 102/102/102\nf 105/105/105 106/106/106 107/107/107\nf 106/106/106 108/108/108 107/107/107\nf 107/107/107 108/108/108 109/109/109\nf 108/108/108 110/110/110 109/109/109\nf 111/111/111 109/109/109 112/112/112\nf 109/109/109 110/110/110 112/112/112\nf 77/77/77 113/113/113 75/75/75\nf 77/77/77 114/114/114 113/113/113\nf 74/74/74 72/72/72 76/76/76\nf 72/72/72 78/78/78 76/76/76\nf 71/71/71 115/115/115 83/83/83\nf 116/116/116 117/117/117 118/118/118\nf 116/116/116 118/118/118 119/119/119\nf 118/118/118 120/120/120 119/119/119\nf 116/116/116 121/121/121 122/122/122\nf 123/123/123 124/124/124 79/79/79\nf 125/125/125 126/126/126 127/127/127\nf 128/128/128 125/125/125 127/127/127\nf 129/129/129 115/115/115 128/128/128\nf 119/119/119 130/130/130 131/131/131\nf 81/81/81 75/75/75 132/132/132\nf 75/75/75 113/113/113 132/132/132\nf 126/126/126 125/125/125 124/124/124\nf 127/127/127 126/126/126 133/133/133\nf 126/126/126 134/134/134 133/133/133\nf 135/135/135 136/136/136 137/137/137\nf 136/136/136 131/131/131 137/137/137\nf 122/122/122 117/117/117 116/116/116\nf 105/105/105 107/107/107 138/138/138\nf 107/107/107 139/139/139 138/138/138\nf 109/109/109 111/111/111 140/140/140\nf 111/111/111 141/141/141 140/140/140\nf 107/107/107 109/109/109 139/139/139\nf 109/109/109 140/140/140 139/139/139\nf 77/77/77 85/85/85 114/114/114\nf 115/115/115 125/125/125 128/128/128\nf 83/83/83 115/115/115 129/129/129\nf 142/142/142 143/143/143 144/144/144\nf 143/143/143 137/137/137 144/144/144\nf 122/122/122 113/113/113 117/117/117\nf 113/113/113 114/114/114 117/117/117\nf 116/116/116 119/119/119 121/121/121\nf 128/128/128 140/140/140 129/129/129\nf 140/140/140 141/141/141 129/129/129\nf 133/133/133 138/138/138 127/127/127\nf 138/138/138 139/139/139 127/127/127\nf 127/127/127 139/139/139 128/128/128\nf 139/139/139 140/140/140 128/128/128\nf 119/119/119 131/131/131 121/121/121\nf 137/137/137 131/131/131 130/130/130\nf 130/130/130 145/145/145 137/137/137\nf 145/145/145 144/144/144 137/137/137\nf 80/80/80 74/74/74 82/82/82\nf 74/74/74 76/76/76 82/82/82\nf 78/78/78 72/72/72 86/86/86\nf 72/72/72 84/84/84 86/86/86\nf 71/71/71 73/73/73 115/115/115\nf 125/125/125 73/73/73 124/124/124\nf 125/125/125 115/115/115 73/73/73\nf 143/143/143 146/146/146 137/137/137\nf 146/146/146 135/135/135 137/137/137\nf 122/122/122 147/147/147 113/113/113\nf 147/147/147 132/132/132 113/113/113\nf 123/123/123 126/126/126 124/124/124\nf 73/73/73 79/79/79 124/124/124\nf 121/121/121 148/148/148 122/122/122\nf 148/148/148 147/147/147 122/122/122\nf 131/131/131 136/136/136 121/121/121\nf 136/136/136 148/148/148 121/121/121\nf 149/149/149 150/150/150 151/151/151\nf 150/150/150 152/152/152 151/151/151\nf 150/150/150 153/153/153 152/152/152\nf 153/153/153 154/154/154 152/152/152\nf 155/155/155 156/156/156 153/153/153\nf 156/156/156 154/154/154 153/153/153\nf 89/89/89 157/157/157 87/87/87\nf 157/157/157 158/158/158 87/87/87\nf 92/92/92 90/90/90 94/94/94\nf 90/90/90 88/88/88 94/94/94\nf 97/97/97 159/159/159 93/93/93\nf 160/160/160 161/161/161 162/162/162\nf 163/163/163 160/160/160 162/162/162\nf 163/163/163 164/164/164 160/160/160\nf 165/165/165 166/166/166 162/162/162\nf 79/79/79 167/167/167 123/123/123\nf 168/168/168 126/126/126 169/169/169\nf 168/168/168 169/169/169 100/100/100\nf 100/100/100 159/159/159 101/101/101\nf 170/170/170 171/171/171 163/163/163\nf 81/81/81 132/132/132 89/89/89\nf 132/132/132 157/157/157 89/89/89\nf 167/167/167 169/169/169 126/126/126\nf 168/168/168 172/172/172 126/126/126\nf 172/172/172 134/134/134 126/126/126\nf 135/135/135 173/173/173 136/136/136\nf 173/173/173 170/170/170 136/136/136\nf 162/162/162 161/161/161 165/165/165\nf 149/149/149 174/174/174 150/150/150\nf 174/174/174 175/175/175 150/150/150\nf 153/153/153 103/103/103 155/155/155\nf 103/103/103 104/104/104 155/155/155\nf 150/150/150 175/175/175 153/153/153\nf 175/175/175 103/103/103 153/153/153\nf 158/158/158 95/95/95 87/87/87\nf 100/100/100 169/169/169 159/159/159\nf 101/101/101 159/159/159 97/97/97\nf 176/176/176 177/177/177 178/178/178\nf 177/177/177 173/173/173 178/178/178\nf 165/165/165 161/161/161 157/157/157\nf 161/161/161 158/158/158 157/157/157\nf 166/166/166 163/163/163 162/162/162\nf 172/172/172 168/168/168 174/174/174\nf 168/168/168 175/175/175 174/174/174\nf 168/168/168 100/100/100 175/175/175\nf 100/100/100 103/103/103 175/175/175\nf 166/166/166 170/170/170 163/163/163\nf 171/171/171 170/170/170 173/173/173\nf 171/171/171 173/173/173 179/179/179\nf 173/173/173 177/177/177 179/179/179\nf 80/80/80 82/82/82 92/92/92\nf 82/82/82 90/90/90 92/92/92\nf 88/88/88 96/96/96 94/94/94\nf 96/96/96 98/98/98 94/94/94\nf 159/159/159 91/91/91 93/93/93\nf 167/167/167 91/91/91 169/169/169\nf 91/91/91 159/159/159 169/169/169\nf 178/178/178 173/173/173 146/146/146\nf 173/173/173 135/135/135 146/146/146\nf 165/165/165 157/157/157 147/147/147\nf 157/157/157 132/132/132 147/147/147\nf 167/167/167 126/126/126 123/123/123\nf 91/91/91 167/167/167 79/79/79\nf 166/166/166 165/165/165 148/148/148\nf 165/165/165 147/147/147 148/148/148\nf 170/170/170 166/166/166 136/136/136\nf 166/166/166 148/148/148 136/136/136\nf 180/180/180 181/181/181 182/182/182\nf 181/181/181 183/183/183 182/182/182\nf 184/184/184 185/185/185 186/186/186\nf 185/185/185 187/187/187 186/186/186\nf 185/185/185 181/181/181 187/187/187\nf 181/181/181 180/180/180 187/187/187\nf 188/188/188 189/189/189 190/190/190\nf 189/189/189 191/191/191 190/190/190\nf 192/192/188 188/188/188 193/193/192\nf 188/188/188 190/190/190 193/193/192\nf 194/194/188 192/192/188 195/195/193\nf 192/192/188 193/193/192 195/195/193\nf 189/189/189 196/196/194 191/191/191\nf 196/196/194 197/197/195 191/191/191\nf 180/180/180 182/182/182 198/198/196\nf 190/190/190 198/198/196 193/193/192\nf 198/198/196 199/199/197 193/193/192\nf 195/195/193 193/193/192 199/199/197\nf 197/197/195 187/187/187 191/191/191\nf 187/187/187 180/180/180 191/191/191\nf 190/190/190 191/191/191 198/198/196\nf 191/191/191 180/180/180 198/198/196\nf 200/200/198 201/201/198 202/202/198\nf 201/201/198 203/203/198 202/202/198\nf 204/204/199 205/205/200 206/206/201\nf 205/205/200 207/207/202 206/206/201\nf 208/208/203 209/209/204 206/206/201\nf 209/209/204 204/204/199 206/206/201\nf 210/210/205 211/211/205 212/212/205\nf 211/211/205 213/213/205 212/212/205\nf 214/214/206 215/215/207 216/216/208\nf 215/215/207 217/217/209 216/216/208\nf 217/217/209 218/218/210 216/216/208\nf 218/218/210 219/219/211 216/216/208\nf 220/220/212 214/214/206 216/216/208\nf 220/220/212 221/221/213 222/222/214\nf 221/221/213 223/223/215 222/222/214\nf 224/224/216 222/222/214 223/223/215\nf 225/225/217 216/216/208 226/226/218\nf 216/216/208 219/219/211 226/226/218\nf 216/216/208 225/225/217 220/220/212\nf 225/225/217 221/221/213 220/220/212\nf 227/227/219 228/228/219 229/229/219\nf 228/228/219 230/230/219 229/229/219\nf 231/231/220 232/232/221 233/233/222\nf 232/232/221 234/234/223 233/233/222\nf 235/235/224 236/236/225 237/237/226\nf 236/236/225 238/238/227 237/237/226\nf 237/237/226 238/238/227 233/233/222\nf 238/238/227 231/231/220 233/233/222\nf 239/239/228 240/240/229 241/241/230\nf 240/240/229 242/242/231 241/241/230\nf 243/243/232 244/244/233 239/239/228\nf 244/244/233 240/240/229 239/239/228\nf 245/245/234 246/246/235 243/243/232\nf 246/246/235 244/244/233 243/243/232\nf 241/241/230 242/242/231 247/247/236\nf 242/242/231 248/248/237 247/247/236\nf 249/249/238 232/232/221 231/231/220\nf 240/240/229 244/244/233 249/249/238\nf 244/244/233 250/250/239 249/249/238\nf 250/250/239 244/244/233 246/246/235\nf 248/248/237 242/242/231 238/238/227\nf 242/242/231 231/231/220 238/238/227\nf 240/240/229 249/249/238 242/242/231\nf 249/249/238 231/231/220 242/242/231\nf 251/251/240 252/252/241 253/253/242\nf 252/252/241 254/254/243 253/253/242\nf 255/255/244 256/256/245 257/257/246\nf 256/256/245 258/258/247 257/257/246\nf 259/259/248 256/256/245 260/260/249\nf 256/256/245 255/255/244 260/260/249\nf 261/261/250 262/262/251 263/263/252\nf 262/262/251 264/264/253 263/263/252\nf 265/265/254 266/266/255 267/267/256\nf 266/266/255 268/268/257 267/267/256\nf 268/268/257 266/266/255 269/269/258\nf 266/266/255 270/270/259 269/269/258\nf 266/266/255 265/265/254 271/271/260\nf 271/271/260 272/272/261 273/273/262\nf 272/272/261 274/274/263 273/273/262\nf 274/274/263 272/272/261 275/275/263\nf 276/276/264 277/277/265 266/266/255\nf 277/277/265 270/270/259 266/266/255\nf 266/266/255 271/271/260 276/276/264\nf 271/271/260 273/273/262 276/276/264\nf 278/278/266 279/279/267 280/280/268\nf 279/279/267 281/281/269 280/280/268\nf 282/282/270 283/283/271 284/284/272\nf 285/285/273 286/286/274 287/287/275\nf 283/283/271 282/282/270 288/288/276\nf 287/287/275 289/289/277 285/285/273\nf 290/290/278 291/291/279 292/292/280\nf 293/293/281 294/294/282 295/295/283\nf 296/296/284 290/290/278 297/297/285\nf 295/295/283 298/298/286 299/299/287\nf 283/283/271 300/300/288 284/284/272\nf 300/300/288 301/301/289 284/284/272\nf 287/287/275 286/286/274 300/300/288\nf 286/286/274 301/301/289 300/300/288\nf 302/302/290 303/303/291 304/304/292\nf 305/305/293 306/306/294 307/307/295\nf 308/308/296 309/309/297 310/310/298\nf 311/311/299 312/312/300 309/309/297\nf 313/313/301 314/314/302 315/315/303\nf 314/314/302 316/316/304 315/315/303\nf 317/317/305 318/318/306 319/319/307\nf 318/318/306 320/320/308 319/319/307\nf 321/321/309 322/322/310 313/313/301\nf 322/322/310 314/314/302 313/313/301\nf 323/323/311 324/324/312 325/325/313\nf 324/324/312 326/326/314 325/325/313\nf 325/325/313 326/326/314 321/321/309\nf 326/326/314 322/322/310 321/321/309\nf 319/319/307 320/320/308 327/327/315\nf 320/320/308 328/328/316 327/327/315\nf 329/329/317 330/330/318 317/317/305\nf 330/330/318 318/318/306 317/317/305\nf 315/315/303 316/316/304 331/331/319\nf 316/316/304 332/332/320 331/331/319\nf 333/333/321 334/334/322 323/323/311\nf 334/334/322 324/324/312 323/323/311\nf 327/327/315 328/328/316 335/335/323\nf 328/328/316 336/336/324 335/335/323\nf 296/296/284 333/333/321 323/323/311\nf 315/315/303 331/331/319 337/337/325\nf 315/315/303 337/337/325 313/313/301\nf 337/337/325 338/338/326 313/313/301\nf 314/314/302 318/318/306 316/316/304\nf 339/339/327 321/321/309 338/338/326\nf 321/321/309 313/313/301 338/338/326\nf 322/322/310 320/320/308 314/314/302\nf 320/320/308 318/318/306 314/314/302\nf 324/324/312 328/328/316 326/326/314\nf 323/323/311 325/325/313 296/296/284\nf 325/325/313 340/340/328 296/296/284\nf 339/339/327 340/340/328 321/321/309\nf 340/340/328 325/325/313 321/321/309\nf 322/322/310 326/326/314 320/320/308\nf 326/326/314 328/328/316 320/320/308\nf 297/297/285 290/290/278 341/341/329\nf 342/342/330 296/296/284 297/297/285\nf 341/341/329 290/290/278 292/292/280\nf 343/343/331 294/294/282 344/344/332\nf 294/294/282 293/293/281 344/344/332\nf 343/343/331 345/345/333 294/294/282\nf 345/345/333 346/346/334 294/294/282\nf 345/345/333 347/347/335 346/346/334\nf 347/347/335 348/348/336 346/346/334\nf 329/329/317 349/349/337 350/350/338\nf 318/318/306 330/330/318 316/316/304\nf 330/330/318 332/332/320 316/316/304\nf 337/337/325 331/331/319 299/299/287\nf 351/351/339 308/308/296 352/352/340\nf 353/353/341 354/354/342 355/355/343\nf 308/308/296 356/356/344 352/352/340\nf 355/355/343 354/354/342 310/310/298\nf 354/354/342 356/356/344 310/310/298\nf 357/357/345 352/352/340 302/302/290\nf 351/351/339 352/352/340 357/357/345\nf 358/358/346 359/359/347 303/303/291\nf 337/337/325 360/360/348 338/338/326\nf 361/361/349 338/338/326 360/360/348\nf 362/362/350 363/363/351 308/308/296\nf 363/363/351 309/309/297 308/308/296\nf 358/358/346 283/283/271 359/359/347\nf 361/361/349 364/364/352 338/338/326\nf 364/364/352 339/339/327 338/338/326\nf 303/303/291 302/302/290 353/353/341\nf 295/295/283 294/294/282 298/298/286\nf 365/365/353 346/346/334 366/366/354\nf 346/346/334 348/348/336 366/366/354\nf 298/298/286 294/294/282 365/365/353\nf 294/294/282 346/346/334 365/365/353\nf 283/283/271 288/288/276 359/359/347\nf 288/288/276 367/367/355 359/359/347\nf 317/317/305 349/349/337 329/329/317\nf 351/351/339 350/350/338 362/362/350\nf 350/350/338 349/349/337 362/362/350\nf 362/362/350 308/308/296 351/351/339\nf 299/299/287 298/298/286 337/337/325\nf 360/360/348 365/365/353 368/368/356\nf 365/365/353 366/366/354 368/368/356\nf 337/337/325 298/298/286 360/360/348\nf 298/298/286 365/365/353 360/360/348\nf 357/357/345 302/302/290 369/369/357\nf 370/370/358 304/304/292 367/367/355\nf 304/304/292 359/359/347 367/367/355\nf 353/353/341 302/302/290 354/354/342\nf 308/308/296 310/310/298 356/356/344\nf 355/355/343 371/371/359 353/353/341\nf 371/371/359 372/372/360 353/353/341\nf 356/356/344 354/354/342 352/352/340\nf 354/354/342 302/302/290 352/352/340\nf 304/304/292 303/303/291 359/359/347\nf 358/358/346 373/373/361 283/283/271\nf 373/373/361 300/300/288 283/283/271\nf 303/303/291 374/374/362 358/358/346\nf 374/374/362 373/373/361 358/358/346\nf 353/353/341 372/372/360 303/303/291\nf 372/372/360 374/374/362 303/303/291\nf 375/375/363 364/364/352 361/361/349\nf 360/360/348 368/368/356 361/361/349\nf 368/368/356 375/375/363 361/361/349\nf 349/349/337 376/376/364 362/362/350\nf 376/376/364 363/363/351 362/362/350\nf 317/317/305 319/319/307 349/349/337\nf 319/319/307 376/376/364 349/349/337\nf 310/310/298 377/377/365 355/355/343\nf 377/377/365 371/371/359 355/355/343\nf 309/309/297 377/377/365 310/310/298\nf 378/378/366 379/379/367 291/291/279\nf 379/379/367 380/380/368 291/291/279\nf 378/378/366 291/291/279 381/381/369\nf 291/291/279 382/382/370 381/381/369\nf 381/381/369 382/382/370 383/383/371\nf 382/382/370 384/384/372 383/383/371\nf 385/385/373 386/386/374 335/335/323\nf 328/328/316 324/324/312 336/336/324\nf 324/324/312 334/334/322 336/336/324\nf 342/342/330 333/333/321 296/296/284\nf 387/387/375 311/311/299 388/388/376\nf 389/389/377 390/390/378 391/391/379\nf 387/387/375 392/392/380 311/311/299\nf 389/389/377 312/312/300 390/390/378\nf 312/312/300 392/392/380 390/390/378\nf 393/393/381 387/387/375 394/394/382\nf 394/394/382 387/387/375 388/388/376\nf 306/306/294 305/305/293 395/395/383\nf 340/340/328 396/396/384 296/296/284\nf 396/396/384 340/340/328 397/397/385\nf 398/398/386 311/311/299 363/363/351\nf 311/311/299 309/309/297 363/363/351\nf 305/305/293 287/287/275 395/395/383\nf 397/397/385 340/340/328 364/364/352\nf 340/340/328 339/339/327 364/364/352\nf 391/391/379 393/393/381 306/306/294\nf 292/292/280 291/291/279 380/380/368\nf 399/399/387 400/400/388 382/382/370\nf 400/400/388 384/384/372 382/382/370\nf 290/290/278 399/399/387 291/291/279\nf 399/399/387 382/382/370 291/291/279\nf 287/287/275 305/305/293 289/289/277\nf 305/305/293 401/401/389 289/289/277\nf 335/335/323 386/386/374 327/327/315\nf 388/388/376 398/398/386 385/385/373\nf 398/398/386 386/386/374 385/385/373\nf 388/388/376 311/311/299 398/398/386\nf 396/396/384 402/402/390 399/399/387\nf 402/402/390 400/400/388 399/399/387\nf 296/296/284 396/396/384 290/290/278\nf 396/396/384 399/399/387 290/290/278\nf 403/403/391 393/393/381 394/394/382\nf 404/404/392 401/401/389 307/307/295\nf 401/401/389 305/305/293 307/307/295\nf 390/390/378 393/393/381 391/391/379\nf 392/392/380 312/312/300 311/311/299\nf 389/389/377 391/391/379 371/371/359\nf 391/391/379 372/372/360 371/371/359\nf 392/392/380 387/387/375 390/390/378\nf 387/387/375 393/393/381 390/390/378\nf 307/307/295 306/306/294 393/393/381\nf 395/395/383 287/287/275 373/373/361\nf 287/287/275 300/300/288 373/373/361\nf 306/306/294 395/395/383 374/374/362\nf 395/395/383 373/373/361 374/374/362\nf 391/391/379 306/306/294 372/372/360\nf 306/306/294 374/374/362 372/372/360\nf 397/397/385 364/364/352 375/375/363\nf 402/402/390 396/396/384 375/375/363\nf 396/396/384 397/397/385 375/375/363\nf 386/386/374 398/398/386 376/376/364\nf 398/398/386 363/363/351 376/376/364\nf 327/327/315 386/386/374 319/319/307\nf 386/386/374 376/376/364 319/319/307\nf 312/312/300 389/389/377 377/377/365\nf 389/389/377 371/371/359 377/377/365\nf 312/312/300 377/377/365 309/309/297\nf 405/405/393 406/406/394 407/407/395\nf 406/406/394 408/408/396 407/407/395\nf 405/405/393 407/407/395 409/409/397\nf 410/410/398 411/411/399 412/412/400\nf 413/413/357 410/410/398 414/414/401\nf 410/410/398 412/412/400 414/414/401\nf 415/415/402 405/405/393 416/416/403\nf 417/417/404 414/414/401 418/418/402\nf 419/419/405 420/420/406 421/421/407\nf 422/422/408 423/423/409 424/424/410\nf 425/425/411 426/426/412 416/416/403\nf 426/426/412 425/425/411 427/427/413\nf 419/419/405 428/428/414 429/429/415\nf 430/430/416 431/431/417 432/432/418\nf 433/433/419 425/425/411 416/416/403\nf 434/434/420 435/435/421 436/436/422\nf 437/437/423 419/419/405 429/429/415\nf 419/419/405 421/421/407 428/428/414\nf 438/438/424 437/437/423 429/429/415\nf 425/425/411 428/428/414 439/439/425\nf 435/435/421 433/433/419 440/440/426\nf 429/429/415 434/434/420 438/438/424\nf 434/434/420 436/436/422 438/438/424\nf 437/437/423 441/441/427 419/419/405\nf 427/427/413 425/425/411 439/439/425\nf 439/439/425 428/428/414 421/421/407\nf 433/433/419 416/416/403 440/440/426\nf 419/419/405 441/441/427 420/420/406\nf 434/434/420 433/433/419 435/435/421\nf 433/433/419 434/434/420 425/425/411\nf 434/434/420 428/428/414 425/425/411\nf 429/429/415 428/428/414 434/434/420\nf 417/417/404 423/423/409 442/442/428\nf 443/443/429 444/444/430 430/430/416\nf 432/432/418 445/445/431 446/446/432\nf 431/431/417 447/447/433 445/445/431\nf 432/432/418 446/446/432 448/448/434\nf 422/422/408 431/431/417 423/423/409\nf 449/449/435 442/442/428 444/444/430\nf 432/432/418 448/448/434 430/430/416\nf 448/448/434 443/443/429 430/430/416\nf 445/445/431 450/450/436 446/446/432\nf 424/424/410 423/423/409 451/451/437\nf 445/445/431 447/447/433 452/452/438\nf 447/447/433 431/431/417 422/422/408\nf 449/449/435 417/417/404 442/442/428\nf 452/452/438 450/450/436 445/445/431\nf 444/444/430 442/442/428 430/430/416\nf 423/423/409 430/430/416 442/442/428\nf 423/423/409 431/431/417 430/430/416\nf 432/432/418 431/431/417 445/445/431\nf 417/417/404 451/451/437 423/423/409\nf 453/453/439 454/454/440 455/455/441\nf 456/456/442 457/457/443 458/458/444\nf 459/459/445 456/456/442 458/458/444\nf 460/460/446 461/461/447 458/458/444\nf 461/461/447 462/462/448 458/458/444\nf 455/455/441 460/460/446 463/463/449\nf 460/460/446 457/457/443 463/463/449\nf 454/454/440 460/460/446 455/455/441\nf 464/464/450 460/460/446 454/454/440\nf 458/458/444 457/457/443 460/460/446\nf 462/462/448 465/465/451 458/458/444\nf 465/465/451 459/459/445 458/458/444\nf 461/461/447 460/460/446 464/464/450\nf 466/466/452 467/467/453 468/468/454\nf 469/469/455 466/466/452 470/470/456\nf 466/466/452 468/468/454 470/470/456\nf 471/471/457 469/469/455 472/472/458\nf 469/469/455 470/470/456 472/472/458\nf 467/467/453 473/473/459 468/468/454\nf 468/468/454 473/473/459 470/470/456\nf 473/473/459 474/474/460 470/470/456\nf 472/472/458 470/470/456 475/475/461\nf 470/470/456 474/474/460 475/475/461\nf 476/476/462 477/477/463 466/466/452\nf 477/477/463 467/467/453 466/466/452\nf 478/478/464 479/479/465 476/476/462\nf 479/479/465 477/477/463 476/476/462\nf 480/480/466 473/473/459 477/477/463\nf 473/473/459 467/467/453 477/477/463\nf 481/481/467 480/480/466 479/479/465\nf 480/480/466 477/477/463 479/479/465\nf 482/482/468 483/483/469 484/484/470\nf 483/483/469 485/485/471 484/484/470\nf 486/486/472 482/482/468 487/487/473\nf 487/487/473 482/482/468 488/488/474\nf 482/482/468 484/484/470 488/488/474\nf 489/489/475 490/490/476 488/488/474\nf 490/490/476 487/487/473 488/488/474\nf 491/491/477 489/489/475 492/492/478\nf 489/489/475 488/488/474 492/492/478\nf 488/488/474 484/484/470 492/492/478\nf 484/484/470 493/493/479 492/492/478\nf 484/484/470 485/485/471 493/493/479\nf 485/485/471 494/494/480 493/493/479\nf 487/487/473 495/495/481 486/486/472\nf 492/492/478 493/493/479 491/491/477\nf 493/493/479 494/494/480 491/491/477\nf 495/495/481 487/487/473 496/496/482\nf 487/487/473 490/490/476 496/496/482\nf 486/486/472 497/497/483 482/482/468\nf 498/498/484 499/499/485 500/500/486\nf 501/501/487 498/498/484 500/500/486\nf 502/502/488 500/500/486 503/503/489\nf 500/500/486 504/504/490 503/503/489\nf 501/501/487 500/500/486 505/505/491\nf 506/506/492 499/499/485 507/507/493\nf 499/499/485 498/498/484 507/507/493\nf 505/505/491 500/500/486 508/508/494\nf 509/509/495 501/501/487 505/505/491\nf 508/508/494 500/500/486 502/502/488\nf 510/510/496 511/511/497 512/512/498\nf 511/511/497 513/513/499 512/512/498\nf 514/514/500 510/510/496 515/515/501\nf 514/514/500 516/516/502 510/510/496\nf 516/516/502 511/511/497 510/510/496\nf 517/517/503 516/516/502 518/518/504\nf 516/516/502 514/514/500 518/518/504\nf 519/519/505 520/520/506 517/517/503\nf 520/520/506 516/516/502 517/517/503\nf 516/516/502 520/520/506 511/511/497\nf 520/520/506 521/521/507 511/511/497\nf 511/511/497 521/521/507 513/513/499\nf 521/521/507 522/522/508 513/513/499\nf 515/515/501 523/523/509 514/514/500\nf 520/520/506 519/519/505 521/521/507\nf 519/519/505 522/522/508 521/521/507\nf 523/523/509 524/524/510 514/514/500\nf 524/524/510 518/518/504 514/514/500\nf 510/510/496 525/525/511 515/515/501\nf 526/526/512 527/527/513 528/528/514\nf 529/529/515 526/526/512 530/530/516\nf 526/526/512 528/528/514 530/530/516\nf 531/531/517 532/532/518 529/529/515\nf 532/532/518 533/533/519 529/529/515\nf 534/534/520 529/529/515 530/530/516\nf 535/535/521 536/536/522 527/527/513\nf 536/536/522 528/528/514 527/527/513\nf 537/537/523 529/529/515 534/534/520\nf 534/534/520 530/530/516 538/538/524\nf 531/531/517 529/529/515 537/537/523\nf 539/539/525 540/540/526 541/541/527\nf 542/542/528 543/543/529 544/544/530\nf 543/543/529 545/545/531 546/546/532\nf 541/541/527 547/547/533 548/548/534\nf 549/549/535 550/550/536 551/551/537\nf 550/550/536 546/546/532 551/551/537\nf 546/546/532 552/552/538 551/551/537\nf 553/553/539 554/554/540 555/555/541\nf 556/556/542 557/557/543 553/553/539\nf 547/547/533 558/558/544 548/548/534\nf 543/543/529 542/542/528 545/545/531\nf 559/559/545 560/560/546 561/561/547\nf 562/562/548 560/560/546 546/546/532\nf 563/563/549 559/559/545 564/564/550\nf 563/563/549 564/564/550 565/565/551\nf 566/566/552 567/567/553 568/568/554\nf 569/569/555 567/567/553 566/566/552\nf 570/570/556 567/567/553 569/569/555\nf 568/568/554 567/567/553 571/571/557\nf 562/562/548 546/546/532 572/572/558\nf 569/569/555 566/566/552 572/572/558\nf 566/566/552 562/562/548 572/572/558\nf 542/542/528 573/573/559 574/574/560\nf 544/544/530 573/573/559 542/542/528\nf 575/575/561 576/576/562 577/577/563\nf 570/570/556 578/578/564 567/567/553\nf 578/578/564 570/570/556 579/579/565\nf 566/566/552 568/568/554 562/562/548\nf 564/564/550 559/559/545 580/580/566\nf 581/581/567 559/559/545 561/561/547\nf 559/559/545 581/581/567 580/580/566\nf 572/572/558 545/545/531 569/569/555\nf 568/568/554 561/561/547 562/562/548\nf 561/561/547 568/568/554 581/581/567\nf 575/575/561 570/570/556 569/569/555\nf 582/582/568 564/564/550 583/583/564\nf 584/584/569 585/585/564 580/580/566\nf 585/585/564 584/584/569 586/586/570\nf 544/544/530 543/543/529 587/587/571\nf 582/582/568 565/565/551 564/564/550\nf 587/587/571 543/543/529 546/546/532\nf 563/563/549 588/588/572 559/559/545\nf 583/583/564 580/580/566 585/585/564\nf 583/583/564 564/564/550 580/580/566\nf 559/559/545 588/588/572 560/560/546\nf 584/584/569 580/580/566 581/581/567\nf 574/574/560 545/545/531 542/542/528\nf 576/576/562 545/545/531 574/574/560\nf 584/584/569 568/568/554 571/571/557\nf 568/568/554 584/584/569 581/581/567\nf 577/577/563 570/570/556 575/575/561\nf 579/579/565 570/570/556 577/577/563\nf 545/545/531 572/572/558 546/546/532\nf 545/545/531 575/575/561 569/569/555\nf 575/575/561 545/545/531 576/576/562\nf 567/567/553 589/589/573 571/571/557\nf 589/589/573 567/567/553 578/578/564\nf 584/584/569 589/589/573 586/586/570\nf 584/584/569 571/571/557 589/589/573\nf 562/562/548 561/561/547 560/560/546\nf 548/548/534 539/539/525 541/541/527\nf 590/590/574 591/591/575 592/592/576\nf 547/547/533 591/591/575 593/593/577\nf 594/594/578 592/592/576 595/595/579\nf 596/596/580 594/594/578 595/595/579\nf 597/597/581 598/598/582 599/599/583\nf 599/599/583 598/598/582 600/600/584\nf 600/600/584 598/598/582 601/601/585\nf 602/602/582 598/598/582 597/597/581\nf 558/558/544 547/547/533 593/593/577\nf 600/600/584 558/558/544 599/599/583\nf 558/558/544 593/593/577 599/599/583\nf 574/574/560 573/573/559 539/539/525\nf 540/540/526 539/539/525 573/573/559\nf 577/577/563 576/576/562 603/603/586\nf 598/598/582 578/578/564 601/601/585\nf 579/579/565 601/601/585 578/578/564\nf 593/593/577 597/597/581 599/599/583\nf 604/604/587 592/592/576 594/594/578\nf 590/590/574 592/592/576 605/605/588\nf 604/604/587 605/605/588 592/592/576\nf 600/600/584 548/548/534 558/558/544\nf 593/593/577 590/590/574 597/597/581\nf 605/605/588 597/597/581 590/590/574\nf 600/600/584 601/601/585 603/603/586\nf 583/583/564 594/594/578 582/582/568\nf 604/604/587 585/585/564 606/606/589\nf 586/586/570 606/606/589 585/585/564\nf 540/540/526 607/607/590 541/541/527\nf 594/594/578 596/596/580 582/582/568\nf 547/547/533 541/541/527 607/607/590\nf 592/592/576 608/608/591 595/595/579\nf 585/585/564 604/604/587 583/583/564\nf 604/604/587 594/594/578 583/583/564\nf 591/591/575 608/608/591 592/592/576\nf 605/605/588 604/604/587 606/606/589\nf 539/539/525 548/548/534 574/574/560\nf 574/574/560 548/548/534 576/576/562\nf 602/602/582 597/597/581 606/606/589\nf 605/605/588 606/606/589 597/597/581\nf 603/603/586 601/601/585 577/577/563\nf 577/577/563 601/601/585 579/579/565\nf 600/600/584 603/603/586 548/548/534\nf 576/576/562 548/548/534 603/603/586\nf 602/602/582 589/589/573 598/598/582\nf 578/578/564 598/598/582 589/589/573\nf 586/586/570 589/589/573 606/606/589\nf 589/589/573 602/602/582 606/606/589\nf 591/591/575 590/590/574 593/593/577\nf 609/609/592 610/610/593 554/554/540\nf 547/547/533 555/555/541 610/610/593\nf 555/555/541 554/554/540 610/610/593\nf 549/549/535 551/551/537 611/611/594\nf 610/610/593 612/612/595 547/547/533\nf 546/546/532 560/560/546 552/552/538\nf 613/613/596 614/614/597 615/615/598\nf 616/616/599 617/617/600 615/615/598\nf 618/618/601 619/619/602 620/620/603\nf 616/616/599 615/615/598 621/621/604\nf 622/622/605 623/623/606 624/624/607\nf 625/625/608 626/626/609 623/623/606\nf 626/626/609 617/617/600 623/623/606\nf 627/627/610 628/628/611 629/629/612\nf 628/628/611 630/630/613 629/629/612\nf 622/622/605 624/624/607 631/631/614\nf 627/627/610 622/622/605 628/628/611\nf 622/622/605 631/631/614 628/628/611\nf 632/632/615 552/552/538 630/630/613\nf 632/632/615 633/633/616 552/552/538\nf 629/629/612 630/630/613 552/552/538\nf 625/625/608 623/623/606 622/622/605\nf 611/611/594 551/551/537 634/634/617\nf 551/551/537 633/633/616 634/634/617\nf 551/551/537 552/552/538 633/633/616\nf 560/560/546 629/629/612 552/552/538\nf 560/560/546 588/588/572 629/629/612\nf 588/588/572 627/627/610 629/629/612\nf 588/588/572 563/563/549 627/627/610\nf 563/563/549 622/622/605 627/627/610\nf 563/563/549 565/565/551 622/622/605\nf 565/565/551 625/625/608 622/622/605\nf 565/565/551 582/582/568 625/625/608\nf 582/582/568 626/626/609 625/625/608\nf 615/615/598 617/617/600 626/626/609\nf 620/620/603 612/612/595 618/618/601\nf 612/612/595 635/635/618 618/618/601\nf 619/619/602 614/614/597 613/613/596\nf 620/620/603 619/619/602 613/613/596\nf 635/635/618 610/610/593 636/636/619\nf 610/610/593 609/609/592 636/636/619\nf 610/610/593 635/635/618 612/612/595\nf 615/615/598 614/614/597 621/621/604\nf 553/553/539 557/557/543 554/554/540\nf 557/557/543 609/609/592 554/554/540\nf 547/547/533 612/612/595 591/591/575\nf 591/591/575 612/612/595 608/608/591\nf 612/612/595 620/620/603 608/608/591\nf 608/608/591 620/620/603 595/595/579\nf 620/620/603 613/613/596 595/595/579\nf 595/595/579 613/613/596 596/596/580\nf 613/613/596 615/615/598 596/596/580\nf 596/596/580 615/615/598 582/582/568\nf 615/615/598 626/626/609 582/582/568\nf 637/637/620 638/638/621 639/639/622\nf 638/638/621 640/640/623 639/639/622\nf 640/640/623 641/641/624 639/639/622\nf 638/638/621 637/637/620 642/642/625\nf 637/637/620 643/643/626 642/642/625\nf 644/644/627 645/645/628 640/640/623\nf 645/645/628 641/641/624 640/640/623\nf 646/646/629 647/647/630 644/644/627\nf 647/647/630 645/645/628 644/644/627\nf 648/648/631 649/649/632 646/646/629\nf 649/649/632 647/647/630 646/646/629\nf 650/650/633 651/651/634 648/648/631\nf 651/651/634 649/649/632 648/648/631\nf 652/652/635 653/653/636 650/650/633\nf 653/653/636 651/651/634 650/650/633\nf 642/642/625 643/643/626 652/652/635\nf 643/643/626 653/653/636 652/652/635\nf 650/650/633 648/648/631 652/652/635\nf 648/648/631 646/646/629 652/652/635\nf 640/640/623 638/638/621 644/644/627\nf 638/638/621 642/642/625 644/644/627\nf 646/646/629 644/644/627 652/652/635\nf 644/644/627 642/642/625 652/652/635\nf 654/654/637 651/651/634 655/655/638\nf 651/651/634 653/653/636 655/655/638\nf 649/649/632 651/651/634 654/654/637\nf 656/656/639 647/647/630 654/654/637\nf 647/647/630 649/649/632 654/654/637\nf 657/657/640 637/637/620 639/639/622\nf 643/643/626 637/637/620 657/657/640\nf 655/655/638 653/653/636 657/657/640\nf 653/653/636 643/643/626 657/657/640\nf 658/658/641 645/645/628 656/656/639\nf 645/645/628 647/647/630 656/656/639\nf 641/641/624 645/645/628 658/658/641\nf 639/639/622 641/641/624 658/658/641\nf 658/658/641 656/656/639 639/639/622\nf 656/656/639 654/654/637 639/639/622\nf 654/654/637 655/655/638 639/639/622\nf 655/655/638 657/657/640 639/639/622\nf 654/654/637 656/656/639 655/655/638\nf 656/656/639 658/658/641 655/655/638\nf 658/658/641 639/639/622 655/655/638\nf 659/659/642 660/660/643 661/661/644\nf 660/660/643 662/662/645 661/661/644\nf 663/663/646 662/662/645 664/664/647\nf 662/662/645 660/660/643 664/664/647\nf 663/663/646 665/665/648 662/662/645\nf 665/665/648 666/666/649 662/662/645\nf 661/661/644 662/662/645 667/667/650\nf 662/662/645 666/666/649 667/667/650\nf 668/668/651 669/669/652 661/661/644\nf 669/669/652 659/659/642 661/661/644\nf 667/667/650 666/666/649 670/670/653\nf 666/666/649 665/665/648 670/670/653\nf 668/668/651 661/661/644 670/670/653\nf 661/661/644 667/667/650 670/670/653\nf 671/671/654 672/672/655 673/673/656\nf 672/672/655 674/674/657 673/673/656\nf 675/675/658 676/676/659 674/674/657\nf 676/676/659 673/673/656 674/674/657\nf 675/675/658 674/674/657 677/677/660\nf 674/674/657 678/678/661 677/677/660\nf 672/672/655 679/679/662 674/674/657\nf 679/679/662 678/678/661 674/674/657\nf 680/680/663 672/672/655 681/681/664\nf 672/672/655 671/671/654 681/681/664\nf 679/679/662 682/682/665 678/678/661\nf 682/682/665 677/677/660 678/678/661\nf 680/680/663 682/682/665 672/672/655\nf 682/682/665 679/679/662 672/672/655\n"
 
 /***/ }),
-/* 22 */
+/* 26 */
 /***/ (function(module, exports) {
 
 module.exports = "newmtl cbabe\r\nillum 1\r\nKa 0.2 0.2 0.2\r\nKd 0.8 0.8 0.8\r\nKs 0.2 0.2 0.2\r\nNs 10.0\r\nmap_Ka cbabe.jpg\r\nmap_Kd cbabe.jpg\r\n\r\n\r\n"
 
 /***/ }),
-/* 23 */
+/* 27 */
 /***/ (function(module, exports) {
 
 module.exports = "Qk02AAMAAAAAADYAAAAoAAAAAAEAAAABAAABABgAAAAAAAAAAwDEDgAAxA4AAAAAAAAAAAAAaCiQaCiQWCCIUBiAUBh4UBiAWCCAUBiAUBiAWCCIWCCIUBiAMAhoOAhoMAhoOBBwWCCIUCCAQBBwOBBwSBB4SBiASBiASBh4SBiAUCCAYCCIaDCYaCiQaCiQYCCIUBiASBh4UBiAUCCAUBiAUBiAWCCIWCCIWCCAOBBwMAhoOAhoMAhoSBiAWCCISBB4OBBwQBB4SBh4UBiASBiAQBB4SBh4SBh4SBiAWCCIYCCQYCCQWCCAQBh4SBh4UBiAUBiAUBiAUBiAUBiAUBiAUBiAUBiAUBiASBh4SBh4SBh4QBB4QBB4QBh4QBB4QBBwQBBwOBBwOBBwQBB4SBh4SBB4SBB4QBB4QBBwOBBwQBBwQBB4OBBwMBBoMAhoQBBwUBiAQBB4OBBwQBBwOBBwMAhoQBBwQBBwQBB4QBBwOBBwQBB4QBBwOAhoKAhgKAhgOBBwOBB4QBB4QBBwOBBwQBBwSBB4SBB4QBBwMAhoMAhoQBBwSBB4QBB4QBB4OBBwOAhoOAhoOAhoQBBwOBBwOBBwQBBwOBBwOBBoMCA4IBggGBgYGBgYICAgGBgYGBgYGBgYGBgYGBggICAgKCggKCgoICAgGBgYGBgYGBgYIBggICAYIBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYODg4UFBQQEBAGBgYUFBQODg4ODg4GBgYGBgYGBgYGBgYGBgYGBgYGBgYIBgYICAYIBggGBgYGBgYGBgYICAgKCgoKCggICAgGBggGBgYGBgYGBgYIBgYIBggGBgYEBAQEBAQEBgQICAgMDAwODg4QEBAODg4KCgoICAgICAgICAgODg4ODg4ODg4ODg4QEBAODg4MDAwMDA4ODg4MDAwMDAwKDAoMDAwMDAwODg4ODg4OEBAQEBAQEBASEhISEhAQEBAODg4ODg4ODg4MDAwMDAwKDAoKCgoKCgwMDAwODA4ODg4MDAwUFBIODg4QEBAODg4ODg4ODg4ODg4ICAgICAgICAgODg4QEBAOEA4ODg4ODAwODg4YCiQYCiIYCCISBh4UBiAUBiAWCCIWCCAWCCIYCCIWCCIQBBwMAhoQBBoMAhoQBBwUBiAUBiASBB4UBiAUBiASBiAQBB4SBiAWCCIYCCIaDCYaCiQaCiQYCiIYCCIUBiASBh4UBiAWCCIWCCAWCCIWCCIYCCISBh4MBBoOBBoOAhoOBBwSBh4UBiASBh4SBh4WBiAUBiASBiAQBB4QBB4SBiAWCCAYCiIaCiQYCCISBh4SBh4UBiAUBiASBiAUBiAUBiASBB4QBB4SBB4SBB4SBB4SBh4SBh4SBh4SBB4SBB4SBB4QBB4QBB4QBB4QBBwOBBwMBBoOBBwQBBwQBBwQBBwQBB4QBB4QBBwOBBwQBB4SBh4SBBwOBBoKAhoOBBwQBBwQBBwSBB4SBB4QBBwMAhoMBBoQBB4QBB4QBBwOBBwOBBwMAhoMAhoKAhgMAhoQBBwSBh4QBB4QBBwOBBwOBBwOBBwOBBwOAhoOBBoQBBwMAhoQBBwSBh4OBBwQBBwOAhoOBBoOBBoMAhoMBBoOBBwOBBwOBBoKCA4GBggGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBggICAgICAgKCgoICAgICAgEBAQGBgYGBgYEBAQEBAQCBAQCBAICAgICAgICAgICAgICAgIMDAwUFBQUFBQODg4UFBQODg4MDAwCAgICAgICAgICAgICAgICBAICBAQEBAQEBAQGBgYGBgYEBAQICAgICAgKCgoICAgICAgGBggGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBgQICAYMDAwQDg4QEBAODg4KCgoICAgICAgICAgODg4ODg4ODg4ODg4QEBAODg4MDAwODg4ODg4ODg4MDAwKCgoKCgoKCgoKCgoICgoKCgoKCgoKCgoMDAoKCgoICAgICAgICAgICAgICAoICgoICgoKCgoMDAwODg4ODg4ODg4ODg4SFBIODg4QEBAODg4ODg4ODg4ODg4ICAgICAgICAgODA4QEBAODg4ODg4ODg4ODg4YCiIWCCIWCCASBh4UBiAWCCIaCiQaCiQYCCIYCCIWCCIQBBwOAhoMBBoQBBwQBB4SBh4SBh4SBiASBiAUBiAUBiAQBB4UBiAaCiQaDCYcDCYcDCYaDCYWCCISBh4QBB4UBiAWCCIYCiQaCiQaCiQYCCIYCCISBh4OAhoOAhoOBBoSBBwSBh4SBh4SBiASBiASBiAUBiASBh4SBh4UBiAYCCIaCiQYCiQWCCASBh4SBh4UBiAWBiASBiASBh4SBh4SBh4QBB4QBBwQBB4QBB4QBB4QBB4QBBwOBBwOBBwQBBwQBBwQBB4QBB4OBBwMAhoQBBwOBBwOBBwOBBoMAhoMBBoSBB4SBh4QBB4OBBwOBBoOBBwOBBoOBBwOAhoOBBwQBBwOBBwQBBwQBBwQBBwOBBwMAhoOAhoOBBwQBBwQBB4QBBwOAhoOBBoMAhoOBBwOBBoOBBwQBBwSBh4QBB4OBBwMAhoMAhoMAhoOBBwUBiAMBBoOBBoQBBwOBBwQBBwOBBwOBBoOAhoOAhoMAhgOAhoOBBwOBBoKCA4IBggGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKDAwICAgCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIKCgoODg4UFBQcHBwSEhIMDAwKCgoCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIICAgKDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBgQGBggMDAwQDg4QEBAODg4KCAoICAgICAgICAgODg4ODg4ODg4ODg4QEBAODg4ODg4QEBAQEBAQEBAQEBAODg4ODg4MDg4MDAwMDAwMDAwMDAwKCgoKCgoMDAwODg4ODg4QEBAOEBAQEBAQEBAQEBAQEBASEhISEhISEhISEhIODg4UFBIODg4QEBAODg4ODg4ODg4ODg4ICAgICAgICAgODg4QEBAODg4ODg4ODg4ODg4YCiIWCCAWCCAWCCAWCCIYCiQaCiQaCiQaCiQaCiQWCCAOAhwOAhoMAhoQBBwUBiAUBiAUBiAUBiASBiAQBh4SBh4UBiAWCCIaCiYeDigcDCYcDigYCiQUBiASBB4UBiAWCCIWCCIYCiQYCiQaCiQYCCIYCCIOBBwOAhoMAhoQBBwUBh4UBiAUBiAUBiASBiAQBh4QBh4SBiAWCCIYCiQaCiQWCiIUCCAUBiAWCCAWCCIUBiAUBiAQBh4QBB4QBB4QBB4QBB4SBB4QBB4QBB4QBB4QBB4SBh4UBiASBh4SBh4QBBwOBBwQBBwQBBwOBBoOAhoOBBoQBBwQBBwOAhoMAhoMBBoQBBwQBB4SBB4OBBoMAhoMAhoOAhoMBBoQBBwSBB4OBBwOBBoOAhoMAhoOBBoOBBoSBh4QBBwMAhoQBBwQBBwOBBoMAhoOAhoSBB4SBh4OBBoMAhgQBBwUBiASBh4QBBwOBBoOBBwMAhoOBBwQBBwOBBoQBBwQBBwOBBwQBBwOBBoQBBwQBBwOAhoMAhoOBBoOBBoKCA4GBggGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoODg4ICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYKCgoKCgogICAuLi4SEhIKCgoKCgoGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgODg4KCgoICAgICAgGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQGBgYMDAwQEA4QEBAODg4KCgoICAgICAgICAgODgwODg4ODg4ODg4QEBAODg4ODg4QEBASEhIUFBQUFBQUFBQWFBYWFhYUFhQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBYUFBQUFBQUFhQWFhYWFBYUFBQUFBISEhISEhIQEBAODg4SEhIODg4QEBAODg4ODg4ODg4ODgwICAgICAgICAgODg4QEBAODg4ODg4ODA4ODgwWCCIYCiIYCiQYCiQYCiQcDCYaDCYYCiQYCCIYCCIQBBwMAhgMAhoQBBwUBiAYCCIWCCIWCCIUBiASBiAQBh4WCCIYCCIYCiQcDCYeDigeDigaCiQSBh4SBB4UBiAYCiQYCCQYCiQaDCYaDCQYCiIYCCIUBiAOAhoOBBwQBBwUBiAWCCIWCCIWCCIWBiAUBiAQBh4UBiAYCCIaCiQaDCYYCiQUCCAWCCAYCCIYCCIUBiASBh4SBh4SBh4SBh4SBh4SBh4SBiAUBiASBh4UBiAUBiAWCCAWCCAUBiAWBiAWCCIUBiASBB4QBBwOBBoOBBwOAhoOBBoQBBwQBBwQBBwQBBwOAhoMAhoMAhoSBh4SBh4OBBwOAhoQBBwOBBoOAhoQBBwQBB4OBBwOAhoOAhoOAhoMAhoQBB4SBh4OAhoQBBwQBBwQBBwOBBoOBBwOBBwMBBwSBiASBB4MAhoQBBwUBh4SBh4QBB4QBBwOAhwOAhoQBBoOBBoQBBwQBBwQBBwSBBwQBBwOBBoQBBwOAhoMAhoOBBwOBBoKCA4IBggGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoQEBAICAgICAYICAgICAgICAgKCgoKCgoKCgwKCgoMDAwKCgoKCgoKCgoMDAwMDAwcHBw0NDQUFBQKCgoKCgoKCgoKCgoKCgoMDAwKCgoKCgwKCgoKCgoICAgICAgICAgICAYICAgQEBAKCgoICAgICAgGBgYGBgYGBgYGBgYGBAYEBAQEBAQEBAQEBAQEBAQGBgYMDAwQEBAQEBAQEBAKCgoICAgICAgICAgMDgwMDAwMDAwODg4QEBAQEBAKCgoMDAwMDA4ODg4ODg4QEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAODg4MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCgoKCgoKCgoKCggICAgUFBIQEBAQEBAODg4MDAwMDAwMDgwICAgICAgKCAgODg4SEhIQEBAODg4MDAwODg4YCiQaCiYaCiQaCiYcDigcDCYcDCYaDCQYCCIUBiAMAhoMAhoQBBwUBiAWCCIWCCIWCCAWCCAUBiASBiAWCCIYCCIYCiQYCiQaDCYcDiYaCiQUBh4QBBwSBh4UCCAYCCIWCCIaCiQcDCYaDCQWCCIWCCISBh4QBBwSBB4UBiAWCCIWCCIWCCIWCCAUBiASBiAUCCAYCCIaCiQYCiQYCiQWCCIYCCIaCiIYCCISBiAQBB4QBB4SBh4SBiAUBiAWCCIWCCIYCCIYCiQWCCIUCCAUBiASBiAQBh4QBB4QBB4SBiAUBiAUBiASBh4QBB4OBBwOAhoOBBoQBBwQBBwOBBwSBB4SBB4QBBwOAhoMAhoSBh4UBh4QBB4QBB4QBBwOBBoOBBwQBBwSBB4QBBwQBBwQBBwQBBwOBBwQBBwOBBoOAhoQBBwQBBwOAhwQBBwOBBwMAhoOBBoUBiAQBBwKAhgMAhoQBB4UBiAUBh4QBB4OAhwOAhoOAhoOBBwQBBwOBBwQBB4QBBwOBBwQBBwOBBoKAhgOBBwOBBoKBg4GBggGBgYGBgQGBgQGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoQEBAKCgoKCgoMDAwODA4ODg4ODg4ODg4ODg4OEA4ODg4ODg4ODg4ODg4MDAwMDAwUFBQuLi4SEhIICAoKCgoODg4ODg4ODg4ODg4OEA4ODg4ODg4ODg4ODg4ODA4MDAwKCgoKCgoQEBAKCgoICAgICAgGBgYGBgYGBgYGBgYGBAYEBAQEBAQEBAQEBAQEBAQGBgYKCgoQEBASEhIQEBAKCgoICAgICAgICAgODg4ODg4ODg4QEBASEhIQEhAICAgICAgICAYICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgSFBIQEhASEhIQEBAODg4ODg4ODg4ICAgICAgICAgODg4SEhIQEBAODg4ODg4ODg4cDCYYCiQaCiYcDiggECoeDigcDigYCiQWCCIUBiAOAhoQBBwSBh4WCCAYCCIWCCIWCCIWCCIUBiAWCCIWCCIYCiQWCiIYCiIcDCYcDCYWCCAQBB4QBBwSBiAUBiAWCCIWCCIaCiQYCiQWCCIYCCIWCCISBh4QBB4SBh4WBiAWCCIYCCIWCCIWCCIUBiAUCCAWCCIaCiQaDCQWCCIWCCIWCCIYCCIWCCISBh4QBB4SBB4SBh4SBiAWCCIYCCIYCiQaCiQWCCIUBiASBh4QBB4QBB4QBB4QBh4SBh4QBB4OBBwQBBwSBh4SBh4SBh4QBBwOBBwOBBwQBB4SBh4QBBwOBBwQBB4SBB4SBBwOAhoMAhoQBBwQBB4QBB4QBBwOBBwSBB4QBB4SBBwSBB4QBBwQBBwSBh4SBh4SBB4SBB4OBBwOAhoOBBwOAhwQBBwQBBwQBBwQAhoOBBoSBh4SBh4MAhoOAhoQBBwUBiAUBiAQBh4OBBwOBBwOBBwSBB4QBB4QBBwQBBwOBBwQBBwQBBoMAhgOBBwOBBoKBg4GBggGBgYGBgYGBgQGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoQEhAKCgoKCgoMDAwMDAwMDAwMDAwKDAoKCgoKCgoKCgoKCgoKCgoKCgoKCgwKCgoODg4aGhoODg4ICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKDAoMDAwMDAwMDAwMDAwKCgoKCgoQEhAKCgoICAgICAgGBgYGBgYGBgYGBgYGBAQEBAQEBAQEBAQEBAQEBAQGBgYKCgoQEBAQEBAQEBAKCgoICAgICAgICAgODg4QDg4SEhIQEBAQEBAQEBAMDAwODg4ODg4ODAwMDAwKDAoMDAoMDAwMDAwMDAwMDg4ODg4ODg4ODg4ODg4MDAwMDAwMDAwMDAwKDAwKDAoKDAoKCgoMDAwMDAwODg4ODg4MDgwSFBIQEBAQEBAQEBASEhIQDg4ODg4ICAgICAgICAgODg4SEhIQEBAUFBQQEBAODg4cDCYaDCQeDiggECggECogECocDigYCiQYCiISBh4OBBoQBB4SBiAWCCIYCCIWCCAWBiAWCCAYCCIWCCIYCiQWCCIWCCAaCiQaDCYYCiQUBiAUBiAUBiAUBiAWCCIWCCIWCCIaCiQYCCIYCiQYCiQWCCISBB4QBBwSBh4WBiAYCCIWCCIWCCAWCCAWCCIYCCQaCiQcDCYUCCASBh4SBh4UBiAUBiAQBh4QBB4SBh4SBh4UBiAWCCIYCiQWCCIUCCASBiASBh4SBh4SBh4SBh4SBh4SBh4SBiASBh4SBB4QBB4SBBwOBBwOBBwOBBwOBBwOBBwQBBwUBiAUBiAUBh4SBh4QBBwQBB4QBBwQBBwOBBoMBBoOBBwSBB4QBB4OBBwOBBwQBBwQBBwQBBwQBBwOBBwOBBwQBBwSBh4SBh4SBh4QBBwOAhoOBBoQBBwOBBwOBBwQBB4QBBwQBBwUBiAQBB4QBBwKAhoMBBwUBiAUCCISBiAQBB4OBBwQBB4SBB4QBB4QBBwOBBwQBBoOBBoMAhoQBBwOBBgIBgwGBggGBgYEBgYGBAQGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoSEhIKCgoKCgoKCgoKCgoKCgoICAgGCAgGCAYGBgYGBggICAgICAgICggKCgoKCgoQEBAeHh4QEBAICAgKCgoICAgIBggGBggGBggGBgYGCAYGCAgICAgKCgoKCgoKCgoKCgoKCgoSEhIKCgoICAgICAgGBgYGBgYGBgYGBgYGBAQEBAQEBAQEBAQEBAQEBAQGBgQKCAoQEBASEBIQEBAICAgICAgICAgICAgODg4ODg4UFBQUFBQSEhIQEBAMDAwODg4QDg4ODg4ODg4MDAwKDAwKDAwKCgoKCgoKCgoKCgoKCgoMDAoKDAoKDAoKCgwMDAwMDAwMDAwMDAwMDAwMDgwODg4QEBAQEBAQEBAODg4SEhIQEBASEhIUFBQUFBQODg4ODg4ICAgICAgICAgODg4SEhISEhIUFBQQEA4MDA4aDCYcDiggECogEioiEiwgEioeECgaDCYWCCIQBBwQBB4SBh4UBiAYCCIWCCIWCCAWCCAWCCIWCCIWCCIWCCIUBiAaCiQaCiQWCCIWCCIWCCIUBiAUBiAUBiAWCCAWCCIYCiQaCiQaCiQaDCYYCiQUBiAOBBwSBh4SBh4WCCIWCCIWBiAWBiAWCCIYCCIaCiQYCiQUBiASBh4QBBwQBBwSBh4SBh4QBh4SBiAUBiAWCCIYCiQWCCIUBiASBh4SBh4UBiAUBiAUBiASBh4SBh4SBh4SBh4SBh4QBB4OBB4SBh4QBB4QBB4QBB4QBBwMAhoMBBoQBBwSBh4SBh4WCCAUBiAQBh4QBB4QBB4QBB4SBB4OAhoMAhoQBBwQBB4SBB4OBBwOAhoMAhoMAhoOBBoOBBwSBB4OBBwOBBwQBBwSBB4UBiASBh4QBBwQBBwQBBwMAhoOBB4QBBwQAhoQBBwSBiAOBB4QBBwOAhoOBBoSBiAWCCIUBiAQBBwOAhwOAhwSBB4QBB4OBBwOBBoOBBoOBBoQBBwMBBgIBgwGBggGBgYEBgQGBAQGBgQGBgYGBgYGBgYGBgYICAgICAgKCgoSEhIKCgoGBgYGBgYGBgYICAgICAgICAgICAgGBgYGBgYICAgICAgKCAgICAgKCgoQEBAgICAQEBAICAgKCgoICAgGBgYGBgYGBgYGBgYICAgICAgICAgICAgGBgYGBgYGBgYKCgoSEhIKCgoICAgICAgGBgYGBgYGBgYGBgYGBAQEBAQEBAQEBAQEBAQEBAQGBgQICAgQEA4SEhIQEBAICAgGBgYICAgICAgKCgoODg4SEhISEhISEhIQEBAODg4QEBASEhISEhISEhISEhAQEBAQEBAQEBAQEBAQEBAODhAODg4ODg4OEBASEhISEhISEhISEhISEhISEhISEhISEhISEhISEhISEhIQEBAODg4SEhAQEBASEhISEhISEhIODg4KCgoICAgGBggICAYODg4SEhISEhISEhIODg4MDAwcDiYgEiogECokFCwkFi4iFCweDigaDCQUBiAQBB4SBiAUBiAWCCAUCCASBiAWCCIYCCIWCCIUBiAUBiASBh4WCCIaCiQWCCIYCiQYCiIUBiAUBiAWCCAWCCIWCCIYCiIaCiQaCiQaDCYcDiYWCCISBh4SBh4UBiAUBiAWCCISBiAUBiAWCCIaCiQYCiQWCCISBh4OBBwOBBwQBB4SBB4SBB4SBh4SBiAWCCAYCCQYCiQUBiAQBB4SBh4UBiAUBiAUCCAWCCIWCCIWCCAWCCAWCCAUCCAUBiAUBiASBB4QBB4OBBwSBB4SBB4QBBwOBBoOBBwQBBwQBB4QBB4SBh4UCCAUBiASBh4SBh4SBh4SBB4QBBwOAhoMAhoOBBoSBB4SBh4OBBwOAhoOAhoOAhoMBBoQBBwQBBwOBBwQBBwQBBwQBh4WCCIUBiASBB4SBh4QBBwQBB4QBBwMAhoMAhoQBh4SBiAQBB4QBBwQBBoOBBwWBiAWBiAQBBwOAhoOAhoQBBwSBh4QBBwOBBoQBBwOAhoQBBwOBBgKBg4IBggGBgYEBAQEBAQEBgQGBgYGBgYGBgYGBgYICAgICAgKCggSEhIKCgoICAgICAgICAgICAgKCAoKCgoKCgoKCgoKCgoKCgoKCgoKCgoGCAgKDAwQEBAgICAQEBAICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCAoICAgICAgICAgICAgKCgoSEhIKCggICAgICAgGBgYGBgYGBgYGBgYGBAQEBAQEBAQEBAQEBAQEBAQEBgQICAgODg4QEBIQEBAICAgGBgYICAgICAgICAgKCgoODg4QEBAQEBIQEBAMDAwODg4QEBASEBASEhISEhIUEhQUFBQSFBISEhISEhISEhISEhISEhISEhIQEhAQEhIQEBAQEhISEhISEhISEhISEhAQEBAODg4ODg4ODg4MDAwQEBAQEBAQEBIQEBAODg4KCgoICAgICAgGBgYICAgODg4SEBAQEBAQEBAKDAoKCgogEiwiEiwiEiwkFi4iFCweDigaDCYYCiQSBh4QBh4SBiAWCCIWCCIQBh4UBiAaCiQYCiQSBiASBh4UBiAYCCIYCCIWCCIYCiIaDCYYCCIUBiAWCCAWCCIWCCIWCCIYCCIYCiQYCiQaDCYaDCQWCCAQBB4SBiAUBiAYCCISBiASBh4YCiQaCiQYCCIUBiASBh4QBB4QBB4SBh4SBh4SBh4SBB4SBiAWCCAYCCQaCiQSBiAQBh4UBiAUBiAUCCAWCCIWCCIYCCIYCiQYCiQYCiQYCiQYCiQYCiQYCiIYCCIUBiAQBB4QBB4QBBwQBBwOBBwQBBwQBB4SBh4SBh4QBB4QBh4UCCAYCCIWCCISBiAQBB4SBB4SBB4QBBwMAhoMAhoSBB4UBh4QBBwQBBwQBBwOAhoOAhoQBBwOBBwQBBwQBBwOBBwSBh4UBiAUCCAUBiASBh4SBB4QBB4OBBwMAhoOBBoUBh4UBiAOBB4OBBwQAhwSBBwSBiAQBh4OBBwOAhoOBBoOBB4QBBwQBBwQBBwOBBoOBBwOBBYIBgwGBggGBgYEBAQEBAQEBAQGBgYGBgYGBgYGBgYICAgICAgICgoSEhIMDAwMDAwODg4ODg4ODg4QEBASEhASEhISEhISEhIQEhIQEBAODg4GBgYMDAwSEhIgICASEhIGBgYKCgoQEhIQEBAQEhISEhISEhISEhISEhAQEBAODg4ODg4ODg4MDAwMDAwSEhIICgoICAgICAgGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQGBAQIBgYODg4QEBAQDhAICAgGBgYGBgYICAgICAgKCgoODg4QEBAQEBAQDhAKCgoKCgoKCgoKCgwMDAwMDAwMDAwMDA4MDAwMDAwMDAwMDAwMDAwMDAwMDAwKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCAoICAgICAgICAgICAgQEBAQDhAQEBAQEBAODg4KCgoICAgIBgYGBgYGBgYMDAwQEBAQEBAODg4KCgoKCgoiFCwiEiwmFi4iFCweECocDCYaDCYYCiQSBh4SBh4WCCIYCCIUBiASBiAYCiQaCiYUBiAQBB4UBiAYCiQWCCIUCCAWCCIaDCYaDCYUCCAUBiAUBiAWCCIWCCIYCCIYCiQWCCIYCiQcDiYaDCYUBiAQBB4UCCAWCCIWCCISBh4WCCIcCiYYCiQSBiAQBh4UBiASBiASBiASBh4QBB4SBh4UBiAWCCIYCiQYCCISBh4SBh4UBiAUBiAUBiAWCCIWCCIYCiQcDCYcDCYaDCQaCiQaCiQYCiQYCiQYCiQYCiQYCiQWCCISBh4OBBwMAhoOAhwSBB4QBB4QBB4SBh4SBiASBh4QBh4WCCIYCiQWCCIUBiAOBBwQBB4SBB4QBBwOAhoMAhoQBBwSBh4SBh4SBB4QBBwOAhoOAhoOAhoOBBwQBBwOBBwQBB4SBB4WCCIWCCIUBiASBh4QBB4SBB4QBBwMAhoOBBwUBiASBh4QBB4OAhoMAhoQBB4SBh4QBBwQBBwOAhoMBBoMBBoSBh4QBBwOBBwQBBwMBBYIBgoGBgYEBAQEBAQEBAQEBAQGBgYGBgYGBgYIBgYGCAgICAgKCgoQEBAODg4ODg4QEBASEhISEhISEhISEhISEhISEhISEhISEhISEhIODg4GBgYKCgoUFBQgICASEhIGBgYKCgoSEhISEhISEhISEhISEhISEhISEhISEhISEhISEhIQEBAODg4ODg4QEBAKCgoICAgGCAgIBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQIBgYODg4QEBAODg4ICAgGBgYGBgYGBgYICAgICAgMDAwQEBAQEBAODg4KCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoKCgoKCgoKCgoKCgoQEBAODg4QEBAQEBAMDAwICAgICAgGBgYGBgYGBgYMDAwQEBAQEBAODg4ICAgICAggECgiFCwkFiwiEioeECgcDigcDigWCCISBh4UBiAWCCIWCCIUBiAWCCIWCCIUCCASBh4UBiAYCCIWCCISBiAYCiQaCiQaCiQYCiQUBiAUBiAUCCAWCCIYCiIYCiQYCCIWCCIcDCYcDigaCiQSBh4SBh4WCCAWCCIUBiAUBiAWCCIWCCIUBiASBh4SBiAUBiASBh4SBh4QBh4QBB4WCCAaCiQaCiQYCCISBiASBh4UBiAWCCAWCCAWCCIYCiIcDCYeDigaDCYYCiIWCCIWCiIWCiIWCCIWCCIYCiIYCiQYCiQYCiQWCCAQBB4MBBoOBBwQBB4SBh4SBh4SBh4SBh4SBB4SBh4QBh4UCCAaCiQWCCIQBB4QBBwQBB4QBB4QBBwMAhoMAhoQBBwSBh4UBiASBh4QBB4OBBwOBBwOBBwSBB4QBBwQBBwQBBwQBh4WCCIYCCIUBiASBh4SBB4SBh4QBBwMAhoSBh4WCCIQBB4OBBwMAhoMAhoSBh4UBh4QBBwOAhoOAhoMAhoQBB4SBB4QBBwOAhoMBBYIBggGBgYEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYGCAYICAgICAoQEBAQEBAODg4QEBAQEBAQEBAODg4MDgwMDAwMDAwMDAwMDAwKCgwICAgGBgYKCgoSEhQgICIQEBAICAgICAgKCgwMDAwMDAwMDAwMDAwMDAwMDgwODg4QEBAQEBAQEBAODg4QEBAQEBAICAoICAgGCAYGBgYGBgYGBgYGBgYGBAQEBAQEBAQEBAQEBAQEBAQEBgQGCAYODg4QEhAQEBAICAgGBgYGBgYGBgYGBgYICAgMDAwSEhIQEBAQEBAMDAwODg4QDg4ODg4ODg4MDAwKDAwKDAwKCgoKCgoKCgoKCgoKCgoMDAoKDAoKDAoKCgwMDAwMDAwMDAwMDAwMDAwMDgwODg4QEBAQEBAQEBAODg4QEBAQEBAQEBASEhIMDAwICAgGBgYGBgYGBgYIBggODg4SEBISEhIODg4ICAgICAggECgiFCwiEiogECoeECocDigYCiQSBiASBh4UCCAUBiAUBiAWCCAWCCIWCCASBh4UBiAWCCIUCCASBh4WCCIYCCIYCCIaCiQUCCAUBiAWCCIYCiQaCiYaCiQaCiQYCCIaDCQcDCYaDCYUCCASBh4UBiAUCCAUBiAUBiAWCCIWCCISBiASBh4SBiAUBiASBiAUBiASBh4QBh4WCCIYCiQaCiQWCCISBiAUBiAWCCIWCCIWCCAWCCIeDiggECocDigYCiQWCiIaCiQYCiIYCCIWCCIWCCIWCCIWCCIUCCIWCCIYCCIWCCIUBh4QBBwSBh4WCCIWCCIYCCIWCCASBh4SBh4SBiAUBiASBh4UCCAYCCIUBh4QBh4OBBwQBB4QBB4QBB4QBBwOBBoOAhoSBh4WCCISBiAQBh4QBB4OBBwSBB4SBB4OBB4QBBwQBBwSBiAYCCQWCCIUBiASBB4QBB4SBB4OBBwOBBwWCCISBiAQBB4QBBwOAhoQBBwUBiASBiAOBBwOBBoOAhoQBBwSBh4QBBwQBBoMBBYIBggGBgYEBAQEBAQEBAQGBgYGBgYGCAYGBgYGBgYGBgYICAgICAgODg4QEBAKCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAoICAgIBggGBgYGBgYICAgSEhIkJCQSEhIKCgoICAgICAgICAgICAgICAgICAgICAgICAgKCgoKCgoKCgoKCgoKCgoQEBAODg4ICAgICAgGBgYGBgYGBgYGCAYGBgYGBAQEBAQEBAQEBAQEBAQEBAQGBgQGBgYODg4SEhIQEBAICAgGBgYGBgYGBgYGBAYICAgKCgoSEhISEhIQEBAODg4QEBASEhISEhISEhISEhAQEBAQEBAQEBAQEBAQEBAODhAODg4ODg4OEBASEhISEhISEhISEhISEhISEhISEhISEhISEhISEhISEhIQEBAODg4ODg4QEBASEhISEhIKCgoICAgGBAYGBgYGBgYIBggODg4SEhIUEhIODg4ICAgICAgiFCokFCwgECoeDigeDigeDigWCCISBh4UBiAWCCIWCCIYCCIYCCIYCCIUBiASBiAWCCIWCCASBh4SBiAYCCIWCCIaDCYaCiQUBiAWCCIYCiQaDCYaDCYaCiQaCiQaCiQcDigeDigaDCQSBh4UBiAWCCAWCCIYCCIYCCIYCCIWCCASBh4SBh4UBiAUBiAQBh4QBh4SBh4WCCIYCiQYCiQWCCIUCCAWCCIYCCIYCiQYCCIcDiYiEiwgECocDCYYCiQaDCYcDCYaDCYaCiQYCiQaCiQYCiQYCiQWCCIWCCIWCCIUBiAUBiAUBiAWBiAYCCIYCiQYCiQYCiQYCiIWCCIWCCIWCCIUBiAUBiASBh4SBiAWCCAUBiASBh4SBB4SBh4SBB4SBB4QBBwOBBwOBBoSBB4UCCIUCCASBh4OBBwQBBwQBBwSBh4QBB4OBBwSBB4WCCIYCiQWBiAUBiAQBh4SBB4QBBwOAhwSBiAWCCISBh4SBB4QBBwMAhoQBh4WCCIQBh4OBBwOBBwOBBwSBh4OBBwOBBwOBBgIBggGBgYEBAQEBAQEBAQGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgQDhAQEBAICAgICAgICAgICAgKCAoKCgoKCgoKCgoKCgoICAgICAgICAgGBgYEBgYQEBAoKCgSEhIMDAwKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCAoICAgICAgICAgICAgQEBAQDhAICAgICAgGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQGBAQGBgYOEA4UFBQSEhIICAgGBgYGBgYGBgYEBAQICAgKCAgSEhIUFBQSEhIMDAwODg4QEBASEBASEhISEhIUEhQUFBQSFBISEhISEhISEhISEhISEhISEhIQEhAQEhIQEBAQEhISEhISEhISEhISEhAQEBAODg4ODg4ODg4MDAwMDAwSEhIUFBQSEhIKCAgICAgEBAQGBgYGBgYGCAgODg4UFBQUFBQMDAwICAgICAgiFCwgEioeECgeDigcDiYeDiYWCCAUBiAWCCIYCiQcDCYaCiQaCCIWCCIWCCIWCCIWCCIUBiAUBiAUCCAaCiYcDCYcDiYYCiQYCiQaCiQaDCYcDCYaDCYaCiQYCiQaDCYcDCYeDigYCiISBh4UBiAWCCIaCiYaDCYaCiQYCCIWCCIUCCAWCCAWCCAUBiAQBh4SBh4YCCIYCiQaDCQWCCIWCCIWCCIaCiQaDCYYCiQeDigiEiweDigcDCYeDigcDCYaDCYYCiQaDCQcDCYaCiQaCiQYCiQWCCIWCCIWCCIYCCIWCCISBiASBh4WCCIYCCQYCiQYCiIYCiQaDCYYCiQYCiQYCCIWCCIUBiAUBiAQBB4QBh4UCCAWCCAUBiASBiASBB4QBB4QBB4QBB4QBBwQBBwSBh4WCCIUBiAQBBwOAhoOAhoQBB4SBh4QBBwOBBwSBiAYCCIYCCISBiASBh4SBh4SBB4QBBwQBBwUCCAWCCAQBB4SBB4QBBwOBBwUBiAUBiIQBB4QBB4MAhoQBh4QBB4OBBwOBBgIBgoGBgYEBAQEBAQEBAQGBgYGBgYGBgYGBgYGBgYGBgYGCAgICAgQEBAQEBAMDAwODg4ODg4ODg4QEBASEhASEhISEhIQEhAOEBAODhAQEBAGBgYEBAQODg4qKioQEBAKCgoKCgoQEBAQEBAQEhISEhISEhISEhISEhAQEBAODg4ODg4ODg4MDAwQEBAQEBAICAgGCAgGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQGBAQGBgYODg4UFhQSEhIICAgGBgYGBAYEBAQEBAQICAgICAgSEhIWFhYSEhIKCgoKCgoKCgoKCgwMDAwMDAwMDAwMDA4MDAwMDAwMDAwMDAwMDAwMDAwMDAwKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCAoICAgICAgICAgICAgKCgoSEhIWFhYSEhIICAgICAgEBAQEBAQGBgYGBgYODhAWFhYUFBQKCgoGCAYGBgYiFCwgECgeECoeDigcDiYcDCYWCCIYCCQWCCIaDCYaCiQYCiQYCCIYCiIWCCIWCCIWCCAUBiAUBiAYCCIcDigcDigYCiQYCiQaDCYaDCYcDCYcDCYcDCYaCiQYCCIaDCYcDigcDCYWCCAYCCIWCCIYCiQaDCQYCiQYCiQYCCIWCCIWCCAWCCASBiASBiASBiAWCCIYCiQaCiQWCCIWCCIYCCIYCiQaDCQYCiQeECgiEiweDigcDigcDigaCiQYCiIYCiQWCCIWCCIWCCAWCCAWCCAWCCIWCCIWCCAWCCAYCCIWCCIUCCAUBiAUCCAWCCIWCCIWCCIWCCIWCCIYCiQcDCYYCiQYCCQWCCIUCCIUBiAQBB4QBB4WCCIYCiQWCCISBiASBh4QBB4SBh4QBB4QBBwSBBwUBh4UBiAQBB4OAhoOAhoOBBwQBh4QBBwQBBwQBBwUCCAYCiQWBiASBh4SBh4SBB4QBB4QBBwSBh4WCCISBh4QBB4QBBwOAhwQBh4WCCISBh4SBiAOBBwQBBwSBh4QBBwOBBoIBgoGBgYEBAQEBAQEBAQGBAYGBgYGBgYGBgYGBgYGBgYGBgYICAgQEBASEhAODg4QEBASEhISEhISEhISEhISEhISEhISEhIQEhISEhISEhIGBgYCAgIODg4oKCgQEA4KCgoICAgSEhISEhISEhISEhISEhISEhISEhISEhISEhISEhIQEBAODg4SEhAQEBAICAgGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBgQGBgYMDA4WFhQSEhIICAgGBgYEBAQEBAQEBAQGBgYGBgYQEBAWFhYSEhIICAgGBgYGBgYGBgYICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBggICAgIBgYGBggGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgGBgYGBgYGBgYKCgoSEhIWFhYQEBAGBgYGBgYEBAQEBAQGBgQGBgYODg4WFhYSEhIICAgGBgYGBgYgEiogEiogECoeDiggECocDCYYCiQYCiQaDCYcDCYaDCYaCiQYCCIWCCIWCCIYCCIWCCAUBiAUCCAcDCYeDigaCiQWCCAaCiQcDCYcDCYeDigeDigaDCYYCiQaCiQcDiggECgcDCYYCiQaDCYYCiQcDCYaDCYaDCYYCCIWCCIWCCIWCCIWCCIUCCASBiAWCCIWCiQaDCYWCCIWCCIYCiQYCiIYCiQWCiIcDiYiEiwgECoeECocDCYYCiQYCiQYCiQWCCIWCCIWCCIWCCIYCiQYCiQYCiQWCCIUBh4UBiASBB4QBh4UBiAWCCIWCCIWCCIYCCIYCCIYCiIYCiIWCCIYCiQeDigYCiQYCCIWCCISBh4SBh4SBh4QBB4UCCAaCiQWCCIUBiASBh4SBh4QBh4QBB4QBBwSBBwUBiASBiAQBBwQAhwMAhoMBBwOBBwSBB4QBB4SBh4YCCIYCCIUBiASBh4SBh4SBB4OBBwQBB4UBiAUBiAQBB4SBB4QBBwOBBwUBiAUCCAUBiASBiAOBBwSBh4QBBwQBBoIBgoGBgYEBAQEBAQEBAQGBgQGBAYGBgYGBgYGBgYGBgYGBgYICAgQEBASEhIODg4QEBAQEBAQEBAODg4MDgwMDAwMDAwMDAwMDAwMDAwMDAwICAgCAgIODg4iIiIODg4ICAgICAgKCgwMDAwMDAwMDAwMDAwMDAwMDgwODg4QEBAQEBAQEBAODg4SEhIQEBAICAgGBgYGBgYGBgYGBgYGBgYGBAYEBAQEBAQEBAQEBAQEBAQEBAQEBgQGBgYMDAwUFBQQEhIICAgGBgYEBAQEBAQEBAQGBgYGBgYODg4WFhYSEhIICAgKCgoKCgoKCgoICAgGCAYGCAgGCAgICAgICAgICAgICAgICAgKCggICAgICAgICAgIBggGBggGBggGBgYGCAYGCAgICAgKCgoKCgoKCgoKCgoKCgoSEhIWFhYODg4GBgYGBgYEBAQEBAQGBgQGBgYODg4WFhYSEhIICAgGBgYGBgYeECggECoeDigeECggECoYCiQaCiYaDCYeDigcDCYcDigaCiQWCCAWCCIYCCIWCCAWCCAWCCIYCiQcDCYcDCYWCCIYCiQeDigeDigcDiYgECocDigcDiYcDCYcDCYeDigeDigaCiQYCiQaDCYeDigcDiYcDiYaDCYYCCIWCCAYCiIWCCIWCCIWCCIWCCIYCCQcDCYYCiQWCCIYCiQYCiQWCCIYCiQcDiggEiogECoeDigaDCYaDCYcDCYYCiQWCiIWCCIYCiQaCiQYCCIUCCAWCCISBiAQBBwSBh4aFCgWECYOBBwUBiAYCCIWCCIWCCIWCCIaCiQYCiQYCiQaDCQYCiQYCiQeDigaCiQWCCIUBiASBh4SBh4SBiAQBh4UCCAaCiQWCCIUBiASBiASBB4QBB4QBBwQBBwSBh4UBiASBh4QBBwOAhoMAhoMBBoSBh4SBB4SBh4UBiAYCCIWCCISBh4SBh4SBh4SBh4QBB4SBh4UCCASBh4QBB4QBB4QBBwSBh4WCCIWCCAUBiAOBh4QBh4QBBwQBBwIBgoGBgYEBAQEBAQEBAQEBAQEBgQGBgYGBgYGBgYGBgYGBgYICAgQEBASFBIMDgwODg4ODg4MDAwMDAwKCgoKDAoKDAoKDAwMDAwMCgoKCgoICAgCAgIMDAwkJCQQEBAICAgICAgMDAwMDAwMDAwKDAwKDAoKDAoKCgoMDAwMDAwODg4ODg4MDgwSFBIQEBAICAgGBgYGBgYGBgYGBgYGBgYEBgQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYKCgoUEhIQEhAICAgGBgYEBAQEBAQEBAQGBgYGBgYMDAwUFBQQEhAKCgoMDAwMDAwMDAwMCgoKCgoICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKDAoMDAwMDAwMDAwMDAwKCgoKCgoQEhAUFBQMDAwGBgYGBgYEBAQEBAQGBgYGBgYODg4UFBQODg4GBggGBgYGBgYgECgiEiwgECogEioeDigYCiQcDCgeDiggECoeECgcDCYWCCIWCCIWCCIWCCIWBiAUBiAWCCIYCiQcDCYWCCIYCiQaDCYcDCYcDCYeECggECogECogECgeDigeDigeDigeECgYCiQcDCYeDiggECogDioeDigYCiQWCCIYCCIYCCIWCCAUBiAWCCIWCCIcDCYaCiQWCCIYCiQYCiQWCCIWCCIeECgkFC4iEiweDigcDCYeDigcDigYCiQWCCIYCiQaCiQYCiQWCCAQBB4OBB4QBB4QAhwSCCAcGCogJjQcIjISBh4OBBwUBiAUBiAWCCIUBiAWCCIaDCQaDCYaDCYcDCYYCiQaDCYeDigcDCYYCiIWCCAWBiAUBiAUBiASBh4UBiAaCiQWCCISBiASBB4QBB4QBB4QBBwSBB4WCCAWCCISBh4OBBwOAhoMAhoQBB4SBh4UBh4UBiAYCCIYCiQWCCAQBB4SBh4SBiASBiAUBiASBiAUBiASBh4SBh4OBBwQBBwUBiAYCCIWCCISBiAQBh4QBBwQBBoIBgoGBgYEBAQEBAQEBAQEBAQEBAQGBAYGBgYGBgYGBgYGBgYICAgQEBASFBIICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgGBgYICAgEBAQCAgIODg4mJiYQEBAICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgSFBIQEBAICAgGBgYGBgYGBgYGBgYGBAYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYICAgSEhAQEBAICAgGBgYGBAQEBAQEBAQGBgYGBgYKCgoSEhIQEBAKCgoMDAwODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4OEA4ODg4ODg4ODg4ODg4ODA4MDAwKCgoKCgoQEBASEhIKCgoGBgYGBgYEBAQEBAQGBgYGBgYODg4UFBQMDAwGBgYGBgYGBgYgECoiEiwgECogEiocDCYcDCYgECogECogEioeECgeDigYCiQYCiQYCCQWCCIUBiAWCCIYCCQcDCYYCiQWCCIcDCYcDCYYCiQaCiQgECoiFCwiFCwgECgeDigeECggECoeECgaDCYgECogECogEiogECoeDigaDCQYCiQYCCQYCCIWCCAUCCAYCCIaCiQcDCYUCCIYCiQYCiQYCiQUBiAcDiYiEiwgECogECoeDigeDigYCiQWCCIYCiQaCiYYCCIUCCIWCCIUBiAQBB4QBB4QBBwSBh4cHCwiKjYgKDQeKDQWECYQAhwWBiAUBh4SBh4WCCIWCCIUCCAaCiQaCiQaDCQcDCYaDCQaCiQeDigeDigaCiQWCCIWCCIUBiAUBiASBB4UBiAYCiQUCCAUBh4SBiAUBiAQBB4OBBwUBh4WCCIUBiAUBiASBh4OAhoOBBwUCCASBh4UBiAWCCIYCiQWCCISBiASBh4SBh4UBiASBiASBh4SBiASBiASBh4SBh4QBB4SBh4WCCIWCCIWCCASBh4QBBwQBBwIBggGBgQEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYGBgYKCAgQEBAUFBIICAgKCggKCgoKCgoMCgoMDAwMDAwMDAwMDAwMDAwKCgoICAgGBgYGBgYMDAwmJiYQEBAICAgICAgMDAwMDAwMDAwMDAwMDAwMDAwMDAwMCgoKCgoKCgoKCggICAgUFBIQEBAKCAgGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBAYGBgYODg4QEA4ICAgGBgYGBAQEBAQEBAQGBgYGBgYICAgQEBAQEBAICAgKCgoKCgwMDAwMDAwMDAwODg4ODg4ODg4MDgwMDAwMDA4ODgwMDAwMDAwKCgoKCgoKCgoKCgoMDAwKCgoKCgwKCgoKCgoICAgICAgICAgICAYICAgQEBAQEBAICAgGBgYGBgYEBAQEBAQGBgYGBgYMDAwQEBAKCgoGBgYGBgYGBgYgECogECogECogECocDCYgECogECoiEioiFCwiEiweDigaDCQaCiQYCCQWCCIWCCIYCiQcDCYcDigYCCQaDCYcDCYaDCQWCCIcDiYiFCwiFCwgECoeDigeDigeECggEiocDiYeDiggECogECoiFCwiEiwgECoaDCYaCiQYCiQWCCIWCCAYCiIaCiQeDigYCiQYCiQcDCYaDCYWCCIYCiQiEiweDigaDCYeECgeDigYCiQaCiQaDCYaDCYaCiYSBiAWCCIYCiIUBh4SBB4SBB4QAhwYEigiKDYiKDQgJjQgKDQaHC4QBB4WBiAUBiAQBBwUBiAaCiQYCCIUBiAWCCIYCiQaDCQcDCYcDCYaDCYeDiggECoaCiQYCiQWCCIUBiAUBiASBh4SBiAYCiQUBiASBiAUCCAUBiAQBB4UBiAYCCQYCCIUBiAWCCIQBh4KAhoUCCAUBiASBh4UCCIYCiQYCiQUBiASBh4UBiAUBiAUBiASBh4SBh4SBh4SBB4SBiAQBh4SBh4SBiAWCCIWCCIUBiAQBB4QBBwGBggEBgQEBAQEBAQEBAQEBAQEBAQGBAYGBgYGBgYGBgYGBgYKCgoODg4UFBIODAwOEBASEhISEhIUFBIUFBQWFBYWFhYUFhQUFBQUFBQODAwGBgYGBgYMDAwgICAODg4ICAgICAgUFBYUFBQUFBQUFhQWFhYWFBYUFBQUFBISEhISEhIOEBAODAwUFBIODg4KCgoGBgYGBgYGBgYGBgYGBAYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgQGBgYMDAwODg4ICAgGBgYGBAYEBAQEBAQGBgYGBgYGBggMDAwODg4GBgYGBgYGBgYGBgYGBgYGBgYICAgIBggICAgGCAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgODg4MDAwGBggGBgYGBgYEBAQEBAQGBgYGBgYMDAwMDAwICAgGBgYGBgYGBgYeDigeDigeECgeDigeECoiEiwgEiokFi4kFi4gEiocDCYYCiQYCiQYCiQYCCIaCiQYCiQcDigYCiIYCiQcDCYcDCYWCCIaDCQiEioiEiwgECocDCYeDioeDigeDigeDigcDigiEiwgECokFCwkFi4iFCweDigaDCQYCiQYCiQYCCIaCiQYCiQcDiYaDCQYCiIaDCYaDCYYCiQWCCIgECogECoaDCYeDiggECoYCiQeDigcDigaDCYcDCYWCCISBh4aCiQWCCISBiASBh4SBB4SBB4cGCokKjYgJjQeJjQeKDQcIDAQBB4UBiAUBh4QBB4OBB4UBiAYCiQYCiQUCCIWCCIWCiIYCiQcDCYeDigeDigaDCYaDCYaCiQYCCQWCCIUBiASBh4SBB4WCCIWCCIUBiAUBiAUBiAUBiASBh4WCCIaCiQUCCAUBiAUCCIMAhoQBh4YCiQSBh4WBiAWCCIaDCQYCCIUBiAQBh4SBh4SBiASBiASBiASBh4SBB4SBh4SBiAUBiASBiAUBiAWCCIUBiAQBB4QBB4GBggEBgQEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGCAYKCgoODg4SEhIODg4QEhASEhISEhISEhIQEBAQEBAQEBAOEBAOEBAQEBAMDAwGBgYGBgYMDAwgICIODg4GBgYICAgODg4QEBAOEBAQEBAQEBAQEBAQEBASEhISEhISEhIQEhAODg4SEhIODg4KCgoGCAYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYICAgKDAoICAgGBgYGBAYEBAQEBAQEBAQGBgYGBgYICAgKDAwCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIICAgKDAwICAgGBgYGBgYEBAQEBAQGBAQGBgYGCAYKCgoKCgoGBgYGBgYGBgYGBgYcDCYcDigeDigeECgiFCwiEiokFiwiFCwgEiocDCYaDCYYCiQaDCYYCiQaDCYaDCYcDiYcDCYYCiQcDiYeDigaCiQYCiQiFCwiFCwgECoeDigcDigcDigcDigcDCYcDiYiEiwiFCwiFCwkFiwiEioeDigaDCYYCiQaDCQYCiQYCiQcDCYaDCYeDigYCiIcDCYcDCYaCiQWCiIeECgiEiweDigcDigiEiwcDCYeECogECoWCCIaDCQcDCgSBiAUCCIaCiQWCCISBiAUBiAUBiAUCCAeHC4iKjYgJjQeJjQeKDQcIDAQBB4WCCIWDCQSBiAQBB4QBiAWCCIaCiQWCiQWCCIYCiQYCiIYCiQcDCYcDigaCiQYCiQcDCYYCiQWCCIUBiAUBiAUBiASBiAYCiQWCCIUBiASBiAUCCIUBiAUBiAYCCIYCCISBiASBiAQBB4QBB4YCCIWCCISBh4SBiAYCiQaCiQUBiAQBh4SBh4UBiASBiAUBiAUBiASBh4SBh4UBiAUBiAQBh4SBiAWCCISBiAOBBwSBB4GBggEBgYEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYICAgKCgoODg4SEhIODgwODg4ODg4ODg4MDAwKDAoKCgoICgoICAoICAgIBggKCgoICAoGBgYMCgweHB4ODA4GBgYGBgYICAgICAgICAgICAoKCgoKCgoKDAoMDAwODg4ODg4ODg4ODgwSEhIODg4KCgoICAgGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBgYGCAYICAgICAgGBgYGBAQEBAQEBAQEBAQGBgYGBgYICAgICAgEBAQEBAQGBAQEBAQEBAQCBAICAgICAgICAgICAgICAgIEAgIEBAQEBAQCBAICAgICAgICAgICAgICAgICAgICBAICBAQEBAQEBAQGBgYGBgYEBAQICAgICAgICAgGBgYGBgYEBAQEBAQEBAQGBgYGBgYICAgICAgGBgYGBgYGBgYGBgYcDCYeDigcDiggECoiEiwkFCwmFi4iEioeDigcDCYcDCYcDigYCiQWCCIcDCYeECgeECoYCiQcDiYeDigcDiYaCiQiFCwkFi4gECoeDiggECocDCYaDCYcDCYcDCYeDigiEiwiEiwmFi4kFCwgECgcDCYaDCYcDigaDCYUCCIaDCYcDiggEioaCiQaDCYeDigcDigaCiQeECgkFi4gECoeECgiFC4gECocDCYgEiwaDCQWCCIeDigaCiQSBh4aDCYYCiQUBiAUBiAUBiAWBiAWCiIgJDIgKDQgJjQeJjQeJjQeJDQSCiIUCCAcFCoUCCIQAhwSCiIYFioYCCIaCiQYCiQYCiIaDCYaCiQcDCYcDCgcDCYYCiQaDCYeDigYCiIWCCIUBiAUBiASBh4WCCIYCCQUBiASBh4SBh4WCCIUCCAWCCIYCiQWCCISBh4SBh4QBh4WCCIYCiQUBh4QBBwWCCIaCiYWCCIUBiAUBiAWCCIWCCASBh4YCCIUBiASBiASBiAUBiASBh4SBiAWCCIUCCAOBBwSBB4GBgYEBAQEBAQEBAQEBAQEBAQEBAQGBAQGBgYGBgYGBgYICAgKCgoMDAwSEhIMDgwODg4ODA4ODg4QEBAODg4QEBAODg4ODg4MDAwMDAwMDAwICAgGBgYICAgQEBAKCgoICAgICAgKCgoKCgoMDAwMDAwODAwQEBAODg4QEBAODg4ODA4ODg4MDgwSEhIMDAwKCgoICAgGBgYGBgYGBgYGBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAYGBgYICAgGBgYGBgYEBAYEBAQEBAQEBAQEBAQGBgYGBgYICAgEBAQGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYIBgYICAYIBggGBgYGBgYGBgYICAgGBgYGBgYEBAYEBAQEBAQEBAQGBgYGBgYGBggGBgYGBgYEBgQGBgYGBgYcDCYcDigeECggECogECokFCwiFCwgECoeECgcDCYcDigaCiYUCCIcDigeECgiEioaDCYcDiggECoiEiwcDCYiEiooGjAgEiocDCYgECoeDigaCiQaDCYcDCYcDCYgECogECgiFCwkFCwgEiogECocDigcDCYcDCgUCCIaDCYeECggEioeECgaDCYgECoiEiweDigeDiYmGDAiEiwgECgiFCwmFi4cDiYgEiocDCYWCCIcDCYeDigSBh4UCCAcDCgWCCIUBiAUBiAWBiAYCCIaEiggKDQgKDQgJjQeJjQeJjQeJjYUECYUBiAcFiwUCiIQBB4SBiAYFioYEigUBiAaCiYWCCIaDCYcDCgcDCYcDCYaDCYcDCYYCiQcDiYgECoYCCIUCCAUCCASBh4SBh4YCCQYCCIUBiAQBB4SBh4WCCIUCCIYCiQYCiISBh4SBh4SBh4WCCIYCiQUCCAQBBwUCCAaDCYWCCIWCCIUBiAUBiAYCCIUBiAYCCQWCCIQBh4QBh4SBiAUBiASBh4SBiAWCCIOBBwOBBwEBgYEBAQEBAQEBAQEBAQEBAQEBAQGBAQGBgYGBgYGBgYICAgKCgoKCgoMDAwMDAwODg4ODg4QEBASEhIUFBQUFBQQEhAQEBAMDAwMDAwMDAwICAgGBgYGBgYICAgICAgGBgYGBgYICAgMCgoMDAwQDhAQEBASEhISEhISEhIQEBAODg4ODg4MDAwMDA4KCgoKCgoICAgGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBAYGBgYGBgYGBAYGBAYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYICAgICAgICAgICAgICAgICAoICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgQEBAYEBAQGBgYGBgYGBgYEBAQEBAQGBgQGBgYYCiQcDCggEiogECogEioiFCwgEiogECoeECocDCYaDCYYCCIeDigiEiwkFi4eECgcDCYgEiwkFCwgECogECgoGjIkFi4eDigcDCYiECoaDCYaCiQaDCYaCiYeDiggEiogECoiFCwiEiogECogECocDiYcDCYYCiQaCiQgECokFCwiFCwcDCYgECoiFCwiEioeDiYmGC4mFi4gECokFC4oHDIiFCogEioiEiwYCiQaCiQgECoaDCQSBBwaDCYaCiQUCCAUBiASBiAWCCIYCCIcGiwgKjYgJjQeJjQeJjQeJjQeJjYWFioUBh4cHC4WECYSBB4SBh4WCiIYEigSBiAaCiQaDCQWCCIcDCgcDCYcDCYaCiYaDCQcDiYaDCQgECoeECgWCCIWCCIUBiAQBh4WCCIYCiQWCCASBh4SBh4SBiAWCCIYCiQYCiQUBiASBh4UBiAYCCIWCiQWCCIWCCAWCCIaDCYYCiQUBiAUCCAWCCIYCCIYCCIYCiQYCCQSBiASBiAUBiAUBiASBh4SBiAWCCIQBBwOBBwGBgYEBAQEBAQEBAQEBAQEBAQEBgQGBgYGBgYGBgYICAgICAgKCgoKCgoMDAwODg4OEA4QEBASEhIUFBQWFhYUFBYSFBIQEhAODg4MDAwICggICAgGCAYGBgYGBgYGBgYGBgYICAgICggMDAwODg4QEhASFBIUFBYWFhYUFhQSEhIQEBAOEA4ODg4MDAwKCgoKCgoICAgICAgGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBgYGBgYGBgYGBAQGBgYGBgYGBgYGBgQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgQCAgICAgIEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBAQGBgYGBgYGBgYEBAQEBAQEBAQEBAQYCiQgECogEiogEioiFCwiFCwgECgeDigcDigeDigYCiQcDCYiEiokFiwkFCwcDCYgECokFi4kFi4gECgoGjAkFiweDigeDigiEiweDigYCiQaDCYaDCYaCiQgECogEioiEioiEiweECgeDigcDigeDigcDCYYCiQiEioiFComGC4eDigeDigiFCwmGC4gECokFiwoGjAeECgcDigoGjAoGjAiEiokFi4cDigYCiQeDigiEioUCCAWCCAcDiYWCCIWCCISBh4WCCIYCCQWCiQcIjIgKDYeJjQeJjQeJjQeJjQeJjYYHC4SBh4cHjAYFCgSBB4UBiAYCCIYDCQSCCAYCiQcDCYYCiQWCCIcDigeDigeDigYCiQYCiQeDigcDCYiEiwcDigWCCIWCCIUCCAUBiAYCiQYCiQUBiASBh4SBB4UBiAaDCYaDCQWCCIUBiASBh4YCiIYCiQWCiIWCCIaDCYaDCYcDCYYCiQWCCIWCCIWCCIWCCIYCiIYCiQUCCIUBiASBiAWCCIUBiAUBiAYCCISBiAQBBwEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBAYGBgYGBgYICAgKCgoKCgoKCgoMDAwQEA4SEhISEhIWFhYaGBgaGhoaGhoYGBgWFhYUEhQQEBAODAwICAoICAgICAgGBgYICAgICAgICAoODgwQEBAUEhQWFhYYGBgaGhoaGhoaGBgWFhYSEhISEhIQEA4MDAwKCgoKCgoKCgoICAgGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBAYGBgYEBAQGBgYGBgYGBgQEBAQEBAQEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQcDCYgECogECogEioiEiogECgeDigeDigcDiYcDigYCiQiFCwmGC4oGjAgECgiEiomGC4oHDAkFCwmGi4oGjAeECgaDCYkFCwkFCwYCiQaDCYcDCYYCiQcDCYgECogEioiFCwgECgeDigeECgcDCYeDigYCiQeECgkFi4oGjAiFCogECgkFCwoGjAmFi4kFiwoHDIiFCwaDCYgECoqHDIiEiokFi4iEioaDCYaCiQiEiweECgQBh4cDCYaDCYYCiQUBiAUBiAYCiQYCCIYFCgeKDQeJjQeJjQeJjQeJjQeJjQeKDYaHi4SBiAcHjIaHC4SBh4UBiAYCCIaDiYWECYYCiQaDCYcDiYaCiQaCiQgECogECoaDCYWCCIaDCYeDigeDiggECoYCiQYCiQWCCIUCCAWCCIYCiQWCCISBh4QBB4SBiAaDCQcDCYYCiQWCCIQBh4WCCIaDCYYCiQWCCIaDCYcDCgeDioaDCYUBiAWCCIWCiIWCCIYCiQYCiQWCCIUBiAUBiAUCCAWCCIWCCIYCCIWCCASBh4EBAYEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYICAgKCgoMDAwODg4UFBIWFhYWFhYYGBgaGhoaGhoaGhoaGhoYGBgWFhYUFBQSEhIQEBAMDAwKCgoICAgICAgICAgKCgoMDAwQEBASEhIUFBQWFhYYGBgaGhoaGhoaGhoaGhoYGBgWFhYWFhYUFBIODg4MDAwKCgoICAgGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgQGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBAQGBgYEBAQEBAQEBAQCBAQCBAQCAgQCAgQEAgQEBAQEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICBAQEBAQEBAQEBAQGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBgQGBgYEBgYEBAQEBAQEBAQEBAQEBAQEBAQeECggECogECoiEiwiEiwgECoeECoeDigeECgYCiQaDCQmFi4oHDIkFiwgEiokFiwoGi4mFiwmGC4qHDIiFCweECggECgoGjAeDigaCiQeDigcDCYaCiYcDiggECgkFiwiFCwgECogECoeDigeDigcDiYWCCIiFCwoGjAmGjAgECokFCwmGC4mGC4kFiwqHjImGC4gEiocDiYmGDAkFCwiEiokFCweECgaCiYcDigkFCwYCiIUCCAeDigcDCYYCiQSBh4WCCIYCiQWCCIaHi4eKDQeJjQcJjQcJjQeJjQeJjQeJjYcJDQWECgaGi4aHjAUBiAUBiAYCCIaDigYFiwaDigaDCYYCiQeDigaCiYcDigeDigcDiYaDCQYCiQcDigeECggECocDigYCiQYCiQWCCIUCCAYCiQYCiIUCCASBh4SBB4YCiQgECoYCiQWCCIUBiASBiAaDCYaDCYYCiQaDCYaDCYcDigeECoWCCAWCCIYCiQWCCAYCiQaCiYYCiQWBiAWCCIWCCIWCCAYCCIYCiIUBiAUBiAEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBAQEBgYGCAgKCgoMDAwODg4WFhYaGhoaGhoaGhoaGhoYGhgYGBgWFhYUFBQUFBQSEhIODg4MDAwMDAwKCgoKCgoICAgICAgICAgKCgoKCgoMDAwMDAwODg4SEhIUFBQUFBQWFhYYGBgYGhgaGhoaGhoaGhoaGhoWFhYODg4MDAwKCgoGCAgEBgYGBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAYICAgICAgGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQgECogECogEiokFCwgEiogECoeECgeECggECoUCCIeECgoGDAmGi4gECokFC4mGC4mGC4mFiwqHjImGC4gECogEComFi4iEioaDCYcDigeDigaDCYaDCYgECokFiwmGC4eDiggECogECoeDigiEioYCiQaDCQmFi4oGjAiEioiEiwmGC4oGjAkFiwqHDAoGjIiEiweDigkFCwmGC4eDigiFCwgECgeDigaCiYgEiwgEioWBiAcDCYeDigeDigUCCISBh4YCiIYCCIWDiQcJDQcJjQcJjQcJjQcJjQcJjQcJjQcJjQcKDYaGi4aFCoYGiwSBiAUBiAYCCIcDigYIDIcGC4cDCYWCCIeDioeDigcDiYeECoaDCYeDigaDCYaDCYeECgiEiwgECoYCiQaCiQYCCIWCCIYCiQaDCQYCCISBh4SBh4YCCIeDigcDCYWCCIWCCIUBiAWCCIaDCYWCiQYCiQaCiQWCCIgEiwYCiQWCCIaDCYYCiIWCCIaDCYYCiQUCCIWCCAWCCIYCCIWCCIWCCIWCCAWCCIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBAYGBgYICAgKCgoMDAwSEhIYGBgaGhoaGhoaGhoYGBgWFhYWFhYWFhYWFhYWFhYWFBYUFBQUFBQUFBQUFBQUFBQSEhIUFBQUFBQUFBQUFBQUFBQWFBYWFhYWFhYWFhYWFhYWFhYYGBgaGhoaGhoaGhoYGBgSEhIMDAwKCgoICAgGBgYGBAYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgQCAgICBAQEBAQEBAQGBgYICAgICAgICAgICAgKCAoKCgoICggICAgICAgICAgICAgICAgICAgICAgICAoICAgICAgICggKCgoKCAoICAgICAgICAgGBggGBgYEBAQEBAQEBAQCAgICAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQgECogECogECgiEiwgECggECoeECggECgaDCYUCCIkFiwoGjAkFiwgEComGC4oGjAkFCwoGjAoGjAiEioeDigiEiwiFCwcDiYeDigeDigcDiYYCiQeDigkFCwqHDIiFCweDiYgECoeECoeECgeECgSBiAgEigoGC4oGjAgECgkFi4oGjAmFi4kFiwqHDIkFCwgECogECokFi4cDigeDiggEiogECgeDigaDCYiFCwaDCQYCiIeECggECocDigSBh4UBiAaCiQYCCQYFiwcJjYcJjQcJjQcJDQcJDQeJjQcJjQcJDQcKDYaHC4aFCoYHjASCCIUBiAYCCIaDCYYIjIcHjIcDCYYCCIcDCggECoeDiggECocDCYeDigeECocDCYcDCYgECogECoaDCQYCiQYCiQYCCIYCCIYCiQaCiQWCCIQBh4SBiAaCiQaDCYWCCIWCCIUCCIWCCAcDCYaDCYYCiQaCiQWCCIcDCYcDCYYCCIcDCYaDCYYCiQcDCYaCiQWCCIUBiAWCCAYCCIWCCIYCCIWCCIUCCIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBAYGBgYGBgYICAgKCgoODg4QEBAQEBAQEBAQEBAODg4ODg4ODg4ODg4MDAwODg4ODg4ODg4ODg4MDAwODg4ODg4ODg4ODg4ODg4MDAwODg4ODg4ODg4ODg4MDAwODg4ODg4ODg4ODg4QEBAQEBAQEBAQEBAODg4KCgoICAgGBgYGBgYGBAYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgICAgICAgIEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgQCAgICAgICAgICAgICAgICAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQgECgeECggEiogEiogECogEiwgECogECoWCCQcDiYmFiwoGDAgECgiFCwmGC4kFiwgEiomGDAkFiwgECogEioiFCwgECoeECoeECggECgaDCYYCiQkFCwmGDAmGC4gECggECgiEiwgEiogEioaDCYWCiQkFCwoGC4kFCwgEiomGC4mGC4gEiokFiwmGC4iEiogECoiFCwgEioYCiQeDiggECogECocDCYeDigiEiwYCiIcDiggECogECoYCiQUBiAYCCIaCiQYCiQaHjAcJjYcJjYcJjQcJDQcJDQcJjQcJDQcJDQcKDYcGi4aEigaJDQUDiQWBiAYCCIcDigYIDIaIjQeECgYCCIaCiYgECoeDigiEiweECoeDigeECocDigcDCYeDigiEiwcDiYYCiIYCiQYCCQWCCIWCiIaCiQYCCISBiASBiAYCiQcDCYYCiQaDCYYCiIWBiAaCiQeDigYCiQYCCIWCCAWCCAcDCYYCiQaCiQaDCYYCiQcDCYcDCYYCiQUBiAWCCIWCCIWCCIWCCIWCCIWCCIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBgQGBgQGBgYGBgYGBgYICAgKCgoODg4MDAwKCgoKCgoICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoKCgoMDAwODg4KCgoICAgGBgYGBgYGBgYGBgQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCBAQCAgICBAICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBAIEAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQgECgeDiggEiogECggECogEiogEioeDigYCiQiEiomFi4kFi4eECgkFCwiEiogEioiEiomGC4iEioeDiggECogEioeDiggECoeDiggECoWCCIcDiYmGC4oGjAkFCweDiYgECogEiogEiogECoYCiQeECgkFCwoGDAeECgiFCwiFCwiEiogECokFi4kFCweECggECoiEiwcDCYaDCQeDioeECoeDigcDCYiEiweDigcDCYiEiwiEiwgECoWCCIUCCAaCiQaCiQWDiYcJDQcJjYcJDQcJDQcJDQcJDQcJjQcJjQcJDQcJjYaGi4aEigcJDQUDiQUBiAYCiQcDigYIDIYJDYeFCwaCiQaDCQgEioeDigiFCwiFCweECgiFCwaDCYeDigeECoiEiwiEiwYCiQWCCIYCiQWCCIWCCIYCiQYCiQWCCIYCCQYCCIcDCYYCiQeECgcDiYUBiAWCCIeECgaDCYYCCIYCiIWCCAYCCIaCiQaDCYcDCYYCiQaDCYcDCYaCiQWCCIYCCIYCiQYCiQYCiQSBiAWCCIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYMDAwSEhIUFBQWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYUFBQSEhIMDAwGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCBAQEAgQEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgIEBAQEBAIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQgECoeDigeECgeDiggECoeECggECgYCiQYCiQiEiwmFi4gECoeECgiEiogEiggECoiFCwkFCweECgeDigeECoeECgeECogECogECgeECoUBiIgEigmGC4oGC4eECgcDCYgECoeECgeECgcDiYWCCIeECgkFCwkFCwcDiYiEiogECggECoiEiokFi4gEioeDigeDigeECgYCiQcDiYgECoeDigeDiggECogEioeDiYgECokFC4iFCwcDigUCCAWCCIaCiYYCCQYGCwcJjYcJDYcJDQcJDQcJDQaJDQcJDQcJjQcJDYcJjYaGi4aEiocJDQSDCQWCCIcDCYcDigaIDQaJjYgFi4cDCYaCiQiEiwgEiokFi4iFC4gECgkFiweECgcDCYeECoeDigiEiwaDCYWCCIYCCIWCCIWCCIYCiQcDigYCiQaCiQWCCIYCiQcDiYeDigcDiYYCiIaCiQcDCYcDCYYCiQaCiQWCCIWCCIYCCIaDCYeDigaDCYaDCYcDCYYCiQaCiQYCCQYCiQaDCYaDCYSBiAUCCAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYICAgMDAwODg4ODg4ODg4ODg4QEBAQEBAQEBAQEBAQEBAQEBAQEBASEhISEhISEhISEhISEhISEhISEhIQEBAQEBAQEBAQEBAQEBAQEBAQEBAODg4ODg4ODg4ODg4MDAwICAgGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQeDiggECocDCYcDCYeDigeDigeDigWCCIaDCYiEiwiEiwaDCYeDiggECggEiogECokFCwgEioeDigeDigeECgeECggECogEiogEiocDCgaDCYkFCwmFi4kFiwaCiQaDCYeDigeDigeDigYCiQWCiIgECokFC4eDigcDCYgECggECggECoiFCwiFCweDigeDigeDigcDiYaCiQeECggECogECogECggEioeECoeECggEioiFCwiEiwaCiQUCCAaCiQaCiQYECYaIjIaJjYaJDQcJDQaJDQaJDQaJDQcJDQcJDYcJDQcJjYaGi4aEioaJDQSDiQYCCQeDigcECgaIDQaJjYgFi4cDCYaDCYiEioiFCokGC4oGjAiEioiFCwiFCwaCiQeECocDCYgECoeDigWCCIYCiIYCiQWCCIYCiQgECoaDCYaDCYYCiQaDCQgEiocDiYaDCYcDCYgECgaCiQcDCYYCiQYCCQWCCIYCCQYCCQaCiQeDigcDCYaCiQgECocDCYaDCYYCCQYCiQaCiQcDCYUCCASBh4EBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBgQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQaDCQeDigaCiQaDCQcDiYeDigaDCQUCCIeECggEiogECoaCiQeDiggECogECoiEiwiFCwgECogECoeDiggECggECogECoeECggECoWCCIeDigkFCwmGC4gECoaCiQYCiQaDCYeDigcDiYUCCIcDCYgECoiEiwaDCYcDCYeECggECogEioiFCwgEiogECoeDigeDigcDigcDCYgECogECoiEioiEiogECocDigcDigiEioiFCwgECoWCCAWCCIaCiQcECgaIDIcJjYaJDQaJDQaJDQaJDQaJDQaJDQcJDQcJDQcJDQaJjYaGi4aEioaJjYWGCwYCiQgECocDigUGCoQGCYeFCocDCYcDCYiEiwkFCwkFiwqHDIgECoiEiomGDAcDiYeECocDiYeECogEioWCiIYCiQaCiQWCCIYCCIcDCgcDCYeDigcDCYeDiYiEioeDigcDCYeDigiFCwaCiQcDigaCiQaCiQYCCQYCiQYCiQaCiQeDiggECocDCYgEiocDiYaDCYWCiIaDCYYCiQaDCYUBiAQBB4EBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgQCAgQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQaDCYeDigaCiYaDCYcDiYeDigUCCIYCiQeDigeECgcDCYYCiQeDiggEioeECgkFCwgEiogECoeDigeDigeDigeDigeDigeDigcDigUCCAeDigiEiwkFCweDigcDiYaCiYaDCYeDigYCiQUCCAeDigeECgeDigYCiQcDCYgECogECoiEiwiEiweECggECoeDigeECgcDiggECggECogECoiEiwgECgeDigeDigcDiYgEiokFC4eDigWCCIaCCQcECgcIDIaJjYaJDQaJDQaJDQYJDQYJDQaJDQaJDQaJDQaJDQaJDQaJjYaGjAaEioYIjQUGCwaCiQgECoeECgKChgEBhAeEigcDCgcDCYiEioiFCwkFCwoGjAcDigeECgmGC4eDiggECoeECocDiggEioYCiQYCiQcDCYYCiQYCiQaDCYaCiQgECoeDigcDiYiFCwgEiocDCgeDigiFCwcDiYeDigeDigaDCYYCiQYCiQYCiQaDCQeDiggECocDiYgECogEioeDigUCCIaDCYcDigaDCYUBiASBh4EBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBAYGBgYGBgYGBgYGBgYEBgYEBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBgYEBgYGBgYGBgYGBgYGBgYGBAYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgQGBAYEBAQGBgYEBAQEBAQGBgYGBgYEBgQEBAQGBgYEBgQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQcDigcDCYYCiQaDCYcDCYaDCYSBiAaCiYeDiggECoYCiIYCiQeDiggEioeECgiEiwgECgiEioeECggECocDCgcDCYeDigeDigYCiQYCiQgECoiEiwgECogEioeDigYCiQcDCYcDCYUCCIWCCIeDiggEioaDCYYCCIcDCYgEioeECgiEiwgECogECogECoeECgeECocDCYgECogECoiEiwiEiogECogECocDigcDigiEiokFC4aCiQaCiQYDCQaHjIaJjYaJDYaJDQYJDQYIjQYIjQYIjQYJDQaJDQaJDYaJDYaJDYWJDYYGjAYECgMFiYIDB4aDCQiEiweECgGBAwAAAgcECYcDCgeDiggECgiEiwiEiomGC4eDigeDigkFiweDiggEioiFC4eDiggECocDCYYCiIaDCYaCiQYCiQcDCYaCiQiEiogECoaDCYiEioiFCwcDCYgECoiEioeDigeDigeECoaDCQYCiQaDCYaCiQaCiQcDiYgECoeDiggECgkFiwgEioYCiQYCiQcDigcDCYWCCIUCCAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQcDCYYCiQYCCQaCiQaCiQWCCISBh4aCiYeDigcDiYUBiAYCiIgECoeDigiEiogEiogECoiEiwgECoeDigaDCYaDCYeDigcDigSBiAcDCYeDiggECocDCYiFCwcDigYCCIaCiQYCiQSBh4WCCIcDCgeDigWCCAWCCAcDiYgECoeECgiFCwgECgiEiogECogECoeECgeECggEiogECokFCwgECogECoeECgcDiYgECgiFCwgEioaCiQaCiYSEigWIjQaJDYaJDYYJDYWIjQYIjQYIjQYIjQYIjQYJDYaJDYaJDYWIDQOGiwQECQUCiAEBhAAAggSCBoiEiwgEioKChgIDhoeEiocDCYeDiggECogEioeECgkGC4gEiogECokFiwiEiogEiokFi4eECgiEiogECoaCiQaDCYaDCYYCCIaCiQaCiQeECggECocDCYiEiwkFCweDigiEiwiFCweDigeDigiEiweDigWCCIYCiQcDigaDCYcDCYeECgiEiogECgkFi4iEioeDigYCiQcDiYcDCYYCCIWCCIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAYEBAQEBgYEBgYGBgYGBAYGBgYGBgYGBgQGBgYGBgYEBAQEBAYGBgYGBgYGBgYEBAYEBAQEBAYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQaCiQWCCIWCCIWCCIaDCYSBiASBh4aCiQcDCgYCiQUBiAaDCQgECoeDiggEioeDiggECogECoeECgcDigaCiQcDigeDigYCiQUBiAcDCYeDigcDigaDCYgEioYDCQUBiAaCiQYCCIQBBwYCCQcDigcDCYUBiAYCCIeECgeDiggECoeECgeECggECogECogECoeECggEiogECogECoiEiweECggECoeECgeECggECokFCwcDigcDCYOBhgCCBQKFCQWHjIaJDYYIjYYIjQYIjQYIjQYIjQYIjQYIjYYJDYUHjAKEiQCBhIGBBAQCBgCAgoAAgYMChgkFC4iFCwUFioOGiwcFiwcDCYeDiggECogECocDiYiFCwiFCweECgkFi4kFiwiFCwmGDAgEiogECoiFCwcDCYcDCYcDCYaCiQaCiYaCiQcDCYiEioeDigiEiwkFi4gECokFCwmGC4eECgeDigkFCwiEiwaCiQYCiQcDigaDCYcDCYeDigkFCwgEiomGC4kFiwgEioYCiQcDigcDiYYCCIWBiAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgQGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBAQEBAYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQYCCIWCCIWCCIYCiQaCiQQBBwWCCAYCiQaDCYWCCIUBiAeECggECgeECgeDigcDCYeDigeDigeDigaDCYYCiQcDCYaCiYUBiAUCCAcDCYeECgYCiQaCiQeECgYCiQWCCIaDCYSBiASBB4YCiQaDCYYCiQSBiAaDCQgECoeDiggECocDCYeDigeDigeDiggECggECogECgeECggEiogECogECoiEiwgECogECogEioiEiweDCYWDCICBBAAAg4CCBYOFioYIjYYIjQYIjQYIjQYJDQYIjQWIjQWIjQYIjQMFigCBhYAAgwEBBIQDB4KDhwKEiAUFCgkEiwiFCwWGjAOHDAaGC4eDiYeDiggECoeDigaDCYgEioiFCweECgkFCwkFiwiFCwoHDAkFCwgECokFi4eDigeDigeECgaDCYaCiQcDiYaDCQgEiogECogEiokFi4kFCwkFiwoGjAiFCweDigkFCwkFCweDigYCiQaDCYcDiYcDCYeDiYkFi4iEiooGC4mGDAgEioYCiQeDigcDiYYCiIWCCIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBgQGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQWCCIWCCIUBiAaCiQYCiQOBBwUCCAWCiQYCiQUBiAWCCQeECocDCggECoaDCYaCiQcDigeDigcDiYYCiQYCiQaCiYYCiQSBB4UCCAaDCYaDCYYCCIYCiQeECYWCCIWCCIaDCYQBBwSBh4WCiIaDCYWCCIUBiAcDigeDigcDigcDiYYCiQcDCYeDigcDiggECgeECggECoeDiggEiogECggECoiEiweFCwgECoiEiwgECoeDCgUEiYKEiIIDh4IECAQGCwWIDQWIjQYIjQYIjQYIjQYJDQYIjQWIjQWIDQQGCoIECAGDh4MECIUEigQFioOGi4WGjAiEiwiEiwYGjAQHDAWFiweECggDigeDigeDigaCiQeECgiFCwgECoiEiwkFi4iEiooGjAiEiwcDigkFi4iEioeECgiEioeDigaDCQeECgaDCYgEiogECogECokFi4mFi4mFiwoGC4kFCwiEiomFi4mGC4iEioYCiQcDCYcDigaDCYeECgmFi4gEiomGC4mGC4gEioWCCIeDigcDCYWCCIYCCIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQICAgMDAwKCgoKCgoICAgICAgICAgICAgICAgICAgICAgICAgICAgGCAgICAgICAgKCgoKCgoKCgoKCgoEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQWCCIWCCAUBiAYCiQSBh4OBBwWCCIYCCQWCCISBiAaCiYeDigaDCYeDigaDCQaDCQcDCYeDigaDCYYCCQaDCYaCiQYCCIQBBwWCCIaDCYWCCIWCCIWCCIcDiYUCCAWCCIYCCIMBBoSBh4YCiQaDCYUBiAWCCIeDigaDCYcDCYaCiQaCiQaDCYeDigcDCYcDCYgECogECoeECgeDigeDiggECoWDiIUEiQiECwiEiogECgeECoSGCwOGCwMFioOGi4UHjAWIDIYIjQYIjYYIjYYIjQYIjQaJDYYIjQWIDIUHjAOGC4MFioQGCoYFiwUHDIUHjQUHDAgFCwgECoQDiAIDBoKDBweECggEiogECogECgaCiQcDiggEiogECoiEiomGC4gEiomGC4iFCwcDCYkFCwmGC4gECoiFCwgECocDiYeECoeDiggECogEiogECokFCwmGDAmFiwoGjAmFi4iEiokFiwoGjAiFCwYCiQcDigcDigaCiQeDigmFi4gEComGC4mGC4gEioWCCIeECgcDiYWCCIWCCIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYGCAgGCAgICAgICAgICAgICAgICAgICAgGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQWCCIUBiAUBiAYCCIOBBoQBBwYCCIYCCIUBiASBiAaDCYcDCYcDCYcDigYCiQaDCYcDigcDCYYCiQaDCYcDigaDCYUCCAQBBwYCiIYCiQUCCAUBiAWCCIcDiYUBiAWCCISBh4MAhoWCCIaCiQcDiYSBiAWCCQeDigaCiQcDigYCiQaDCQcDCYeDigaDCQaDCQiEiweDigeECocDCYcDCgSChwEBAoIBhAgEioiEiwgDigeFCwUHDASGi4QGC4QGjAWIDIYIjQaIjQaJDYYIjQYIjQYIjQaJDYaIjQYIjQWIDIQGjAOGi4SGi4aGjAYHjISGCoMDhoeECYgECgIBBAAAAQAAAYWDB4kFCwgECogECgaCiQcDigeECgeDigiEiomFi4gECokFiwkFCweDigiFCwoGjAkFCwmFi4iEiocDCYgEioiFCwgECoeECogECgkFCwmGjAiEiomGjAmGC4gEiokFiwoGjAkFCwWCCIcDCYcDiYaCiQcDCYkFi4gEComGC4mFi4gEioUCCIgECoeDigYCiQYCiQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBAQGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQUBiASBh4UBiAUBiAMAhgSBh4WCCAUBiASBh4UBiAcDCYaCiQcDCYaCiYYCiQaCiYcDCYaCiYWCCIcDCYaDCYYCiQQBh4QBBwWCCIWCCIUBiAUBiAWCCIaDCQSBiAWBiAOBBoOBBwUBiAYCiQeECgSBB4YCiQcDigaCiQaDCYWCCIaCiQaDCYaCiYWCCIaDCQaDCQaDCYeDigcDCgSCBwCAgQEBAIODhAaECIiECwgDioWECYUHCwUHjISHDASHDAWIDQaJDQaJDQaJDQaJDYYIjYaJDYaJDYaJDYaIjQWIDQSHDASHDAWHjIWHC4MEB4CBA4CAgYcECQgECgIBgwAAgAAAAAMCBAkFCwgECogECocDCYeDigcDigeDiggECokFi4eECggEiokFi4eECgiFCwoHDImGC4mGC4kFi4eDiggECgkFi4gECoeDigeDigkFCwmGC4gECokFi4mGC4gEiokFiwoGjAkFCwWCCIeDigeDigaCiQaCiQiFCweECgmFiwmFi4gEigUCCIgECoeDigYCiQYCiQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgICAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQICAgKCgoKCgoICAgICAgICAgGBgYGBgYGBgYICAgICAgICAgGBgYGBgYGBgYICAgICAgICAgKCgoKCgoGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQKCgoMDAwKCgoKCgoICAgICAgICAgIBggICAgICAgICAgICAgGBgYGBgYICAgICAgKCgoKCgoMDAwMDAwGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgICAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQUBiASBh4UBiAQBBwKAhgUBiAUCCASBh4QBB4WCCIcDCYaCiQcDCYYCCQWCCIYCCIcDCYYCiQYCCQcDCYYCCQWCCIMBBoSBh4YCiQWCCIUBiAUBiAUBiAWCiIUBiAUBh4KAhgQBB4SBiAaDCQcECgSBB4cDCYeDigcDCYYCCIWCCIYCCIYCiQYCiQYCCQYDCIUDhgaDCQeDioYCiQGBAwAAAAAAAAGBgoWDB4iECwgECoMCBYIDhwSHC4UHjIUHjIWIDQaJDQcJDYcJDYcJDYaJDQaJDYcJDYcJDYaIjQWIDQUHjIUHjIUHC4IDhwEBg4ODhQGBgoaDiIgECgGAggAAAAAAgQEAgYgECggECogECoeDigeDigeDigeECggECokFCweECgcDigkFCweECgiEiooGjAoGjAmFi4mFi4iEiwgECgmGC4eECgcDigeDigiEiokFiwgECoiEiokFCwiEiwiFCooGDAkFCwUCCIeDigeECgaCiQaDCYiEiocDiYkFi4kFCwgEioYCiQeECogECoaDCYYCiQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEAgIEAgICAgIEBAQCAgICAgIEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYICAgICAgKCgoKCgoMDAwMDAwMDAwKCgoKCgoKCgoICAgGBgYGBgYEBAQEBAQEBAQEBAQEBAQCAgICAgIEBAQEBAQEBAQCBAIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQSBh4SBB4SBh4KAhoMAhoUBiAUBiASBh4QBB4YCiQcDCYaCiQaCiQYCCIWCCIYCiQaDCYWCCQYCiQaDCYWCCISBh4MAhoWCCAYCCIUBiAWBiASBh4UCCAWCCISBiAOBBwKAhgSBh4UBiAaDCYaDCYSBiAeDigeECgcDCYaDCQWCCIWCCIaCiQYCiQUBiAKCBYSEhwcDigcDCgMBBICBAQCBAYAAgQAAgYSCBwgDCwiFioWFhwGChAMEiIUHjIWIDQWIDIYIjQcJDYcJDYcJDYcJDQcJDYeJDYcJDYYIjQWIDQWIDQUHjIKEiIGCBIWGBwiJCYSFBYUChwaDiIAAgYCBAYCBAYEBAQgEiYgECogECoeDigeDigeDiggECogEioiFCweECgcDCYiFCwgECoiEiomGC4qHDAmFiwmFi4kFCwgEiooGjAgECocDiggECogEioiFCwgEioiEioiEiogEioiFCooGC4kFCoSCCIeDigeECgaDCQcDCYgECoaCiQiFCwiEiweECgYCiQgECogECocDCgaDCYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBgYGBgYGBgYGBgYGBgYGBgYIBggGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQICAgKCgoGBgYEBgYEBAQEAgQCAgICAgICAgICAgICAgIEBAQCAgICAgIEBAQEBAQEBAQEBAQICAgKCgoMDAwODg4MDAwMDAwICAgGBgYEBAQEBAQCAgICAgIEBAQEBAQCAgICAgICAgICAgQEBAQEBgYGBgYGBgYICAgKCgoEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQQBB4SBh4SBh4IAhgOBBoUBiASBh4QBBwOBBwcDCYaDCYYCiQYCCIYCCIWCCAYCiQaCiQWCCIYCiQYCiQUBiAOBBoOBBoWCCAWCCASBh4SBh4SBh4UCCAUCCASBh4MBBoKAhgUBh4UBh4cDCYaDCYWCCIgECocDiYcDCYaDCYWCCAYCCIcCiQWCiQIBhwAAhQGBhocDCYaCiYOChYECAgCBAgCBAgGCA4WCiAeDCoiGCgeICYSFiQIDiAQGi4WIjYWIDIYIjQcJDYeJDYeJDYeJjYeJDYeJDYaJDYYIjQWIDIWIjYOGC4IDiASGCQeICYiIiYiIiQWFBwMCBQABAYCBAgEBgoSEhYeFiYgECoiEioYDCQYDCYeECggECogECoiFCwgECoaDCYgEiogEiogEComFi4mGDAkFiwmGC4kFi4gEiomGC4gEioeDiggECogEioiFCwgECogECogECoeECggFComFi4iFCwYCiQeDiogECoaDCYaDCYeDigaCiQiEiwiECocDiYWCCIgECgeDigYCiYcDigEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYKCgoMDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgKCgoMDAwGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYKCgoICAoKCgoKCgoICAgEBAQEBAQCAgICAgICAgICAgICAgIEBAQCAgICAgICAgICAgIEBAQEBAQGBgYICAgGBgYGBgYEBAQCAgICAgICAgIEBAQEBAQCAgICAgICAgICAgIEAgIEBAYICAgICAgGBgYGBgYICAgICAgEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQQBBwQBB4QBBwMAhgQBBwSBh4QBBwOBBoSBh4cDCYYCCIYCiQWCCIWCCIUBiAWCiIYCiQWCCIaCiYWCCISBh4KAhgQBBwUBiAUBiASBh4SBB4QBB4SBiASBh4QBB4MAhgOAhoQBB4SBh4cDCYaDCYaCiQgECocDCYeDigaCiQUBiAUBiAaCiQWDiYKFCgGECQIDCIaCiQYCCIQDiIIEBwGDBoGDBoQDiAaCiYgECgcGCwUHCwUGjAOFi4MGCwWIjQWIDIYIjIcJDQeJjYeJjYeJDYeJjYcJjYcJDQYIjIWIDIWIDQMFiwOFi4UHDAUGiwWGioYHCoWHCoMEiAGDBoGDBoKDh4KECASDCIgECoiEioSECgSECgiECoiEiogECoiEiweECoaDCYeECgeECggECgkFi4kFiwiEiomGC4kFi4gEComGC4gEioeDiggECogECokFCwgEiogECoeECgcDCYeECgkFCwgECoWCCIeDiggECoaDCYaDCYcDCYYCiQgECogECocDiYWCiIeDigcDiYWCiQcDCgEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYICAgICAgICAgICAgICAgICAgICAgICAgKCgoKCgoICgoICAgICAgICAgICAgICAgICAgICAgICAgEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgICAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgICAgQEBAQEBAIEBAQGBgYGBgYIBgYKCgoKCgoKCgoGCAgEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQEBAQEBAQCAgICAgICAgIEBAQCAgICAgICAgIEBAQEBAQGBgYICAgKCgoICAgGBgYGBAYGBgQEBAQEBAQEAgICAgIEAgICBAQCAgQEBAQEBAQEBAQEBAQOBBwQBBwOBBoMAhgQBh4SBh4SBBwOBBoWCCAYCiQWCCIWCCIWCCIWCCAUBiAWCCIYCCIWCCIaCiYUBiAQBBwGAhgSBB4WBiAUBiASBh4QBB4QBh4UBiAQBB4OBBwMAhgOBBwQBh4UCCAeDigcDCYaCiQcDCYaCiQeDigaCiQUBh4UBh4UEigQFiwOFiwOGCwQFiwYCiQYBiIODCQKFCoMFiwOFiwUDCYaCCIgEioaGjAUHjIYIDIWIDQWIDIYIjIUIDIWIDIaIjQcJDYeJDYcJDQeJDYcJDYaIjQYIDIUIDIYIjIWHjIYIDIYIDIWHjIUHDASGi4QGC4OGC4OFiwOFCwKEigIECYQECYgDiogECoUFiwWFCoiECogEiogECoiEioeECgcDiYeDigeDiggECgkFiwkFCwgEiokFCwkFi4gEComGC4gEiogECogEiogECgiFCwgECggECoeDigaCiQeECgkEiweDigWCCIeDigeDigaCiQcDCYcCiYYCCIgECoeDigcDiYUCCIeDiYeDigYCiQaDCYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYEBAQEBAQCAgICAgIEBAQCAgICAgIEBAQEBAQEBAQCAgICAgIEBAQGBgYICAgICAgKCgoMDAwMDAwODg4ODg4MDAwKCgoICAgGBgYEBAQEBAQCAgICAgIEBAQCAgICAgICAgICAgICAgICAgIEBAQEBAQEBAQGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgICAgIEBAIEBAQEBAQEBAQEBAQGBAYGBAYGBAQGBgYICAgKCgoMDAwKCgoICAgGBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQCAgICAgICAgICAgICAgICAgICAgIGBgYICAgKCgoKDAwMDAoICAgEBAQGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQCBAQCAgICAgIEBAQEBAQOBBwOBBwMAhgMAhoQBh4QBB4QBBwOBBwWCCAYCiIUCCAUBiAUBiAUBiAUBiAWCCIWBiAWCCIYCiQSBh4OBBoMAhoSBh4UBiAUBiASBB4QBBwSBh4UBiAQBBwOBBoMAhgQBBwQBB4WCCIeECoaCiQYCiQaDCYWCCIeDigYCiQWBiASECYSHjIQHjAQGi4QGi4QGCwWCCIYCCIUFCoSHjIUHjIUHDAWCiQaCiQkFCwcHjIYIjQaIjIaIjQaIjQaJDQUHjIWIDIYIjQaIjQcJDQcJDQcIjQYIjQYIjQWIDIUIDIaJDQaIjQaIjIaIjIaIjIYIDIYIDIWIDIWHjAUHjIUHjIUHDASHDAWFCogDigcECgQGiwWFCoeDiggECogECoiEiogECoeDigeDigeDigeECgiFCwiFCwgECoiEiokFCwgEComFi4gEioiEiogECogECoiEioeECgiEiocDCYYCiQcDiggEioeDigWCCIeDigcDigaCiYaDCYYCCIWCCIgECoeDigaCiQUCCAeDigcDigYCiQcDCYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQICAgMDAwICAgICAgICAgEBAQCAgICAgICAgICAgICAgIEBAQEBAQEBAQCAgICAgIEBAQEBAQEBAQICAgKCgoKCgoKCgoICAgGBgYEBAQEBAQCAgIEBAQEBAQEBAQEBAQCAgICAgICAgICAgIEBAQGBgYICAgICAgMDAwKCgoEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgIEBAQEBAQEBAQGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBgQICAgMDAoODAwMDAwKCgoGBgYEBAQEBAQEBAQEBAQEBAQGBgYICAgICAgICAgGBgYEBAQEBAQEBAQEBAQGBgYICAgMDAwODg4MDAwMDAwICAYEBAQEBgYGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQCAgICAgICAgICAgIOBBwQBBwKAhgOAhoQBB4OBBwOBBwQBBwWCCAWCCIUBiAUBiAUBiASBh4SBh4WCCIWCCAYCiIUCCASBB4OAhoSBB4SBh4UBiASBh4QBB4QBBwUBiAUCCAQBBwMAhoKAhgQBB4OBB4YCiQeECgYCiQaDCYaDCYWCCIcDiYYCCIYDCYUHDAUIDIUHjAUHjASHjASGi4WBiAWCiQUGi4UHjIUHjIWGi4WBiAcDCYgFCwaIDIYIjIaIjIaIjQaIjQYIDIUHjAWIDIWIDIWIDIYIjQaIjQaIDQWIDQUIDIWIDIUHjAYIDIaIjQaIjQaIjIaIjIYIDIYIDIYIDIWIDIUHjIUHjIUHjASHjAWFCwgDigeEioSHC4YFiweDiYeDigeDigeDigeECgeDigeDigeDiggECoiEioiFCwgECoiEioiEiweECgkFCwgECgiEiwgECogECgiEioeDiggECgaCiQYCCIcDigeECgcDiYUCCIcDiYeDigcDCYaDCQYCCIWCCAeDigcDCYYCCISBiAcDigcDigYCCIcDCYEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgICAgIEBAQICAgICAgMDAwMDAwMDAwICAgGBgYEBAQEBAQEBAQCAgICAgIEBAQEBAQCAgICAgICAgICAgIEBAQEBAQEBAQEBAQEBAQCAgICAgICAgICAgIEBAQCAgICAgICAgIEBAQEBAQGBgYICAgKCgoMDAwMDAwKCgoICAgEBAQCAgICAgICAgIEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgIEBAQGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAYEBAQGBgYKCggMDAwODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4QEBAODg4QEBAODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4MDgwKCgoGBgYEBAQEBAQGBgYGBgYGBgYGBgYIBgYGBgYGBgYGBgYGBgYEBAQCAgICAgICAgICAgICAgIQBBwOBBwKAhgQBBwSBB4OAhoOBBwQBB4WCCIWCCIWBiASBh4SBh4QBB4SBh4WCCIUCCAWCCISBh4QBBwQBBoUBiASBh4UBiAOBB4QBBwQBBwWCCAWCCIQBBwKAhgMAhoSBB4QBBwaDCQeDigYCiQcDCYaCiQWCCIaDCYYCCIaECgUHjIUIDIWIDIWIDAWIDIWHi4WBiAUDCQUHjAWIDIWIDIWGi4UBiAeDigeGC4aJDIaIjIcJDIcJDQaJDQUIDISHjAUIDIUHjIWIDIYIDQaIjQYIDQWIDIUHjIUIDISHjIWIDIaJDQcJDQcJDIaIjIYIjIYIjIYIDIWIDIWIDIWIDIWIDIUIDIYFiwgDigeEioUHjAaGCweDCYcDCYaCiQeECgeDiogECoeECgeDiggECoiEioiFCwgECogECogECocDCYiEiogECoiEioeDigeDiYgECgeDigeECgYCCIWCCIeECggECoaDCYSCCAcDCYcDigcDCYaDCYWCCIWCCIcDigaCiQWCCASBiAaCiYcDCYWCCIcDCYEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYKCgoMDAwODg4MDAwKCgoICAgGBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYGBgYKCgoMDAwODg4MDAwKCgoGBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgIEBAQEBAQGBgQGBgYGBgYIBgYICAgICAgIBgYGBgYGBgYGBgYEBAQEBAQGBgYKCgoODg4QEBAQEBASEhISEhIQEBAODg4MDAwKCgoMDAwODg4QEBASEhISEhIQEBAODg4MDAwICAgGBgYEBAQEBAQEBAQGBgYGBgYIBgYIBgYIBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQCAgICAgICAgICAgIQBBwMAhoIAhgQBBwQBBwOAhoQBBwSBiAWCCAUBiAUBiASBh4QBB4QBBwSBh4WCCIUBiAUBiAQBB4OBBwQBBwUBiAQBh4SBiAQBBwQBBwOBBwWCCIYCiQQBBwIAhYOAhoQBB4QBBwcDiYeDigYCCIcDCYWCiISBiAWCCIYCCIaECgUHjAUIDIWIDIWIjIYIjIYHjAUBB4UCiIYIDAYIjIYIjIYHC4YCCIeECoeIDAaJDIcJDIeJDIcJDQYIjIWIDISHjISHjIUHjIWIDIYIjQYIjQYIjQWIDIUHjISHjISHjIWIDIYIjIcJDQcJDIcJDIcJDIaJDIaIjIYIjIYIjIYIjIYIjIYIjIYFiweDCgcFiwWJDIaGCwcDCYaDCYaCiQeDigeDigeECogECogECogECggECoiFCwgECggECoeDigaDCQgECogECogECgaCiQcDCYgECgeDiggECgYCiIWCCIcDiYeDigYCiQSBiAaDCYcDigcDCYaDCYUBiAWCCIaCiYYCiQUBh4UBiAaCiQaCiQUCCIcDigEBAQCAgIEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYICAgKCgoMDAwMDAwMDAwKCgoGBgYEBAQEBAQCAgICAgICAgICAgIEBAQEBAQEBAQEBAQEBAQCAgIEBAQCAgICAgIEBAQGBgYICAgMDAwMDAwMDAwMDAwKCgoGBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQCAgICAgICAgICAgICAgICAgICBAQEBAQEBAQGBAYGBgYGBgYIBggICAgICAgGBgYGBgYGBgYGBgYEBAYEBAQEBAQGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQGBgYGBgYGBgYICAgICAgICAgICAgIBgYGBgYGBAYEBAQEBAQEBAQEBAQCAgICAgICAgICAgISBBwMAhgMAhoSBB4QBBwOAhoOBBwSBh4WCCASBh4SBB4QBB4QBBwQBBwUBiAWCCASBh4SBB4SBh4OBBwSBh4UBiASBB4SBh4QBBwSBBwOBBwWCCIYCiQQBBwKAhgQBBwQBBwQBBweDigcDCYYCCIaDCYWCCIQBB4SBh4YCCIYECgUIDAWIjIWIjIWIjIYIjIYIDAUCiIUDCQYIjIaJDIaJDIYHC4aCCQcFCocJDQcJDQcJDIaIjIYIjIYIDIUIDISHjISHjAUHjIWIDIWIjQYIjQWIjQWIDIUIDISHjASHjAWIDIYIjIYIjIaIjIcJDIcJDQaIjIaIjIaIjIaIjIaIjIaIjIaJDIaGCweCiYaGCwWJjQYFiwcCiYaDCYaDCYcDigcDCYgECggEioiEiogECggECogEioeECggECocDCYaCiQeECggECoeDigaCiQcDiYeDigeDigeECgYCiQYCiQaDCYaDCYWCCISBiAYCiQaDCYcDCYaCiQUBiAWCCIYCiQWCCQSBh4UBiAaCiYYCiISBiAcDCYCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQICAgMDAwODg4ODg4ODg4MDAwKCgoICAgICAgICAgICAgKCgoMDAwMDAwMDAwMDAwICAgICAgICAgICAgMDAwODg4ODg4ODg4ODg4KCgoGBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQCAgICAgIEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYICAYICAgICAgICAgIBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQGBgYGBgYGBgYEBAQGBgYGBgYGBgYEBAQGBgYGBgYEBgQEBAQEBAQEBAQGBgYGBgYGBgYIBggIBggICAgICAgICAgICAgIBgYGBgYGBAYEBAQEBAQEBAYEBAYEBAQCBAICAgICBAICAgIQBBwIAhgMBBoSBB4OBBoOAhoOBBwSBh4UBiAQBB4SBh4QBB4QBBwQBBwWBiAUCCASBh4QBB4SBh4QBBwSBh4SBB4SBh4SBh4QBBwSBBwQBBwWCCIWCCIOBBwKAhgSBBwQBBwSBhwgECgcDiYYCiQcDCYWCCISBh4SBh4YCCIWDiYUIDIWIjIWIjIWIjIYIjIYJDIWHCwWFioaJjQaIjIaJDIaHjAaCiQaHi4cJDQcJDIaIjIYIjIYIjIWIjIUHjISHjASHjAUHjIWIDIYIDQYIjQYIDQWIDIUHjISHjASHjAUHjAYIDIYIjIYIjIaIjIcJDIcJDIaJDIaJDIaIjIaIjIaIjIaJDIaGCwcCiYYFiwWIjIYDiYaCiQaCiQaCiQcDCgcDCYgECogECogECogECgiEiogEioeECggECoaCiQaCiQeECgeECoeDigaDCQeDigcDCgcDiYeECgaDCYYCiQYCiQYCiQWCCASBiAaCiQaCiQaDCYYCiQUBiAWCCIYCCIUCCIOBBwUCCIaDCYYCiQUCCAcDigCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYICAgMDAwODg4QEBASEhIUFBQUFBQUFBQUFBQSEhISEhIQEBAQEBASEhISEhIUFBQUFBQSEhISEhIODg4MDAwKCgoGBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQGBgYEBAQEBAQEBAQGBgYGBgYICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBgYEBAQGBgYGBgYGBgYICAgGBgYGBgYGBgYGBgYGBgYEBAQGBgYGBgYGBgYGBgYEBgQGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgICAgGBgYGBgYEBAQGBAQGBgYEBgYEBAQEAgQCAgICAgICAgICAgIQBBwGAhgOBBoSBBwOAhoOBBoQBBwUBiAUBiASBB4SBB4QBBwQBBwSBB4WCCISBiASBh4SBh4QBB4QBBwQBB4QBBwSBh4UBiASBh4QBBwOBBwUBiAWCCIOBBwKAhgQBBwOAhoSBh4gECocDCYYCiQaCiYYCiQUCCASBh4YCCQWDCQUHi4WIjIWIjIWIjIWIjIYJDIYHC4WGCoaJjQaIjIaJDIcHi4cGCwcJjQcJDIcJDIaJDIaIjIYIDIWIDAUHjASHjASHDASHjAWIDIYIDQYIjIYIDQUIDISHjASHjAUHjAUHjAWIDAYIjIYIjIaJDIcJDIcJDIcJDIcJDIcJDIaIjIaIjIaJDQaGCwcCCQYFioYIjIYDCYYCCIYCCIaCiQcDigcDCYgECogECogECoeDiggECogECoeDigeECgYCCIYCCIgECoeDigcDCYYCiQeDigcDCYcDiYeECgcDCYYCiQYCiQWCCIUBiASBiAaCiQYCiIaCiQWCCISBiAWCCIYCCIUCCAOBBwWCCIYCiQWCCIYCiQeDigCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQICAgKCgoMDAwMDAwODg4ODg4MDAwKCgoGBgYGBgYGBgYICAgMDAwODg4MDAwMDAwKCgoICAgGBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEAgIEBAQEBAQGBgYGBgYGBgYGBgYICAgICAgICAgICAoICgoICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAYICAgICAgICAgICAgICAgICAgGBgYGBgYGBgYGBgYEBgQEBAQEBAQCAgICAgICAgICAgICAgIMAhoKAhgQBBwQBBwOAhoQBBwQBBwUBiASBh4QBB4QBBwQBBwQBBoUBiAUBiAQBBwUBiASBiAQBB4QBBwQBBwQBBwSBh4SBh4QBBwQBBwOBBwUBiAWCCAQBB4MBBoQBBwOAhoUBiAeDigYCiQYCCQYCiQcDCYWCCISBh4WCCIWCCIUGCwWIjQWIjIWIjIYIjIYJDQWHC4UGCoaJDQaJDIcJDIaGiwcJDIcJjIcJDIcJDIaIjIaIjIYIDIUIDIUIDAUHjASHC4SHjAUIDIUIDIWIDIUIDIUHjISHjASHC4UHjAUHjAUIDAYIDIaIjIaJDIcJDIcJDIcJDIeJDIcJDIcJDIaJDIaJDIaGCwcDCYYHjAYHDAaCiQWBiIWCCIaDCYgECocDiggECoeECgcDigaDCYgECogECoeECgeDiYWCCIYCiIgECoeDigYCiQUCCIeDigaCiYcDCYeECgcDiYYCCIYCCIWCCIUBiAWCCIaCiYYCiIaCiQWCCIQBB4UBiAUCCAUCCAOBBoUCCAWCCIUBiAUCCIcDigCAgIEBAQCAgICAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYICAgGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQGBgYEBgQEBAQEBAQEBAQEBAQEBAQGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYICAgICAgGBgYEBAQGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAIEBAIEBAQEBAQEBAQGBgYGBgYICAgKCgoICAgGBgYMDAwKDAoICAgGBgYGBgYGBgYGBgYGBgYICAgICAgICAgGBgYGBgYGBgYGCAYGBgYGBgYGCAYICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYKCgoMDAwICAgICAgKCgoKCgoICAgGBgYGBgYEBAQEBAQEBAIEAgIEBAQEBAICAgICAgICAgIKAhgMAhgSBB4OBBwOAhwOBBwQBBwUBiAQBB4QBB4QBBwQAhoOBBwUBiASBh4QBBwUBiASBiAQBBwQBBwQBBwQBBwSBB4SBh4QBB4OBBwQBBwSBh4UBiAQBB4SBBwSBBwOAhoWCCIcDCYaDCYYCiQWCCIaCiYYCiQQBBwUCCAUBiASEigWIjQWIjIYIjIYIjIYIjIYIDAYIDAaJDIaJDIcHjAcHC4cJjIcJDIaJDIaJDIaIjIYIjIYIjIWIDAUIDASHC4QHC4QHDASHjIUIDIWIDIUIDISHjIQHDAQHC4SHC4UHjAWIDAYIjIaIjIaIjIaIjIaJDIcJDIcJDIcJDIcJDIaJDIaJDIaGCwcFCwYJjQaFiwYCCIYCiIaCiQcDigiEioeDigeECgcDCYaDCYYCiQgECocDigeECgeDigWCCIYCiIeECgcDCYWCCIUCCAcDCYaCiQcDCYeECgaDCYYCCIYCCIUCCAUBiAWCCIaCiQWCCAaCiQWCCIQBB4SBh4UCCASBh4MAhoUBiAUBiAUBiAUCCAcDiYCAgICBAICAgICAgIEAgQEBAQGBgYGBgYEBAQEBAQEBAQEBAQGBgYICAgICAgICAgICAgICAgICAgICAgGBgYGBgYEBAQEBAQGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQGBgYGBgYGBgYEBAQEBAQEBAQGBgYGBgYICAgICAgICAgICAgICAgICAgGBgYGBgYEBAQEBAQEBAQGBgQGBgYEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQEAgICAgIEBAQEBAQEBAQGBgYGBgYICAgKCgoGBgYODg4MDAwKCgoICAgGBgYGBgYGBgYGBgYICAYICAgGBgYGBgYGBgYICAgICAgGBgYGBgYGBgYICAgICAgGBgYGBgYGBgYGBgYICAgKCgoMDAwODgwKCgoICAgKCgoICAgGBgYGBgYEBAQEBAQCAgIEAgIEBAQEBAQEBAICAgICAgICAgIKAhgMAhoQBBwOAhoQBBwQBB4UBiASBh4OBBwQBBwQBBwOAhoQBBwWBiAQBB4QBB4UBiASBh4QBBwQBBwQBBwQBBwSBh4SBB4QBB4OBBwQBBwSBiAUBiASBB4SBBwOAhoOBBwYCiQaCiQaCiQWCCIUBiAYCCIWCCIOBBwUBiAUBiASEiYWJDQWIjIYIjIYIjIYIjIaIjIaJDIaIjIaJDIaHC4aHC4aJDIaJDIaIjIaIjIaIjIYIjIYIjIWIDAUHi4QGiwOGi4QHDASHjIUIDIWIDIUHjISHjIQHDAOGi4QGiwUHi4WIDAYIjIYIjIaIjIaIjIaIjIaJDIaJDIcJDIaJDIaJDIaJDIaIjIaIDIYJDQYFioWBiAaDCYcDCYgEiokFCweECgaDCQaDCYaDCYaDCYeDigaCiQeDigcDigUBiAYCCIeDigaDCYWBiAUBiAcDCYaCiQcDCYgECgcDCYYCiQWCCIUBiASBh4UCCIWCCIUBiAaCiQUBiAQBB4UBiAUBiAQBB4MAhgUBiASBiAUBiAWCCIcDiYCAgICAgICAgICAgICAgIEBAQEBAQGBgYGBgYEBAYEBAQGBAQGBgYICAgICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgGBggGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgICAgIBggGBgYEBAQEBAQGBgYGBgYEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICBAQEBAQEBAQEBAQCBAICAgIEBAQGBgYKCgoMDAwKCgoICAgMDAwMDAwKCgoKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoMDAwMDAwICAgICAgMCgwKCgoGBgYEBAQEAgQCAgIEBAQEBAQEBAQEBAQCAgICAgICAgICAgIKAhgMBBoQBBwOAhwQBBwQBBwUBiASBB4QBBwQBBwQBBwQBBoUBh4UBiAOBBwSBh4SBiAQBBwQBBwQBBwOBBoQBBwSBh4QBB4QBBwOAhoSBh4UBiAUBiASBB4QBBwMAhoSBh4YCCIYCiQYCiQUCCAUBiAUBiAWCCIMBBoSBiAUCCISECYWIjIWIjIWIjIYIjIYIjIYIjIYIjIaIjIaJDIaIjIaIjAaJDIaIjIaIjIaIjIaJDIYIjIWIDIWHjASHC4OGCwOGi4SHjASHjIUIDIWIDIUHjISHjISHDAOGi4OGCwSHC4WHjAWIDIYIjIaJDIaIjIaIjIaIjIaIjIaJDIaJDIaJDIaIjIYIjIYJDQYHjAWDCQYCCIcDigaDCQgEiokFCweDigWCCIaCiYaCiQaDCYeDigaCiQeDigaDCYUBiAYCiIcDCYaCiQSBh4UCCAcCiYYCiQaDCYgECgcDigYCiQUBiAUBiASBh4UCCIUBiAUCCAaCiQSBiAQBBwSBh4UBiAQBBwKAhgUBh4SBiAUBiAUCCAaDCYCAgICAgICAgICAgIEAgQEAgIEBAQEBAQEBAQGBgYGBgYGBgYICAgICAgICAgGBgYICAgKCgoGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgGBgYGBgYGBgYGCAYGCAgGBgYICAgICAgICAYGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoGBgYICAgICAgICAgIBggGBgYGBgYGBgYEBAQEBAQEAgIEAgQCBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYMDAwQEBAODg4ICAgKCgoMDAwMDAwKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoMDAwKCgoICAgMDAwQEBAODg4ICAgEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgICAgICAgICAgIKAhgQBBwOBBwOBBwQBBwOBBwSBh4OAhoQBBwSBBwQBBwOBBwUBiASBiAQBBwUBh4QBB4QBBwQBBwQBBwOAhoSBBwSBB4QBB4QBBwQAhoSBh4UBiAQBh4QBB4QBBwOAhwSBiAYCCIYCiQWCCIUBiASBh4UBiAUCCIOBBoSBh4WDCYUDiQUFioWIjIWIjIWIjIWIjIYIjIYIjIYIjIYIjIYIjIYIjIYIjIaIjIaIjIaIjIaIjIYIjIWIDISHC4OGCwMGCwQHC4SHjAUHjIYIDIaIjIYIjIUHjISHjAQHC4MGCwOGCwSHC4WIDIYIjIaIjIaIjIaIjIYIjIYIjIYIjIYIjIYIjIYIjIYIjIYJDIYFiwWBCAWCiQcDiYYCiQgECogEiwcDCYWCiIcDiYYCiQaCiQcDCgaDCYeDigYCiQUBiAYCCQcDCYWCCIQBBwUCCAaDCYYCCQYCiQeDigcDCYaCiQSBiAQBB4SBB4UBiAUBiAUBiAYCiQSBh4QBBwSBh4SBh4MAhoIAhgUBh4QBB4SBiASBiAaDCQCAgICAgICAgICAgIEBAQEBAQEAgICAgIEBAQEBAQEBAYGBgYICAgKCgoKCgoGBgYODg4MDAwKCgoICAgGBgYGBgYGBgYGBgYICAgICAgICAgGBgYGBgYGCAYIBggGBgYGBgYGBgYICAgICAgGBgYGBgYGBgYGBgYGBgYICAgMDAwODg4ICAgKCgoMDAwICAgGBgYGBgYEBAQEBAQCAgQCAgIEAgQEBAQEBAICAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQGBgYGBgYGBgYGBgYGBgYGBgYGBgYODg4MDAwICAgICAgMDAwMDAwKCgoICAgICAgICAgGBgYGBgYGBgYGBgYICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgICAgMDAwODg4KCgoGBgYMDAwODg4GBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAYEBAQCAgICAgICAgICAgICAgICAgIMAhoQBBwQBBwSBBwQBBwQBh4SBiAOAhoSBB4QBBwOAhoQBBwUBiAQBB4SBh4UBiAQBBwQBBwQBBwQBBwOBBwSBBwQBBwQBBwQBBwQAhwSBh4UBiAQBB4QBBwQAhwQBBwUCCIYCCIWCCIWCCISBh4SBh4SBh4UBiAOBBwSBBwUDiQUGiwSEiYSEiYWIDAWIjIWIjIWIjIWIjIWIjIWIjIYIjIYIjIYIjIYIjIaIjIaIjIaIjIYIjIWHjAQGiwQGi4QGi4UHjAWIDIWIDIeJDIkKjYcJDIWHjIWHjAUHjAOGiwQGiwQGiwWHjAaIjIaIjIaIjIaIjIYIjIYIjIYIjIYIjIWIjIWIjIWIjIWIjIYFCoUCCIWEigaDCYYCCIgECoeDigcDiYWCiIeDigYCiQYCiQcDCYaCiQcDigWCCIUBiAYCCIaDCYUCCAQBBwWCCIaCiQWCCIaDCYaDCYcDCYaDCYSBiAQBBwSBB4UBiASBiAUBiAYCCISBB4QBBwSBh4SBh4MAhoMAhoSBh4QBB4SBh4SBh4aDCQCAgICAgICAgICAgIEBAQEBAQEBAQEBAICAgIEBAQEBAQGBgYICAgICAgICAgICAgMDAwKCgoKCgoKCgoICAgGBgYGBgYGBgYGBgYICAgGBgYGBgYGBgYICAgICAgGCAgGBgYGBgYIBggICAgGBgYGBgYGBgYGBgYICAgKCgoKCgoMDAwKCgoICAgICAgICAgGBgYGBgYEBAQCAgICAgIEBAQEBAQEBAQCBAICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQGBgYICAgODg4QEBAMDAwGBgYEBAQKCgoMDAwICAgICAgMDAwMDAwKCgoICAgICAgICAgGBgYGBgYGBgYICAgICAgGBgYGBgYGBgYICAgICAgKCgoICAgMDAwODg4KCgoICAgMDAwMDAwGBgYEBAQICAgQEBAQEBAKCgoGBggGBgYEBAQCAgICAgICAgICAgICAgICAgICAgIOBBoQBBwOBBwQBBwOBBwSBiASBh4QBBwSBB4OBBwMAhoSBB4SBh4OBBwQBBwSBh4OBBwQBB4QBBwQBBwOBBwSBBwQBBwSBh4QBBwQBBwQBB4UBiASBB4QBBwOAhoQBBwWCCIWCCIWCCIUCCASBB4SBh4SBh4SBh4QBB4SBBwQBh4SGi4UIjISECYSFCgUIjIWIDIWIDIWIDIWIjIWIjIWIjIYIjIYIjIYIjIaIjIaIjIaIjIYIjISHC4QGiwSHC4UHC4WHjAYIDIaIDIcJDIiJjQcIjIYIDIYIDIWHjAUHC4SHC4QGi4SHC4YIjIaIjIaIjIaIjIYIjIYIjIYIjIWIjIWIjIWIjIWIjIWIjIWFCoUECYWFiwYCCIWCCIgECoeDigYCiQWCCIeDiYYCiQYCiQcDCYaCiQcDCYUCCASBB4WCCIaCiQUCCAOBBoWCCIYCCIUCCIYCiQaCiQaDCYaCiQSBh4QBBwQBBwUBiAUBiAUBiAWCCIQBB4QBBwQBB4SBh4MAhoOBBoQBB4QBBwSBB4SBh4YCiQCAgICAgICAgICAgICAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQICAgODg4ODg4KCgoKCgoMDAwMDAwKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoMDAwMDAwKCgoICAgODg4ODg4KCgoGBgYEBAQCAgIEBAQEBAQEBAQEBAQEAgQCAgICAgICAgICAgIEBAQCAgICAgICAgICAgICAgICAgICBAIEBAQGBgYODg4WFhYUFBQODg4KCgoGBgYEBAQICAgODg4KCgoICAgMDAwMDAwMDAwKCgoKCgoICAgGBgYGBgYICAgICAgGBgYGBgYGBgYKCgoKCgoKCgoMDAwODg4KCgoKCgoODg4MDAwEBAQEBAQKCgoMDAwUFBQWFhYUFBQICAgEBAQEBAQCAgICAgICAgICAgICAgICAgIEAgIQBBwQBBwOBBwQBBwOBB4SBiAOBBwOBBwQBB4OAhwOBBwSBh4QBh4QBBwSBh4OBBwOBBwQBB4QBBwQBBwOBBwQBBwSBh4SBh4QBBwQBBwQBBwWBiASBB4QBBwOAhoQBBwWCCIWCCIUBiAUBiASBh4SBh4SBB4SBB4SBB4SBBwMAhoQFigUIjQUIDISFioUHjAUIDIUIDIUIDIUIDIWIDIWIDIWIjIYIjIYIjIYIjIaIjIaIjIWIDAQGi4SHC4WHjAWIDASHjIUHjIaIDIcIjIeJDIcIjIYIDIUHjAUHjIWIDIUHjASHC4SGi4YIDAaIjIaIjIYIjIYIjIYIjIWIjIWIDIWIDIUIDIUIDIUIDIWFioUFiwWFioYCCIWCCIcDiYaDCYWCCIWCCIeDigYCiQYCCIaCiQaDCYaDCYSBiAQBB4UBiAYCiQSBh4MAhoUCCAUBiIUBiAWCiIYCiQWCCIYCiQSBh4QBBwSBBwSBh4UBiAWCCISBiAQBBwOAhwQBB4QBB4MAhgOBBoQBBwQBBwQBBwQBB4aCiQCAgICAgICAgICAgICAgICAgIEBAQEBAQGBgYEBAYEBAQEBAQEBAQGBgYMDAwQEBAKCgoICAgMDAwMDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoMDAwMDAwICAgICAgODg4MDAwICAgEBAQEBAQEBAQEBAQGBgYGBgQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQEBAQKCgoUFBQUFBQQEBAODg4MDAwICAgEBAQICAgODg4KCgoICAgODg4ODg4MDAwMDAwKCgoGBgYGBgYICAgICAgGBgYGBgYGBgYMDAwMDAwODg4ODg4KCgoKCgoODg4KCgoEBAQGBgYMDAwODg4QEBAUFBQUFBQODg4EBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgIQBBwQBBwSBB4QBBwQBh4UBiAMBBoOBBwSBB4OAhoQBBwSBh4OBBwQBBwUBiAQBBwQBB4QBB4OAhoOBBoOBBoQBBwSBB4QBB4QBB4QBBwQBBoUBiASBB4QBBwOAhoQBBwUBiAWCCIUBiASBiASBh4SBB4SBB4QBB4QBB4SBB4MAhoOFCYUIjIUIDIUHjAUHjIUIDIUIDIUIDIUIDIWIDIWIDIWIjIWIjIYIjIYIjIaIjIYIjIWIDAQGi4UHC4WIDAQGCoMECQSGCoWHjAaIDAcIjIaIDAWHjASGCoMECQSGiwWHjASHC4SHC4WIDAYIjIaIjIYIjAYIjIWIjIWIjIWIjIWIDIUIDIUIDIUHjIUFioUGCwYEioaCCIYCiQYCiQYCiQUBiAWCCIcDCgWCCIYCiQYCCQcDCYYCiQQBB4SBB4WCCAWCCIQBB4MAhoUBiAUBiASBh4WCCIYCiQYCCIYCiQSBh4QAhwQBBwQBB4SBiAWCCISBiAQBBwOAhoQBB4QBBwKAhgMBBoQBBwQBBwQBBwOBB4aCiQCAgICAgICAgICAgICAgICAgICBAQEBAQGBgYGBgYGBgYICAgMDAwICAgGBgYICAgMDAwKCgoICAgKCgoODg4MDAwICAgICAgICAgGBgYGBgYGBgYGBgYICAgICAgGBgYGBgYGBgYGBgYICAgICAgICAgKCgoMDAwMDAwICAgICAgMDAwKCgoEBAQGBgYKCgoKCgoGBgYGBgYGBgYEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQEBAQEBAQEBAQKCgoSEhISEhIODg4ODg4MDAwICAgEBAQICAgODg4KCgoKCgoODg4MDAwMDAwKCgoICAgICAgICAgICAgGBgYICAgICAgMDAwMDAwODg4MDAwKCgoODg4KCgoGBgYGBgYMDAwODg4MDAwQEBASEhIODg4GBgYEBAQEBAQEBAQEBAQCBAQCAgICAgICAgICAgICAgIQBBwQBBwQBB4OBBwUBiASBh4MAhoQBB4QBBwOBBoOBBwQBBwOBBwQBB4UBiAQBBwQBBwQBBwOAhoMAhoMBBoQBB4SBB4QBh4QBB4OBBoMBBoUBiASBB4QBBwOAhoQBBwUBh4WCCAUBiASBh4SBh4QBB4SBB4QBBwQBBwQBB4OAhoOECQSIDISHjASIDISHjISHjIUHjIUIDIUIDIUIDIUIDIWIDIWIDIYIjIYIjIYIjIWIDIWIDAQGi4SHC4WIDIOFigCBBQECBgOFCgWHjAYIDAWHjAOFCgEBhgCBBQQGCoWIDASHC4QGi4WIDAWIDIYIjIYIjIYIjIWIjAWIDAUIDIUIDIUIDIUIDIUHjAUEigUFiwaDiYaCCQYCiQWCiQYCCISBh4WCCIaCiQWCCIYCCQWCCIcDCYWCCIMBBwQBB4UBiAWCCIQBBwMAhgUBh4SBh4QBB4UBiAYCCIWCCIYCiQQBh4OAhoQBBwQBB4SBiAUCCASBh4QBBwOBBoQBB4OBBwKAhgOBBwQBBwQBBwQBBwQBh4aDCYEBAQCAgICAgICAgICAgICAgICAgIEBAQEBAQGBgYMDAwUFBQUFBQODg4ICAgEBAQGBgYMDAwMDAwICAgKCgoODg4MDAwKCgoKCgoKCgoGBgYGBgYGBgYICAgICAgGBgYGBgYGBgYICAgKCgoKCgoKCgoODg4MDAwICAgKCgoODg4ICAgEBAQGBgYMDAwUFBQUFBQQEBAGCAgGBAQEBAQCAgICAgICAgICAgICAgICAgICAgIEBAQCAgICAgICAgICAgICBAQEBAQEBgYGBgYEBAQEBAQEBAQGBgYODg4ODg4MDAwMDAwMDAwICAgEBgQGBgYKDAoMDAwMDAwOEA4MDAwKCgoICAgICAgICAgICAgICAgICAgICAgMDAwODg4ODg4KDAoMDAwICAgEBAQGBgYKCgoMDAwMDAwMDAwODg4ICAgEBAQEBAQEBAQGBgYGBgYEBAQEBAQCAgICAgICAgICAgICBAIQBBwQBB4QBBwQBh4WCCAOBBwOBBwSBB4QBBwOBBwQBBwQBB4QBBwSBiASBB4OAhoQBB4QBBwQBBwQBBwQBB4QBB4QBBwSBh4SBB4MAhoMAhoUBiAQBBwQBBwOAhoQBBwSBh4UBiASBiAQBB4SBh4SBB4QBBwQBBwOBBwQBBwOAhoKCiASHjASHjISHjASHjASHjASHjAUIDIUIDIUIDIUIDIUIDIWIDIWIjIYIjIWIjIWIjAWIDASHC4OGCwSHC4UHjAMGCoKFCgMFioSGiwUHC4QGCwMFioKFCgMGCoUHjASGi4OGCwSHC4YIDIWIjAYIjIYIjIWIjIWIDIUIDIUIDIUIDIUIDIUIDIUHDAUGCwUGCwYCiQaCiQYCiQWCCIWBiASBh4YCiQaCiQUBiAWCCIWCCIaCiYUCCAOAhoQBBwSBh4UBiAMAhoIAhgUBh4QBBwQBBwUBiAWCCIWCCIWCCISBh4OAhoQBBwQBB4UBiAUBiAQBB4QBBwOBBoSBB4OAhoKAhgQBBwOBBwQBBoOBBoQBh4YCiQEBAQCAgICAgICAgICAgICAgICAgICAgIEBAQEBAQODg4WFhYUFBQQEBAMDAwICAgEBAQGBgYODg4ODg4ICAgMDAwODg4MDAwKCgoMDAwICAgGBgYGBgYICAgICAgGBgYGBgYGBgYMDAwKCgoMDAwODg4MDAwICAgMDAwODg4ICAgEBAQICAgMDAwODg4SEhIWFhYUFBIGBgYEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgACAgAAAgAAAgAAAgACAgACBAIEBgIEBgQGCAQGCAQEBgQCBAICBAIICAYMDgoICggGCAYICggICAgEBAQGBgYKCgoKCgoODg4ODg4ICggGCAQGCAYGCAYGCAYGCAYGCAYGCAYMDAwQEA4MDAwMCgoICAgEBAQGBgYICggICgYICggKDAoICggEBAICBAIEBgQGCAYGCAQEBgQEBgICBAICBAACAgAAAgAAAgACAgACAgAQBB4QBB4OBBwUBiAUBiAOBBoQBBwQBB4OAhwOBBwSBh4QBBwQBB4UBiAQBBwOBBoSBB4OBBwQBBwOBBoQBBwQBBwOBBwQBB4SBB4MAhgMAhoUBiASBB4QBBwOBBwQBBwQBB4UBiASBiAQBB4SBh4SBB4OBBwQBBwOBBwQBBwQAhoMBhwQGCwSIDISHjASHjASHjASIDISIDIUIDIUIDIUIDIUIDIWIjIWIjIWIjIYIjIYIjIYIjIWIDISHjASGjASHC4SHDASHDAUHjAUHC4UHC4UHC4UHi4SHDASHC4SHC4SGi4SHjAWIDIYIjIYIjIYIjIWIjIWIDIWIjIUIDIUIDIUIDISIDIUIDISHjISIDIWFiwaCiQaCiQYCCIWCCIUCCASBiAYCiQYCCQSBiAUBiAUCCIYCiQSBh4OBBoSBBwSBh4SBh4MAhoMBBoSBh4QBBwSBBwUBiAWCCIWCCIWCCISBBwOAhoQBBwQBB4UBiASBh4QBBwQBBoOBBoSBB4OAhoKAhgQBBwOBBwOBBoOBBoQBh4YCCICAgICAgICAgICAgICAgICAgIEBAQEBAQEBAQEBAQGBgYQEBAUFBQQEBAODg4ODg4KCgoGBgYGBgYMDAwMDAwKCgoMDAwODg4MDAwMDAwKCgoGBgYGBgYICAgICAgGBgYICAgICAgMDAwMDAwODg4ODg4KCgoMDAwODg4ICAgEBAQICAgMDAwODg4QEBAUFBQSEhIKCgoEBAQEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgIkCi4mDC4mDC4mDDAmDDAmDDAkDC4kECwmDiwkDiomEC4mEC4kDiwmEC4mDiwkDiomEC4mEC4oDi4qDDIwEjw2GD46HD46HD44Gj4oDjIqEDAuEjQuEjQuEjQuEjQuEjQuEjQuEjQoDjA2GD46HD46HD44Gj4yFDwsDjYmDC4mEC4mEC4kDiomECwmEC4kDiwmEC4mEC4kDiomDiwkECwkDC4mDDAmDDAmDDAmDC4mDC4kCiwSBB4QBB4QBB4WCCISBh4OBBoQBB4QBBwQBBwSBB4QBB4OBBwSBiAWCCAOAhoOBBwQBBwQBBwQBBwKAhgOBBwQBBwQBBwSBB4QBBwIAhgOAhoSBh4QBBwQBBwOAhwQBBwSBh4SBh4UBiASBh4QBB4QBBwOBBwOBBwOBBwQBBwQAhwMBBoOFioSIDISHjASHjISHjISHjISIDISIDISIDISIDIUIDIUIDIUIDAWIDIWIjIYIjIWIDIWIDIWIDIWHjIUHjAUHjAWHjAYIDAaIDAYHjAaIDAYIDAWHjAUHjAUHjAWIDIWIDIWIDIWIDIWIjIWIDIWIDAWIDIUIDIUIDISIDISIDISIDISIDISIDIUHDAYDiYYCCIYCCQYCCIWCCIUBiAWCCIaDCYWCCISBh4UBiAUBiAWCCIQBB4QBBwQBBwSBh4SBh4MAhgMBBoQBB4QBBwQBBwUBiAWBiAWCCIWCCASBBwOAhoQBBwSBB4UBiAQBB4QBBwOAhoOBBoQBBwOAhoMAhgQBBwQBBwOBBwQBBwSBh4WCCICAgICAgICAgICAgICAgIEBAIEBAQEBAQEBAQEBAQEBAQGBgYMDAwQEBAODg4MDAwODg4KCgoGBgYGBgYKCgoMDAwKCgoODg4ODg4MDAwKCgoICAgICAgICAgICAgGBgYICAgICAgMDAwMDAwODg4KCgoMDAwMDAwGBgYEBAQICAgMDAwMDAwMDAwQEBAODg4ICAgEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgICAgICAgICAgIoDDIoDDIoDDIoDDIoDDIoDDIkDiwgFiQgFiQcDiAiFiYiFiYaDiAiFiYgFCQcDiAiGCYgFiQoEjAsDjg0FD48HD4+ID4+ID4+ID4qEDQgBigyFD4yFD4oDDQmCjAkCi4mCjAkCC4oDDA8HD4+ID4+ID4+Hj42Fj4uDjokDiwgFiQiGCYcDiAgFiQiFiYaDiAiFiYiFiYcDiAgFiQgFiQkDiwoDDIoDDIoDDIoDDIoDDImCjASBB4SBB4SBiAUBiAQBBwOBBwQBB4QBBwQBBwSBB4QBBwQBBwUCCASBh4OAhoQBBwOBBwSBB4OBBwMAhoQBBwOBBwQBBwSBBwOAhoKAhgQBBwSBh4QBBwQBBwOBBwQBB4SBB4SBh4UBiASBh4OBBwSBBwQBBwQBBwQBBwQBBwQBBwMAhgMEiYSIDQSHjISHjISHjISHjISHjISHjISHjIUIDAUIDIUIDAUIDAUIDAWIDAWIDAWIDAYIjIWIDAYIDAYIjIYIjIYIDAYIDAYIDAUHjAYIDAYIDAYIDAYIjIYIjIWIDAYIDAYIDIWIDAWIDAWIDAUIDAUHjAUIDASIDISIDISIDISHjISIDISIDIYFiwaCCIYCiIYCiQWCCIUCCASBh4WCCIYCiQUBiASBB4WBiAWCCIUCCAOBBwQBBwQBBwQBB4QBBwMAhoOBBoQBBwOBBwQBBwUBh4UBiAWCCIUBh4QBBwOAhoQBBwSBBwUBh4QBBwOBBwQBBwQBBwQBBwKAhgMAhoQBBwQBBoQBBwOBBwQBh4UBiACAgICAgICAgIAAgACAgICAgIEBAQEBgQGBgYGBgYGBgYEBgQEBAQGCAYMDAwODgwKCgoKCgoICggGBgQEBAIGCAYKDAoKDAoOEA4MDgwKCggICAgICAgICAgICAgICAgICAgICAgMDAwOEA4MDgwKDAoICggEBAQEBgQICAgKDAoKCgoMDAwMDgwICggEBAQEBAQGBgYGBgYGBgYGBgYEBAQCBAICAgIAAgAAAgACAgICAgIsEDYqDjQmDDAmCjAmCi4mCjAgCigcEiAaEh4UCBoiFiYeFCASBhYgFCIYEBwWChogFiQYEBwoEiwkDCwWChocDh4gFCAeEiAcEB4kDiweBiYyFDoyFDwmDDAkCi4iCiwkCiwiCCwmDC4iECYcEh4gFCAcEB4WChogCigiDCgaEhwgFiQWCBoaEh4gFCISBhYeFCAiFiYUCBoaEh4cEiAgCigmCjAmCi4mCjAmDDAqDjQoDjISBh4SBh4UBiASBiAOBBwQBBwQBB4QBBwQBBwSBB4QBB4SBh4WCCAQBBwOBBoQBBwOBBwUBh4OBBoOBBoQBBwOBBwQBBwQBBwMAhoMAhoQBBwSBiAOBBwOBBwQBB4QBB4QBB4QBBwSBh4SBh4QBBwSBB4SBB4QBBwQBBwQBBwQBB4OAhoOCiASHjISHjISHjASHjASHjASHjASHjASHjASHjASHjAUHjAUHjAUHjAUIDAWIDAWIDAYIjIYIjIYIjIYIjIaIjIaJDIaIjIWIDAWHjAWIDAaIjIaJDIaIjIYIjIYIjIYIjIWIjIWIDAWIDAUIDAUHjAUHjAUHjASHjASHjASHjASHjASIDISHDAWDCQYCiIaDCQWCiQUCiISBh4SBh4UBiAWCCISBh4SBB4SBiAUCCIUBiAOBBwOAhoQAhwQBB4QBBwKAhgOBBoSBBwOBBoQBBwUBh4SBiAWBiASBh4QBBwOAhoQBBwQBBwUBiAQBh4OBBwOAhwQBBwQBBwKAhgOBBoOBBwOBBoQBBwQBBwSBh4UBh4IBAgIBAgIBAgIBAgIBggIBAgIBAgIBAgKBgoMCAwMCAwKBgwIBAoIBAgKBgoODBAOCg4MCAwOCA4SCBIQBhAQCBIUChQUDBYWDBYUDBYMCAwKBgoKBgoKBgoKBgoKBgoKBgoKBgoSDBIWDhgUDBYUDBYSCBIQBhASCBIOCBAMCAwOCg4OCg4KBgoIBAgIBAgKBgoMCAwMCAwKBgoKBAgIBAgIBAgIBggIBAgIBAgIBAgIBAgwFDosEDYqDjQoDDImCjAmCjAgCCYmCjAoDDAWBBwuEDgsEDQWBBwsDjYkDC4SBBguEDgmDC4oECweCiQAAAAABAAGCAQECAIAAgAgDCgeCCgwFDowFDomDDAkCi4iCiwiCiwiCiwmDDAOBhAABgAGCgYCBgIAAAAWBhwiCiomDDAsEDYWBB4oDDIsDjYWBBwsEDQuEDgWBBwoDDAmCjAgCCYmCjAmCjAoDDIqDjQsEDgqEDQUBiAUBiAUBiASBB4OBBwQBB4QBBwQBBwSBBwSBB4QBB4UBiAUBiAOBBwQBBwQBBwSBB4SBB4OBBoQBBwQBBwQBBwQBBwOBBoKAhgOBBoSBB4QBB4OBBwOBBwSBh4QBBwSBB4QBB4SBh4SBiAQBBwQBBwSBB4OBBwQBBwSBB4SBiAOAhoMAhgOGCwSIDISHjASHjASHjASHjASHjAQHjAQHjAQHC4SHjASHjAUHjIUIDIWIDIWIjAWIjAWHiwSGigQFiQSGCYWHi4aIjIYIDAWIDAYIDIYIjIWHi4SGCYQFiQSGigUHiwWIjAWIjIUIDIUIDIUHjISHjASHjAQHC4QHjASHjASHjASIDISFiwSBiAWECgYDCYUDiYUCiISBB4SBh4UBiAUBiASBB4SBh4QBh4UCCISBiAQBBwOAhoOBBoQBB4OBBwKAhgOBBwQBBwOBBoQBBwSBh4SBh4UBiAQBB4QBB4OAhoQBBwQBBwUBiAQBh4QBB4MAhoQBBwQBBwMAhgOBBoQBBwOAhoOBBwSBB4UBh4SBB4kCi4mDC4mDC4mDDAmDDAmDDAkDC4kECwmDiwkDiomEC4mEC4kDiwmEC4mDiwkDiomEC4mEC4oDi4qDDIwEjw2GD46HD46HD44Gj4oDjIqEDAuEjQuEjQuEjQuEjQuEjQuEjQuEjQoDjA2GD46HD46HD44Gj4yFDwsDjYmDC4mEC4mEC4kDiomECwmEC4kDiwmEC4mEC4kDiomDiwkECwkDC4mDDAmDDAmDDAmDC4mDC4kCiwuEjgsEDYqDjQoDDImCjAmCjAeCCYmDC4mDC4UBBosEDYqEDIWBBwqDjQkDCwSBBgsEDYkDC4kDiomDC4aCiAeDiIgECIgECIgECQkDi4eBiYyFDowFDomDDAkCi4iCiwkCiwiCCwmDDAmEiogECAgECIeDiIaCiAkDCwgCiYmDi4sEDYWBBwmDDAqDjQWBBwqEDIsEDYUBBomDC4mDC4eCCYmCjAmCjAoDDIqDjQsEDYqEDQSBh4UBiAUBiAQBBwQBBwSBh4QBBwQBBwSBB4SBh4SBh4UBiASBB4MBBwQBB4QBBwSBh4OBBwOBBwSBB4OBBwSBB4QBBwOBBwMAhoOBBoQBB4QBB4QBBwOBBwUBiASBB4QBBwQBBwQBB4SBiAQBBwQBBwQBBwQBBwQBBwSBh4UBiAQBBwMABgMCiAQHjASHjAQHjAQHjAQHjAQHDAQHC4QHC4OHC4QHC4SHjASHC4QGioSGCYQFCIMDhwKDBgKChgMChYMChYMDhoQEiAQFCIQFCIQFCIQEiAMDhoMChYKChYKChgKDBgMEBwQFCISGigQGioSHC4QHi4QHC4OHC4QHC4SHjASHjASHjASECYSEigSEigUDCQUFCoSCCAQBBwSBh4UBiASBiASBB4SBB4SBh4WCCIQBB4QBBwOAhoOBBwSBB4OAhoKAhgQBBwOBBwOBBwQBBwQBBwSBB4UBiASBh4QBB4OAhoQBBwQBBwSBh4QBBwQBB4OBBwQBBwOAhoKAhgOBBoQBBwOAhoOBBwQBB4SBh4QBB4oDjImDDAmDC4kCi4kCi4mCjAgDCYYGBoWFhgSChYcGh4aGBoQChIaGBwWFBYUDBYcGhwWFBYmEioqDjQqEjQyGDY0HDY0HDY0GjgsEjYmFCgUDhQWDhYYEBgYEBgYEBgWDhYaEBwsEjQ0GDg0HDY0HDYyGjYsFDYqDjQgDCYWFhYcGhwUDBYWFBYaGBwQChIaGBocGh4SChYWFhgYGBogDCYmCjAkCi4kCi4mDC4oDDAmDDAuEjgsEDYqDjQoDDImDDAmCjAeCCYmDC4mDC4UBBosEDYqEDIWBBwqDjQkDCwSBBgsEDYkDC4kDiooDjIoEDAuFjYyGjYyGjYwGDYmDi4eBiYwFDowFDomDDAkCi4iCiwkCiwiCCwmDC4wFjYyGjYyGjYwGDYqEjIoDjIeCCYmDC4sEDYWBBwmDDAqDjQWBBwqEDIsEDYUBBomDC4mDC4eCCYmCjAmDDAoDDIqDjQsEDYqEDQSBiAUCCIUBiAQBBwSBh4SBh4QBBwQBBwSBB4SBh4UBiAUBiAQBBwOBBwQBB4QBB4SBh4OBBoSBB4QBB4QBB4QBB4OBBwOBBwOBBwOBBoOBBwQBh4QBB4OBBoUBiASBh4QBBwQBBwQBB4SBh4QBBwQBBwQBBwQBBwQBBwQBh4UBiAQBB4OAhoMAhgQGCoQHjAQHDAQHDAQHDAQHC4QHC4QHC4OGiwKFCIKEBoMDBYMChQKCBIKBhAKBhAKBhIKCBQMChYMChYKCBQKCBIKCBQMChYMCBQKCBQKCBQMChYMChQKCBQKBhIKBhAKBhAKCBIMChQMDhYKEBoKFCQOGiwQHDASHjASHjASHjASHC4SGi4SDCISFCoUFCoQBB4OAhwSBB4UBiAUBiASBB4SBB4UBiAWBiAQBBwQBBoOAhoOBBwSBB4OAhoKAhgQBBwOBBwOBBwSBBwOAhoQBB4SBh4SBB4QBB4OBBwQBBwOBBwSBh4QBBwQBBwOAhwQBBwMAhoKAhgOBBoOBBwOAhoQBBwQBBwQBBwQBBwuEjosEDYoDDQoDDImCjAmCjAkCi4oEDAkDiwYBh4sEjQmEi4WBhwoEDAiDigWBhwqEjIiDiooEi4gCiYCAgIICAgODg4MDAwIBggmDi4gDiIMCA4OCBAMBg4MBg4MBg4EBAYKCAoqEjIQCBIICggODg4KCgoCBAIYCB4kDCokDioqEjIYBh4kDiwoEDAWBhwmEi4sEjQYBh4kDiwoEDAkCi4mCjAmCjAoDDIoDDQsEDgqEDQuEjgsDjYoDDIoDDImCjAmCjAeCCYmDC4mDC4UBBosEDYqEDIWBBwqDjQkDCwSBBgsEDYkDC4kDiweCiQAAgAGCAYODg4MDgoGBgYgCigeCCYyFDowFDomDDAkCi4iCiwkCiwiCCwkDC4OBhAICggOEA4KCggAAgAWCBwgCigkDC4sEDQWBBwmDDAqDjQWBBwqEDIsEDYUBBomDC4mDC4eCCYmCjAmCjAoDDIoDDIsEDYqEDQUBiAWCCISBh4QBB4SBh4QBB4QBBwQBB4SBh4SBh4UBiAUBiAOBBwQBB4QBB4SBh4SBB4OBBwSBh4QBBwQBB4QBB4OBBwQBB4OBBwOBBwOBBwSBiASBB4MAhoSBB4QBB4QBBwQBBwQBB4SBh4SBB4QBBwSBB4QBB4QBBwQBh4WBiASBB4OBBwKABYODiIQHjAQHjAQHjAQHC4QHi4QHC4QHC4OGiwKFCIICA4GAggGBAoIBgwIBgwIBg4IBg4IBg4KBg4KBg4KBhAKBg4KBg4MBg4KBg4KBhAKBhAIBg4IBg4IBg4KBg4IBgwIBgwIBAwGBAoGAggICBAMFiQOHC4QHC4SHjASHjAQHjASHjASFioQFioQHjAUECgQBBwQBBwSBB4UBiASBh4QBBwQBB4WBiIUBh4QBBwQBBwOAhoOBBwSBBwOAhoMAhgQBBwOBBwOBBwSBB4OBBoQBB4SBh4QBB4QBB4QBBwOBBwOBBoSBiASBBwQBBwOBBwSBBwMAhoMAhgOBBoOBBwOAhwQBB4QBBwQBBwOBBwuEjosEDYqDjQoDDImDDAmCjAkCi4qDjYoDjAUBBosEDYqEDQWBBwsDjYkDC4SBBYsEDYmDC4mDiogCigEAgYIBAgKCAoIBggIBgoiDCoeCCgyFjoyFjwoDDIkCi4kCi4QBBQKCAoqEjISCBQGBgYKCAoIBggEAgQaCCAgCigmDC4sEDYWBBwmDDAqDjQWBBwqEDQsEDYUBBooDjAqDjYkCi4mCjAmDDAoDDIqDjQsEDgqEDQuEjgqDjYoDDIoDDImCjAmCjAeCCYkCi4mDC4WBBwsEDYoDjIWBBwqDjQkDCwSBBgsEDYkDC4iDCogCigMBA4OBhAQCBIOCBIQBhQgCigeCCYwFDowFDomDDAkCi4iCiwkCiwiCCwkDC4WCBoOBhAQCBIOBhIMBA4cCCQeCCYkDC4qEDQWBBwmDDAqDjQWBBwoDjIsEDYWBBwmDC4kCi4eCCYmCjAmCjAoDDIoDDIsEDYqDjQWCCIWCCISBB4SBh4SBh4QBBwQBBwSBB4UBiAUBiAWCCISBh4OBBwQBh4SBB4SBiAQBBwQBBwQBB4QBB4SBB4QBB4OBBwSBB4QBBwOBBwQBB4SBiAQBB4MAhoQBBwQBB4QBB4QBB4QBB4UBiASBh4SBB4QBB4SBB4QBBwQBh4UBiASBB4QBBwMAhoKBBoQFCgQHjAQHi4QHi4QHi4QHC4QHC4OHC4OGi4MFCIICBAGBg4GBg4ICBAICBIICBIKCBQGBhIGBBAGBA4GBA4GBAwIBg4GBAwGBA4GBBAGBBAIBhIKCBQKCBIICBIICBAIBg4GBg4IChIMFiQQHDAQHC4QHC4QHjASHjAQHjAQHC4QHC4QHjASGi4WDCQQBBwQAhwQBB4SBh4SBh4QBBwQBBwUBiAQBBwOBBwQBBwOAhoQBBwQBBwMAhgMAhoQBBwQBBwQBBwQBB4QBBwSBiASBh4SBB4QBBwQBBwOBBwOBBoSBh4OBBwQBBwQBBwSBBwMAhoIAhYOBBoQBBwOAhwQBB4QBBwQBBwQBBwuEjgsEDYqDjQoDDImCjAmCjAkCi4qDjQmDjAUBBosEDYqEDIWBBwqDjQkDCwSBBgsEDYkDC4kDigqDjQuEjgyFjo2Gjo2HDo2GjwoDjAeBiYyFDwyFDwmDDAkCi4kCi4OBBQKCAoqEjI0GDw2HDo2Gjo0GDouFDgqDjYeCCQmDi4sEDYWBBwmDDAqDjQWBBwqEDIsEDYUBBomDjAqDjQkCi4mCjAmCjAoDDIqDjQsEDYqEDQuEjgsEDYoDjIoDDImCjAmCjAeCCYmCjAmDDAWBBwsDjYqDjQWBBwqDjYkCi4SBBgsDjYmDC4eCiYoDDIqDjYuEjgwFDowFDowFDokDC4eCCYwFDowFDomDDAkCi4iCiwkCiwiCCwkCi4uEjgwFDowFDouEjgsDjYqDDQcCCQmDC4sDjYWBBwmDDAqDjQWBBwqDjQsDjYWBBwmDDAmCjAeCCYmCjAmCjAoDDIoDjIsEDYqDjQWCCIUBiASBh4UBiASBh4OBBwQBB4UBiAWCCIWCCAWCCIQBB4QBB4SBh4SBh4SBh4OBBwQBB4QBB4QBB4SBB4SBh4QBB4QBB4OBBwOBBwSBh4SBB4QBBwOAhoQBBwQBBwSBh4SBB4QBB4UBiAUBiASBh4SBh4SBh4QBBwQBh4UBh4SBB4QBBwOBBwMBBoSBBwSFigQHjAQHi4QHi4QHC4QHC4QHC4QHC4QHDAMFCIICBIKCBIMDBgMDBgODBoODhwODhwODhwMDBwMDBgODhgODhgODhgMDBoODBwODhwODhwODhwODhoMDBgMDBgKCBIICBIOFCQQHDAQHC4QHC4QHC4QHjASHjAQHDAQHC4QHDAQHjAUFCoWCCIQBBwQAhwOBBwQBh4SBh4OBBwOBBwUBiAOBBwMBBwQBBwOAhoSBBwQBBwKAhgOBBoOBBwOBBoQBBwOBBwOBBwSBiAQBB4QBBwQBBwQBBwQBBwOBBwQBB4QBBwQBBwQBBwQBBwKAhgKAhgOAhoQBBwQAhwQBB4QBBwOBBwQBBwuEjgsEDYoDjIoDDImDDAmCjAkCi4qDjQmDjAUBBosEDYqEDIWBBwqDjQkDCwSBBgsEDYkDC4kDioiDCoSCBQYDhweFCAcFB4YDhoiDCoeCCYwFDowFDomDDAkCi4kCiwOBBQKBgoqEDAcDiAaEhweFCAaEBwSCBQeCiYgCiYmDC4sEDQWBBwmDDAqDjQWBBwqEDIsEDYUBBomDjAqDjQkCi4mCjAmDDAoDDIoDjIsEDYqEDQqDjQoDjImDDAkCi4kCi4kCi4cCCQcDiAaDiASBBggEiYeECISBBYgEiQaDh4SBBggEiYaDh4eCiYeCCYKBAwQChIWEBgUDhYQCBIeCCYeCCYyFDowFDomDDAkCi4iCiwkCiwiCiwkCiwUCBgSDhQWEBgSDBYKBgwaCCIeCCQaDh4gEiYUBhgcDiAgEiQSBBYeECIgEiYSBBgcDiAcECAeCCQkCi4kCi4kCi4mDDAoDjImDjAYCCQUBiAUBiAWBiAQBB4OBBwSBB4WCCAUBiAWCCIUBiAQBB4SBB4SBB4UBiASBh4OBBwSBh4QBB4SBB4SBh4SBh4SBh4QBBwOBBwSBh4SBB4QBBwQBBwOAhoQBB4QBBwSBh4SBh4QBh4UBiAUBiAUBiAUBiAUBiAQBBwQBh4SBh4SBh4QBBwQBB4QCiAQCCAQDCIQGCoQHi4QHC4QHC4QHC4QHjAQHjAQHjAQHjAOFCQKCBQKCBQMChYODBgQDhoUFB4YFiAYGCAYGCIUFB4SEhwUFCAYGCIYFiAYFiAUFB4ODhoODBgMChgKCBQKCBQOFCQQHjIQHjAQHjAQHjAQHC4QHC4QHjAQHDAQHC4QHDAQHC4WECgUBiAQBBwOAhoQBBwSBh4SBh4OBBoQBBwUBiAQBB4QBB4OBBwOAhoSBB4QBBwMAhgOBBoOBBwOAhoQBB4QBBwOBBoSBiAQBB4QBBwQBBwQBBwQBBwQBBwSBh4QBB4QBBwOBBwQBBwKAhgKAhgOAhoSBBwOBBwQBBwQBBwOBBwQBBouEjgsDjYoDDIoDDImCjAmCjAkCi4qDjQmDjAUBBosEDYoDjIWBBwqDjQkDCwSBBgsEDYkDC4kDCweCiQAAAACBAIICAYGCAQCAgIeCiYeCCgwFDowFDomDDAkCi4kCiwOBBIKBgooDjAKBA4EBgIICgYEBgQAAAAWBhwgCigkDC4qEDQWBBwmDDAqDjQWBBwoDjIsEDYUBBomDjAqDjQkCi4mCjAmCjAoDDIoDDIsEDYqDjQmCjAmCjAoDDIoDDIoDDIoDDIiDCoUFhQSFBAaCCAaFhoSFBAUCBoWFhYSEhIgCigYFhgQEhAiCiocCCQCAgIEBAQICAgGBgYGBAYeCCYeCCgwFDowFDomDDAkCi4iCiwkCiwiCiwkCiwMBA4EBgQICAgGBgYAAgAWBhwiCioQEhAYFhgaCiASFBAWFhYUCBoSFBAaFhoaCCASFBAUFhQiDCooDDIoDDIoDDIoDDImDDAkCi4WCCIUBiAWCCIUBiAQBB4QBB4UBiAWCCIUBiAWCCISBh4SBh4SBh4SBh4UBiAOBBwQBB4SBB4QBB4SBh4UBiAUBiASBh4OBBwQBBwQBh4QBBwQBBwWCCISBh4QBBwQBBwSBh4SBh4QBB4UBiAUBiAUBiAUBiAUBiASBB4QBh4QBh4SBh4QBBwQBBwODiQQFigQFCgQGCoQHC4QHi4QHC4QHi4QHjAQHjAQHDAQHjAQHjIOFiYICBQKBhIMChYODBgQEBoUEhwUEhwSEhwQDhoODBgQEBoUEhwUEhwUEhwQDhoODBgMChYKBhIKChYOFigQHjIQHjAQHjAQHjAQHjAQHC4QHC4QHjAQHDAQHC4QHjASGCwWCiQUBiAQBBoOAhoQBBwSBh4UBiAOAhoOBBwSBh4QBBwQBB4OBBwOAhoSBBwOBBoKAhgOBBwQBBwOAhoQBB4QBBwOBBwUBiAQBB4QBBwQBBwOBBwOBBoQBBwSBiAOBBwQBB4QBBwQBBwKAhgKAhgOBBwSBBwQBBwQBB4QBBwOBBwQBBouEjgqDjYoDDIoDDImCjAmCjAkCi4qDjQmDjAWBBwsEDYqDjIWBBwqDjQkDCwSBBgsEDYkDC4gCigmDDAgDCgiDCokDiwkDiwmDi4kDCweCCYwFDowFDomCjAkCi4kCiwOBBQIBggmDi4mDjAkDiwkDiwkDiwgDCgmDC4eCCQmDC4qDjYWBBwmDDAqDjQWBBwqDjIsEDYWBBwmDjAqDjQkCi4mCjAmCjAoDDIoDDIsEDYmDC4mDDIoDDIoDDIoDDIoDDIoDDIkDC4WFBYQEBAcCCQaFBwQEBAaCCIWFBgSDhIkCiwYFBoQDhAiCiokCi4iCiwkCiwkDCwkDC4kDC4iCioeCCYyFDwwFDwoDDIkCi4kCiwkCi4iCiwkCiwkDC4kDC4kDC4kCiwiCiwkCi4gCCoQDhAYFBoeCiYQEBAWFBgaCCIQEBAaFBwcCCQQEBAWFBYkDC4oDDIoDDIoDDIoDDIoDDIkCi4UCCIWCCIWCCISBiAQBB4SBh4WCCIWCCIWCCAWCCISBh4UBiAUBiAUBiAUBiAOBBwSBh4QBB4QBB4SBh4SBiAUCCASBh4OBBwSBB4QBh4QBBwSBB4YCCIUCCAUBiASBh4SBB4QBB4QBB4UBiAUBiAUBiAUBiAUBiASBh4QBh4QBh4SBh4OBBwQBBwOBh4QGCoQHi4QHC4QHC4QHC4QHC4QHDAQHDAQHjAQHjAQHC4QHjAQHjIOGCoKDBoIBhAKCBQODBgQDhoQDhoODBgODBYODBgODBgODBgQDhoQDhoODBgKCBQIBhIKDBoOGCoQHjIQHDAQHDAQHDAQHjAQHDAQHC4QHC4QHDAQHC4QHjAQHjASEigWBiAUBh4QBBoOBBoQBBwUBiAUBiAOAhoOBBwSBh4QBBwQBB4OBBwQBBwSBBwMAhgKAhgOBBwQBBwOAhoQBB4QBBwOBBwUBiAQBB4QBB4QBBwOBBwMAhoQBBwSBiAOBBwSBB4QBBwQBBwKAhgMAhgQBBwQBB4OBBwSBB4OBBwOBBwQBBwsEjYqDjQoDDImDDAmCi4kCi4iCCwoDjAkDiwUBBgoEDImDi4UBBooDjAgDCoQBBYoDjIiDCoeCCYkCi4eCiYiDiomEi4mEi4kDiwiCioeCCYyFDwwFDwoCjIkCi4kCi4QBBQGBAgkDC4kDi4mEiwmEi4kECwgDCYkCiwcCCQiDCooDjAUBBokDCwmDjAUBBomDi4oEDIUBBgkDiwoDjAiCCwkCi4mCi4mDDAoDDIqDjQkDC4kCi4kCi4kCi4kCi4kCi4kCi4kCi4WDhoMCgweBigYDhwODBAiCCoWDhoQChQkCC4WDhgQChIiCCwmCjAoDDQqDDQqDDQqDDQqDDQiCCweCCYsEDQqEDQkCi4iCCwiCCoiCCogCCoiCCwoDDQqDDQqDDQqDDQoDDQoCjIkCCwQChIWDhogCCgMCgwYDhwiCCoODBAWDhweBiYMCgwWDhokCi4kCi4kCi4kCi4kCi4kCi4iCiwUBiAWCCIWCCASBh4QBh4UBiAWCCIUCCAYCCIUCCISBiAUCCASBiAWCCASBh4QBB4SBiAQBB4UBh4UBiAUBiAWCCIQBB4QBBwSBh4QBB4QBBwSBB4WCCIUBiAWCCIWCCISBiAQBB4SBh4UBiAUBiAUBiASBh4UBiAUBiAQBhwQBhwSBh4QBBwOBBoQBBwQDCIQHC4QHC4QHC4OHC4QHC4OHC4OHC4QHDAQHDAQHC4QHDAQHDAQHjIQHC4MFCIIChYKCBIMCBQMChYMChYMChYMChYMChYMChYMChYKCBQICBIIChYMFCIQHDAQHjIQHDAQHDAQHC4QHDAQHjAQHDAQHC4QHC4QHC4QHC4QHjAQHC4UDiQUBh4SBh4OAhoOBBoQBB4SBh4SBh4QBBwSBh4SBiASBBwSBBwOBBwQBBwSBB4KAhgMAhgOBBoOBBwOAhwSBB4QBBwQBBwWCCAQBB4OBBwQBB4QBBwOBBoQBBwSBiAQBB4SBB4QBB4SBB4MAhoMAhgOBBwQBB4QBBwQBB4OBBwOAhoQBBwmDDAmDDAmDDAmDDAmDC4kCi4gCigWFhgUEhQWBhoaFhwUFBYSBhYYFhoUEBQaCCAaFhoSEBIgCigcCCIAAgAECAQKDgoIDAgEBAIeCCYYBh4YDBwYDB4WChwWChoUCBgIBAoIBgoiCiwKBAwGCgQMDgoGCgYAAgAWBhogCCgSEBIaFhwWCBwUEhQYFhoSBhYUFBYaFhwWBhoUEhQWFhggCigkCi4mDC4mDDAmDDAmDDAiCiokCi4mDC4mDC4mDDAmDDAmDDAkDC4kECwmDiwkDiomEC4mEC4kDiwmEC4mDiwkDiomEC4mEC4oDi4qDDIwEjw2GD46HD46HD44Gj4oDjIqEDAuEjQuEjQuEjQuEjQuEjQuEjQuEjQoDjA2GD46HD46HD44Gj4yFDwsDjYmDC4mEC4mEC4kDiomECwmEC4kDiwmEC4mEC4kDiomDiwkECwkDC4mDDAmDDAmDDAmDC4mDC4kCiwWCCAWCCIUBiAQBh4SBiAWCCAWCCIUCCAYCCIUBiIWCCIUBiAUBiAWCCIQBB4SBiASBB4OBBwUBiAWCCIUCCIWBiAQBBwSBB4SBh4OBBwQBBwSBh4UBiAWBiAWCCIWCCISBh4QBh4UBiAWCCAUBiAWCCIUCCAUCCAWCCISBh4QBBwSBh4SBh4MBBoQBBwQCCAQFCgOHC4QHC4OHC4OHC4OHC4OHC4OHDAQHDAQHDAQHDAQHDAQHDASHjISHjIQHC4OFiQMDhwKDBgMDBgKChgKChYKChgMDBgMChgMDhwOFiYQHC4SHjIQHjIQHDAQHDAQHDAQHC4QHDAOHDAOHDAQHDAQHDAQHC4QHC4QHjAQFioUCCISBh4SBh4OAhoOBBoQBBwSBh4SBh4OBBwSBh4SBiAOBBwQBBwOBBwQBBwSBB4KAhgKAhgOAhoOBBwOAhwQBB4OBBwQBBwWCCIQBh4QBB4SBBwQBBwQBBwQBBwSBiAQBB4SBB4QBBwQBB4MAhoMAhgQBBwQBB4QBBwQBB4OBBwOAhoQBBwmCjAmCjAoDDIoDDIoDDIoDDQkDCwUFhQSEhAcCCIaFhwSEhAWCBwWFhgSEBIiCioYFhgQEBAiCiogCCgSBhYSBhYUBhgSBhgUBhgkCiwWCBwEBAIEBgQGCAYICAYGCAYGBgYIBAwiCioYCB4SBhYUBhgSBhgSBhYeCCYgCioQEBAYFhocCiQSEhIWFhgWCBwSEhAaFhwcCCISEhAUFhQkDCwoDDQoDDIoDDIoDDIoDDIkCi4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4WCCIWCCIUBiASBh4UCCAYCCIWCCAWCCIWCCIUBiAWCCIUBiAWCCIUBiASBh4UBiAQBB4OBBwWCCIUBiASBiASBh4SBB4UBiASBB4OBBwQBB4UBiAUBiAWCCAWCCIWCCASBh4SBiAWCCAUBiAUBiAWCCAWCCAWCCAWCCISBiAQBh4SBh4SBiAMBBoQBBwUBiAQDCIOGiwOHC4OGiwOHC4OHC4OHC4OHDAOHDAQHDAQHDAQHjAQHjASHjASHjIUIDQWIjQWIDIWIDAYIDAYHi4YHi4YHi4YIDAWHjAWIDIWIjQUIDISHjIQHjAQHjAQHjAQHDAQHDAOHDAOHDAOHDAOHDAQHC4QHC4QHjAQGiwSDCIUBiASBh4SBB4OAhoQBBwQBBwSBh4QBB4OBBoSBh4QBh4OBBwQBBwQBBwQBBwSBB4KAhgKAhgOBBoQBBwQAhwQBB4QBBwQBB4WBiAQBh4QBB4SBBwQBB4QBBwQBBwSBiAQBB4SBB4QBB4QBB4MAhoMAhoSBB4SBB4QBBwSBh4QBBwOAhoOAhwoDDIoDDIoDDIoDDIoDDIoDDImDDIWEhoODg4gCCgaEhwQDhAgCCoYEBoSDhQmCjAYEhoQDBIkCC4mCjAqDDQqDDYsDjYsDjYsDjYkCi4iCiwgCCogCCogCCogCCogCCogCCoiCiokCiwqDDQsDjYsDjYqDDYqDDYoCjIiCCwQDBIYEhogCCoODg4YEBogCCoQDhAaEhwgCCgODg4WEhomDDIoDDIoDDIoDDIoDDIoDDImCjAEBAQAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQCAgICAgICAgICAgICAgICAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAAAAAAAAAAAAAAAAAAAAAAAAYCCIYCCISBh4UBiAWCCIYCCIUBiAYCCIUBiAWCCIWCCAUCCAYCCIUBiAUBiASBiAOBBwQBB4YCCISBh4QBB4QBB4SBB4UBiAQBBwQBBwSBB4UBiAUCCAWCCAWCCAUBiASBh4WCCAWCCIUBiAWCCAUBiAUBiAWCCIUBiASBiAQCB4QBh4UBiAOBBwQBBwUBiASCCAOFCgOHC4OHCwOGi4OHC4OHDAOHDAQHDAQHDAQHDAQHjAQHjISHjISIDIWIDIYIjIaIjIcJDQeJDQeJjQeJjQeJjQcJDQaJDQaIjIYIjIWIDIUIDISHjIQHjAQHjAQHDAQHDAQHDAOHC4OHC4OHDAQHC4QHjAQHDAQECYSBB4UBiASBh4QBB4OAhoQBBwQBBwSBh4QBBwOBBwUBiASBB4OBBwQBBwQBBwOBBwQBBwKAhgKAhgOBBwQBBwOAhwQBBwOBBwQBB4UBiAQBB4QBB4SBB4QBB4OBBwOBBwSBiASBB4SBB4SBB4SBB4MAhoMAhoSBh4QBB4QBBwQBh4QBBwOBBwOBBwYCB4YCB4YCB4YCB4YCB4YCB4aBiASCBYKCAwaCB4SDBYMCg4aCCASCBYMCBAaBh4QChQOCBIaCCAgCCgiCioiCioiCioiCioiCiweCCYYCB4aCCAaCCAaCCAaCCAaCCAaCCAaCB4cCCIiCiwiCioiCioiCioiCioiCiocCCQOCBIQChQYBhwIBgoSChYaCCAMCg4SDBYaCB4KCAwSCBYaBiAYCB4YCB4YCB4YCB4YCB4YBh4EBAQEBAQEBAQEBAYGBgYGBgYGBggIBggGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYIBggGBgYGBgYGBgYGBgYICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQICAgGBggGBgYGBgYEBAYEBAQYCiQWCCISBiAUCCAYCCIWCCAWCCAYCCIWBiAWCCIUCCAWCCIWCCIUBiAUBiASBh4QBBwSBh4UBiAQBBwQBBwQBBwSBh4UBiAOBBwQBBwUBiAWCCAUBiAUBiAUBiASBh4SBiAWCCIWCCAUCCAYCCIUBiASBh4YCCISBiASBh4QCCAQBh4UBiAQBBwOAhoSBh4SBiASCiIOGCoMHC4OGi4OHC4QHDAOHDAOHC4QHDAOHDAQHjAQHjISHjISIDIUIDIYIjIaIjIaIjIcJDIcJDIcJDIcJDIcJDIaIjIaIjIYIjIUIDISIDISHjIQHjIQHjAOHDAQHDAOHDAOHC4OHDAOHDAQHDAQHjAQFCoOBhwQBBwUBh4SBh4SBB4OAhoQBBwQBBwSBh4OBBwQBBwQBB4SBB4MBBoOBBwQBBwOBBwQBBwKAhgKAhgOBBwSBB4QBBwQBBwQBBwQBB4UBiASBB4SBB4SBB4SBB4OBBwQBBwUBiASBiASBB4QBB4QBBwMAhoOAhoSBh4QBB4QBBwSBh4QBB4OAhoOBBwYCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4YCB4GBgYEBAQEBAQGBgYGBgYICAgICAgICAgICAgICAgICAgICAgGBggICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgGBgYICAgICAgGBgYGBgYICAgICAgGBgYICAgICAgICAgICAgGBgYIBggGBgYGBgYICAgICAgICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgGBgYGBgYEBAQYCCQWCCIWCCIWCCIWCCIUBiAWCCIWBiAWBiAYCCIWCCIYCCIWBiAUBiAQBB4SBh4QBBwSBh4SBh4QBBwQBB4QBBwSBh4UBiAQBB4SBh4WCCIWCCAUBh4UBh4SBh4UBiAUBiAWCCIUCCAWCCAYCCISBiAQBBwUCCASBiAQBB4QBh4QBh4SBiAQBB4MAhoOBBwQBBwUBB4QECYMHCwOHC4OHC4QHC4OHC4OHDAOHDAOHDAQHjAQHjASHjISHjISIDIWIDIYIjIaIjIaIjIaIjIcIjQaIjQaIjIaIjIYIjIWIDIUIDISHjISHjIQHjIQHjIOHDAOHDAOHDAOHC4QHDAQHDAQHjAOGCoSCiIOAhoQBB4SBh4QBB4QBB4QBBwQBBwOBBoSBh4UBiASBiAOBBwSBB4OBBwQBBwQBBwQBBwQBBwKAhgMAhgQBBwQBBwQBBwSBB4OBBwSBB4UBiAQBB4SBh4SBB4QBB4QBBwQBBwUBiASBiAQBB4QBB4SBB4MAhoMAhoSBh4QBB4QBBwSBh4QBB4OAhoOBBwMBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4MBg4GBgYEBAQEBAQGBgYGBgYICAgICAgICAgICAgICAoKCgoKCgoICAgICAgICAgKCgoKCgoKCgoKCgoICAgICAgICAgICAgICAgICAgICAgGBgYICAgICAgICAgICAgICAgICAgGBgYICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoICAgICAgICAgICAgICAgICAgICAYICAgICAgICAgICAgGBgYGBgYEBAQWCCIWCCIWCCIWCCIWCCAUBiAWCCIUBiAWCCIWCCIYCCIWCCIWBiASBB4QBB4SBh4QBBwSBh4QBBwQBBwQBB4QBBwSBB4SBB4SBh4UBiAWCCIUBiASBh4SBB4SBh4WCCIWCCIWCCAUBiAWCCIWCCIUBiAOBBwQBB4UBiAQBBwQBh4QBh4SBiASBB4OBBwQBBwMAhoSBBwSCiIOGCoMHC4OHC4OHC4OHC4OHC4OHDAOHDAOHjAQHjAQHjISHjISHjIWIDIYIjIYIjIYIjIYIjIYIjIYIjIYIjIYIjIYIDIWIDIUIDISHjISHjIQHjAQHjAOHDAOHDAOHDAOHC4OHC4QHDAQFCoQCCAQBBwQBBwSBiASBh4QBBwQBBwQBBwOBBoMBBoSBCAUBiAUBiAQBB4SBB4QBBwQBBwQBBwQBBwQBBwKAhgMAhgQBBwQBB4QBBwQBB4OBBwSBB4UBiAQBBwSBh4QBBwQBB4QBBwQBBwUBiAUBiAQBh4QBB4SBBwMAhoMAhoSBh4SBB4QBB4UBiASBB4OBBwOBBwEBAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgKCgoKDAoKCgoKCgoKCgoMDAwMCgwKCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgICAgICAgKCgoICAgICAgKCgoICAgICAgKCgoICAgICAgICAgICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgICAgGBgYGBgYGBgYGBgYWCCIWCCIWCCIWCCIWCCAWCCAWBiAUBiAYCiQWCCIWCCIWCCAUBiAQBBwSBB4QBBwQBBwQBB4QBBwQBB4QBBwQBBwSBB4SBB4SBiAWCCAWCCAUBh4SBh4SBB4UBiAWCCIWCCAUCCAWCCIWCCIWCCAUBiAQBB4QBB4SBh4QBh4QBB4QBh4SBh4SBiASBiASBB4MAhoQBBwSBiAQFioMHC4OGi4OHC4OHC4OHC4OHDAOHDAOHDAQHDAQHjASHjASHjIUIDIWIDIWIDIWIDIYIDIWIDIYIDIWIDIWIDIWIDIWIDIUHjISHjISHjAQHjAQHjAOHDAOHDAOHDAOHC4OHDAQGi4QCCAQAhwOBBwOBBwSBiAQBB4QBBwQBBwQBBwQBBwOBBwSBh4SBiASBiAOBB4SBB4QBBwQBB4QBBwQBB4QBBwKAhgMAhgQBBwQBB4QBBwQBB4OBBwSBh4UBiAQBBwSBh4QBBwQBB4QBBwQBBwUBiIUBiASBh4QBBwQBB4MAhoOBBoUBh4SBB4QBh4UBiASBh4QBBwOBBwEBAQEBAQEBAQEBAYGBgYGBgYGBggICAgICAgICAgIBggKCgoQEBAQEBAODg4QEBAQEBAMDAwICAgMDAwODg4MDAwKCgoMDAwMDAwMDAwKCgoKCgoKCgoKCgoMDAwKCgoMDAwKCgoODg4MDAwODg4ODA4MDAwODg4MDAwICAgKCgoODg4ODg4ODg4QEBAQEBAMDAwICAgGBgYICAgICAgIBggGBgYGBgYGBgYEBAQEBAQEBAQGBgYGBgYICAgICAgGBgYGBgYIBggICAgICAgKCgoMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwKCgoKCgoKCgoKCgoKCgoICAgICAgMDAwICAgKCgoKCgoKCgoICAgKCgoKCgoKCgoKCgoKCgoKCgoMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwKCgoICAgICAgICAgICAgGCAYGBgYICAgICAgWCCIWCCIWCCIWCCIUBiIWCCIUBiAYCCIYCiQYCCIWCCAUBiAUBh4QBBwSBh4QBB4QBB4QBBwQBBwQBB4QBBwQBBwSBB4SBB4SBiAUCCAUBiASBh4SBB4SBB4UBiAYCCIUBh4UBiAWCCIWCCIWCCAUBiAUBiAQBBwQBBwSBh4QBB4QBBwQBB4SBh4SBiASBh4OAhoQAhwQBh4OFioMHC4OGi4OGi4MGi4OGi4OHDAOHDAOHDAQHDAQHDIQHDASHjIUHjIWIDIWIDIWIDIWIDIWHjIWIDIWIDIWIDIWIDIUIDISHjISHjASHjAQHDAOHDAOHDAOHDAOHDAOHC4OHjAOFioOBBwQBBwOBBwOBBwUBiAQBBwQBBwQBBwQBBwQBBwOBBwQBB4UBiAUBiAQBB4SBB4OBBwQBB4QBBwQBB4QBB4KAhgMAhoQBB4SBB4QBBwQBh4OBBwSBh4UBiAQBBwUBiAQBB4SBB4QBBwQBB4UBiAUCCISBh4QBBwSBB4OAhoOBBoSBh4SBB4SBh4WBiASBiAQBBwQBBwGBgYEBAQEBAQGBgYGBgYICAgICAgICAgICAgICAgICAgICAgKCgoODg4ODg4ODg4ODg4ODg4KCgoICAgKCgoMDAwKCgoMCgwMDAwKCgoKCgoKCgoKCgoMCgwMDAwKCgoMDAwKCgoMDAwODg4ODg4MDAwMDAwKCgoICAgICAgMDAwMDAwMDAwODA4ODg4KCgoICAgICAgICAgICAgICAgICAgICAgGBgYGBgYEBAQEBAQGBAYGBgYEBAQICAgICAgICAgICAgICAgICAoKCgoKCgoMDAwODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4MDAwMDAwMDAwKCgoKCgoKCgoICAgICAgMDAwKCgoKCgoMDAwKCgoICAgKCgoKCgoKCgoKCgoMDAwMDAwMDAwMDAwODg4ODg4ODg4ODg4ODg4ODg4ODg4ODg4MDAwKCgoKCgoKCgoKCgoICAgICAgICAgICAgICAgWCCIWCCIWCCIUBiAUCCIUBiAWCCAYCiQWCCIWCCIWBiAUBiAQBB4QBBwSBh4QBB4SBB4QBBwQBB4QBB4OBBwSBBwSBB4SBh4UBiAUBiASBh4SBh4SBB4SBB4UBiAWCCISBh4WCCAWCCIWCCIUBiAWCCIWCCAQBBwOBBwSBh4QBB4QBBwQBBwQBB4QBh4UBiASBB4QAhwSBh4OFioMHC4MGi4MGi4MGi4MGi4MGjAOHDAOHDAQHDAQHDAQHDAQHDASHjAUHjAUIDIUHjIUHjIUHjIUHjIUHjIUIDIUHjASHjASHjASHDAQHDAQHDAOHDAOHDAOHDAOHDAOHC4OHjAOFCgOBBwSBB4OBBwQBBwUBiAQBBwQBBwOBBwQBBwOBBoQBB4SBh4SBiAUBiASBB4SBB4QBB4SBB4SBB4QBB4QBB4KAhgMAhoSBh4QBB4QBB4QBh4OBBwUBiAUBiAQBB4UBiAQBB4SBh4QBBwSBB4UBiAWCCISBh4QBB4SBB4OAhoOAhoUBh4SBB4SBh4WCCIUBiAQBBwQBBwGBgYEBAQEBAQGBgYGBgYICAgICAgICAgKCgoKCgoKCgoICAgICAgICAgMDAwQEBAODg4ODg4ODg4MDAwICAgKCAoMDAwKCgoMDAwMDAwKCgoKCgoKCgoMDAwMDAwMDAwMDAwKCgoMDAwODg4MDAwMDAwKCgoICAgICAgKCgoMDAwMDAwODA4MDAwICAgICAgICAgKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYEBAQEBAQGBgYGBAYEBAQEBgYGBgYGBgYICAgKCgoKCgoMDAwMDAwMDAwODg4OEA4QEBAQEBAQEBAQEBAODg4ODg4ODg4ODg4ODA4MDAwMDAwMDAwKCgoKCgoICAgODg4KCgoMDAwMDAwICAgICAgKCgoKCgoMDAwMDAwMDAwODg4ODg4ODg4ODg4ODg4ODg4QEBAQEBAQEBAODg4ODg4MDAwMDAwKCgoKCgoKCgoICAgICAgGBgYGBgYEBgYWCCIWCCIUBiASBh4UCCASBh4YCCIYCCIYCCIWCCIWBiAUBiAOBBwSBh4WCCASBh4QBB4QBBwSBB4OBBoOAhoSBB4SBh4SBh4UBiASBh4SBh4SBh4QBB4SBh4WCCIWCCISBh4UBiAWCCIUBiAUBiAWCCAUCCAQBBwQBBwSBh4QBBwQBBwQBBwQBBwQBBwUBiAWCCISBB4SCCAOFioMHC4MGi4MGi4MGi4MGi4MGi4MHDAOHDAOHDAOHDAQHDAQHDAQHDASHjASHjASHjASHjASHjISHjAUHjAUHjASHjASHjASHjAQHDAQHDAQHDAOHDAOHDAOHDAOHDAOHDAOHjAOEigOAhwSBBwOAhoSBh4UBiAQBBwSBB4OBBwOBBwMAhoSBh4SBiAUBiAUBiASBh4SBB4QBB4QBB4SBB4QBB4QBBwMAhoOAhoUBh4QBB4QBB4QBh4OBBwUBh4SBh4QBB4UBiAQBB4SBh4QBBwSBB4UCCIYCCISBiASBB4QBB4OAhoOBBwUBiASBB4SBiAWCCIUCCIQBBwQBBwGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoODg4MDAwKCgoICAgICAgICAgKCgoODg4ODg4MDAwMDAwMDAwICAgICAgKCgoMDAwMDAwMDAwKCgoKCgoMDAwMDAwKCgoMDAwMDAwODg4ODA4MCgwKCgoICAgICAgKCgoKCgoKCgoMDAwKCgoICAgICAgICAgKCgoMDAwODg4MDAwICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBgYGBgYICAYKCAgMCgwMDAwMDgwODg4QEBAQEBASEhISEhISEhIQEBAQEBAQEBAODg4ODg4ODg4ODg4MDAwMDAwMDAwKCgwKCgoODg4MDAwMDAwMDAwICAgKCgoKCgoMDAwMDAwMDAwODg4ODg4ODg4ODg4QEBAQEBASEhISEhISEhIQEBAODg4ODg4ODg4MDAwMDAwKDAoKCgoICAgGCAYGBgYEBgYEBAQWCCIWCCISBh4SBh4UBiAUBiAaCiQWCCAYCCIUBiAWCCIUBiAQBh4UBiAYCCIUBiAQBB4SBB4SBh4OAhoOBBwQBB4SBh4UBh4WCCASBh4QBB4SBh4QBB4SBh4WCCIUBiASBh4WCCIWCCISBiAUBiAUBiAUBiAQBBwSBB4SBh4QBBwQBBwQBBwQBBwQBBwUBiAWCCIWBiIUCCIOFioMHC4MGi4MGi4MGi4MGi4MGi4MGi4OHDAOHDAOGjAOHDAQHDAQHDAQHDASHjASHjASHjASHjASHjASHjASHDASHDAQHDAQHDAQHDAOHDAOHDAOHDAOHDAOHDAQHDAOHDAOHjIOEiYQAhwSBB4OBBoSBh4UBiAOBBwQBB4QBBwQBBwMAhoSBh4SBiAUBiAUBiASBiAQBB4QBBwQBB4QBBwQBB4SBBwMAhoOAhoSBh4QBB4QBBwSBh4QBBwSBh4SBh4SBB4UBiAQBB4UBiAQBBwSBB4UCCAWCCIUBiASBh4QBB4MAhoQBBwUBiASBB4UBiAWCCIUBiAQBBwQBBwGBgYGBgYICAgICAgGBgYGBgYGBgYIBgYICAgODg4ODg4ODg4MDAwKCgoKCgoICAgKCgoODg4ODg4MDAwMDAwKCgoICAgKCgoKCgoMDAwMDAwKCgoKCgoMDAwMDAwMDAwMDAwMDAwODg4MDAwKCgoICAgKCAoKCgoKCgoKCgoMDAwKCgoICAgICAgKCgoMDAwODg4ODg4QEBAKCgoGCAYGBgYGBgYGBgYGCAgICAgGBgYGBgYGBgYEBAQEBAQEBAQGBgYGBgYICAgMDAwMDAwODg4QDhAQEBASEhISEhIUFBQUFBQSEhISEhISEhIQEBAQEBAQEBAODg4ODg4ODg4MDAwMDAwICAgODg4MDAwMDAwMDAwICAgKCgoMDAwMDAwMDAwODg4ODg4ODg4ODg4QEBASEhISEhISEhISEhISEhISEhIQEBAQEBAODg4MDAwMDAwMDAwKCgoICAgGBgYGBgYEBAQEBAQWCCIUBiAQBB4UBiAUBiAWCCIWCCAWCCAWCCIUBiAWCCISBh4UBiAWCCIYCCIUBiASBh4UBiASBiAOBBwOBBwSBiAUBiAUBiAWCCIQBB4QBBwQBh4QBh4UBiAWCCISBiASBB4WCCIUCCAQBB4UBiAUCCIUBiASBB4SBh4SBB4OBBwQBB4QBB4QBBwQBBwUBiAWCCAWBiIUCCIOFioMHC4MGi4MGi4MGi4MGi4MGi4OGjAOHDAOHDAOHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDASHDASHjASHjAQHDAQHDAQHDAQHDAQHDAQHDAOHDAOHDAOHDAOHDAOHDAQHDAQHjIQECYQAhwQBBwOBBwUBiAUBiAQBBwSBB4QBBwQBBwOAhoSBh4SBh4UCCAUBiASBh4QBB4QBB4SBB4QBB4SBB4SBBwKAhoMAhoSBh4QBB4QBB4SBiASBB4SBB4SBh4QBB4UBiASBiAUBiAQBB4SBB4UCCAWCCIUBiAUBiAQBB4OBBwQBBwUBiAUBiAUBiAWCCIUBiAQBBwQBB4GBgYEBAQICAgICAgICAgICAgGBgYGBgYICAgKCgoMDAwODg4ODg4ODg4ODg4MDAwICAgICAgMDAwODg4ODA4MDAwKCgoKCAoKCgoKCgoKCgoKCgoMDAwMDAwMDAwMDAwMDAwKCgoMDAwKCgoICAgKCgoKCgoKCgoMDAwMDAwICAgICAgKCgoMDAwODg4ODg4QEBAODg4MDAwICAgGBgYGBgYGBgYICAgICAgICAgGBgYEBAQGBgYEBAQEBAQGBgYGBgYGBgYICggMCgoODA4ODg4QEBAQEBASEhISEhIUFBQUFBQUFBQSEhISEhISEhIQEBAODg4ODg4ODg4ODg4ODg4MDAwKCAgMDAwMDAwKCgoMDAwICAgKCgoMDAwMDAwMDAwODg4ODg4ODg4SEhISEhISEhISEhISEhISEhISEhISEhISEhIQEBAODg4ODg4MDAwMDAwKCgoICAgGBgYGBgYGBgYEBAQUBiASBiASBh4UBiASBh4YCCIUBiAWCCIUBiAUCCAWCCISBiAWCCIYCCIWCCIUBiAUBiAWBiASBiAQBBwQBBwUBiAUBiAWCCIUBiAQBB4QBB4SBh4QBB4SBh4UBiAQBB4SBh4WCCAUBiAQBB4UBiAUBiAQBB4SBB4UBiAQBB4QBBwQBB4OBBwQBBwQBB4SBiAWCCAWBiAUCCIOFioMHC4MGi4MGi4MGi4MGi4MGi4OHDAOHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAOHDAOHDAOHDAOHDAOHDAQHDAQHDAQDiQQAhwQBBwQBBwUBiASBiAQBBwSBB4QBB4QBBwOBBoSBh4SBiAWCCIUBiAUBiASBh4QBB4QBBwQBB4QBB4SBB4MAhoOAhoUBh4QBB4QBB4UBiASBB4QBB4QBB4QBB4SBh4UBiAWBiAQBB4SBh4UCCAWCCIUBiAUBiAQBB4QBB4QBBwUBiAUBiAUCCAWCCIUBiAQBB4QBB4GBAYEBAQEBgYGBgYGBgYICAgICAgICAgICAgKCgoKCgoKCgoMDAwODg4QEBAODg4MDAwKCgoICAgKCgoODg4MDAwMDAwKCgoKCgoKCgoKCgoMDAwMDAwODg4ODg4MDAwMDAwMCgwMDAwKCgoKCgoMDAwKCgoMDAwKCgoICAgICAgKCgoMDAwODg4ODg4ODg4MDAwKCgoKCgoICAgICAgICAgICAgICAgGBgYGBgYEBAQEBAQGBgYEBAQGBgYGBgYGBgYGBgYICAgKCgoMDA4ODg4QEBASEhIUEhQUFBQUFBQUFBQUFBQUFBQSEhIUFBQSEhIQEBAODg4ODg4MDAwMDAwMDAwICAgKCgoKCgoKCgoKCgoICAgKCgoKCgoKCgoMDAwMDAwODg4QEBASEhISEhISEhIUFBQUFBQUFBQSEhISEhISEhIQEBAODg4ODg4MDAwMDAwKCgoICAgICAgGBgYGBgYGBgYSBh4SBh4SBiAQBh4UCCAWCCAUBiAWCCISBiAWCCIWCCIWCCIYCCIYCCIWCCIWCCIWBiAUBiASBiAQBBwSBh4UBiAUCCAYCCISBiAQBBwSBB4SBh4SBB4SBh4SBiASBh4UBiAUBiASBh4SBiAUBiASBiAQBB4SBB4UBiAOBB4QBB4QBBwQBBwQBB4QBB4UBiAWCCAWBiAUCCIOFioMHC4MGi4MGi4MGi4MGi4MGi4OGjAOHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAOHDAOHDAOHDAOHDAOHDAOHDAOHjAQGjAQCiIOAhoQBBwQBBwUBiASBh4QBB4SBB4QBBwQBBwOAhoSBh4UBiAWCCIUBiIUCCISBh4QBBwQBBwQBB4QBB4SBB4OAhoOBBoSBh4SBB4SBh4WBiASBh4QBBwQBBwQBB4SBh4UBiAWBiASBh4SBiAUBiAWCCIWCCAUBiAQBB4QBB4QBB4WCCIUBiAWCCAYCCQWBiAQBBwQBB4GBgYEBAQEBAQEBgYGBgYGCAYICAgICAgICAgKCgoMDAwMDAwKCgoODg4SEhIODg4MDAwMDAwKCgoICAgKCgoODg4ODg4MDAwKCgoKCgoKCgoMDAwMDAwODg4ODg4ODg4ODg4MDAwMDAwMDAwMDAwMDAwMDAwKCgoICAgICAgKCgoKCgoMDAwQEBAODg4MDAwMDAwMDAwMDAwICAgICAgICAgICAYGBgYGBgYEBAQEBAQEBAQGBgYGBgYGBgYGBgYGBgYGBggICAgKCgoODg4ODg4QEBASEhIUFBQUFBQUFBQUFBQUFBQUFBQSEhISEhISEhISEhIQEBAODg4ODg4MCgoKCgoICAgKCgoKCgoICAgKCgoGBgYICAgICAgKCgoMDAwODg4ODg4QEBAQEBASEhISEhIUFBQUFBQUFBQUFBQSEhISEhIQEBAODg4ODg4MDAwMDAwKCgoICAgICAgGBgYGBgYGBgYSBh4SBh4SBh4QBh4WCCIUBiAWCCIUCCASBh4YCCQYCCIYCCIYCCIWCCIWCCIWCCIUBiAUCCAUBiAQBBwUBiASBh4WCCAWCCISBh4SBh4SBiAQBB4SBh4UBiASBh4SBh4SBiASBiASBh4SBiAQBh4UCCASBh4SBB4UBiAQBB4QBB4OBBwQBBwSBB4UBiAUCCAUCCAWBiAUCCIOFioMHC4MGi4MGi4MGi4MGi4MGi4OGjAOHDAOHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHjIOGCwQBh4QAhwQBBwQBBwUBiASBh4SBB4SBB4QBB4QBB4OBBoSBh4UBiAWCCIUBiAWCCIQBh4QBB4SBB4QBB4SBB4SBB4OAhoOAhoUBh4SBB4SBh4WCCASBiAQBBwQBBwQBB4SBh4WCCAWCCAUBiAUBiAUBiAWCCIWCCIUBiAQBB4SBB4SBh4WCCIUBiAWCCIYCiQWCCIOBBwSBh4GBgYEBAQEBAQEBAQGBgYGBgYGBgYGBgYICAgKCAoKCgoKCgoKCgoMDAwQEBAODg4MDAwMDAwODg4MDAwKCgoICAgMDAwMDAwMDAwMDAwMDAwMDAwODg4ODg4ODg4ODg4ODg4MDAwMDAwMDAwMDAwMDAwKCAoICAgKCgoMDAwMDAwKCgoMDAwODg4MDAwKCgoKCgoKCgoKCgoICAgIBggGBgYGBgYGBgYGBgYEBAQEBAQGBAQGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoMDAwODg4QEBAUFBIUFBQUFBQWFhYUFBQUFBQUFBQSEhISEhIQEBAQEBAQEBAODg4ODg4MDAwKCgoGBgYICAgICAgICAgICAgGBgYICAgICAgKCgoMDAwODgwODg4QEBAQEBASEhISEhISEhIUFBQWFBYUFBQSEhISEhISEhIODg4ODg4MDAwKCgoICAgICAgGBgYGBgYGBgYGBgYSBh4SBh4SBh4SBh4WCCAUBiAYCCIQBh4UCCAYCiQYCCQYCCIWCCIWCCIWCCIWCCIUCCAWCCAWCCISBh4UBiASBh4WCCIUCCASBh4UBiAUBiASBiAUBiAUBh4SBh4UBiASBh4SBh4SBh4SBh4QBh4WCCISBB4QBB4UBh4SBh4SBiAQBB4QBB4SBB4UBiAWCCAUBiAWBiAUCCIOFioMHC4MGi4MGi4MGi4MGi4MGi4OGjAOHDAOHDAOHDAOHDAOHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAQHDAOHDAQHDAQHDAQHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAQHjIOFioQBBwSBBwOBBwQBBwUBiAQBB4SBB4SBB4SBB4QBBwOBBoUBiAUBiAYCCIUCCAWCCISBh4QBB4SBB4SBB4SBB4SBB4MAhoOBBoUBiASBB4SBiAWCCIUCCAQBBwQBBwQBBwSBh4YCCIWCCIUBiAWBiAUBiAWCCIWCCIUBiASBh4SBh4UBiAYCiQWCCIWCCIYCiQUCCAQBBwSBh4GBgYEBAQEBAQGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoKCgoMDAwKCgoMDAwMDAwODg4ODg4KCgoICAgKCgoMDAwMDAwMDAwMDAwODg4ODg4ODg4ODg4MDAwMDAwODg4MDAwKCgoICAgICAgMDAwMDAwMDAwKCgoKCgoKCgoMCgwKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYEBAQEBAQGBAYEBAQGBgYGBgYGBgYGBgYICAgICAoKCgoMDAwODg4OEA4SEhIUFBQUFBQUFBQUFBQUFBQSEhISEhIQEBAQEBAQEBAODg4ODg4MDAwMDAwKCgoICAgICAgICAgICAgICAgGBgYICAgICAgKCgoKCgoMDAwODg4ODg4QEBAQEBASEhIUFBQUFBQUFBQUFBQSEhIUFBQSEhIODg4MDgwMDAwKDAwKCAoICAgGBggGBgYGBgYGBgYQBh4SBh4SBiAUBiAUBiAWCCIWCCIQBB4YCCIYCiQYCiQYCCIUCCAUBiAWCCIYCiQWCCIWCCIYCiIUBiASBiAUBiAYCCIUBiAUBiAWCCIUBiAWCCAWCCASBh4QBB4UBiASBh4SBh4SBh4SBh4SBh4WCCIQBBwQBBwSBB4SBh4UBiASBB4SBh4UBiAWCCIUBiAUBiAWBiAUCCIOFioMHC4MGi4MGi4MGi4MGi4MGi4OGi4OHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAQHDAQHDAOHDAOHDAQHDAOHDAOHDAQHDAOHDAOHDAOHDAQHDAQHDAQHDAQHDAQHjIOFCgQAhwSBB4OBBwQBB4UBiAQBB4SBh4SBB4QBB4QBBwQBBwSBh4UCCAYCCIUCCIWCCIUBiASBB4SBB4SBh4SBh4QBBwMAhoQBBwUBiAQBB4UBiAWCCIUBiAQBBwQBBwQBBwSBh4YCCQWCCIUBiAWBiAUBiAWCCIWCCAUBiASBh4UBh4UBiAYCiQWCCAWCCIYCiQWCCIQBBwSBh4GBgYEBAQGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoMDAwMDAwKCgoMCgwMDAwKCgoKCgoKCgoMDAwODg4MDAwICAgICAgMDAwMDAwKCgoMDAwMDAwMDAwODg4MDAwMDAwMDA4KCgoICAgKCgoMDAwMDAwKCgoKCgoKCgoMDAwMDAwKCgoMDAwMDAwKCgoKCgoICAgICAgIBgYGBgYGBgYGBgYGBgYGBgYEBAQGBgYGBAYGBgYGBgYGBgYGBgYICAgKCgoKCgoMDAwMDAwODg4SEhIUFBQUFBQUFBQSEhISEhISEhIQEBAQEBAODg4ODg4ODg4MDAwMDAwKCgoKCgoGBgYGBgYICAgGBgYICAgGBgYICAgICAgICAgKCgoMDAwMDAwODg4ODg4QEBAQEBASEhISEhIUFBQUFBQUFBQSEhIQEBAODg4ODAwMDAwKCgoKCgoICAgICAgGBgYGBgYGBgYSBh4UBiAUBiAUBiAUBiAYCCISBiAUBiAYCiIYCiQWCCIWCCIUBiAUBiAWCCIYCCIWCCIWCCIYCiIUBiASBh4WCCAYCCIUBiAUCCAWBiAWCCIWCCIUCCAQBh4SBh4UBiASBiASBh4SBh4UBiAUBiAWCCASBh4QBBwSBB4SBh4UBiASBh4UBiAUCCAWCCIUBiAUBiAWBiAUBiAOFCoMHC4MGi4MGi4MGi4MGi4MGi4OGjAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAQHDAQHDAQHDAQHjIQEigQAhwQBB4OBBwSBB4UBiAQBB4SBh4QBBwQBB4QBBwQBBwUBiAWCCIYCCQUCCIWCCIUBiASBh4SBh4SBh4SBh4QBB4OBBwQBBwUBiASBh4UBiAWCCIUBiAQBBwQBB4QBBwSBh4YCiQWCCIUBiAWCCIUBiAWCCIWCCIWCCAUBiAUBh4UCCAYCiQWCCIWCCIYCCIYCCIQBB4UBiAGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgMDAwQEBAMDAwODg4ODg4MDAwKCgoKCgoKCgoKCgoICAgMDAwODg4ODg4KCgoICAgKCgoKCgoMDAwODg4ODg4ODg4MDAwMDAwKCgoKCgoMDAwODA4MDAwKCgoICAgKCgoKCgoKCgoKCgoODg4ODg4MDAwODg4ODg4KCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBAYGBgYGBgYGBgYICAgICAgKCgoKCgwMDAwODg4QEBASEhIUFBQUFBQQEBASEhIQEBAQEBAODg4ODg4MDAwMDAwKCgoKCgoKCgoICAgGBgYGBgYICAgGBggGBgYEBAQGBgYICAgICAgKCggKCgoMDAwMDAwODg4ODg4QEBAQEBASEhISEhIUFBQSEhISEhIODg4ODg4MDAwKCgoKCgoICAgIBgYGBgYGBgYGBgYGBgYSBh4WBiAUBiASBiAUBiAYCCISBh4UBiAWCCIYCiQUCCIUBiASBh4UBiAWCCIWCCIWCCIWCCIYCiQUBiASBh4WCCIWCCIWCCAWCCAUBiAWCCIWCCIUBiASBh4UBiAUBiAUBiASBh4SBiAUBiAUBiAUBiAUBiASBB4SBB4SBh4SBiASBh4UBiAWCCAWCCAUBh4WCCAWCCIUBiAOFCgMHC4MGi4MGi4MGi4MGi4MGi4OGi4OHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAQHDAQHDAQHDAQHjIQEigQAhwSBB4OBBwSBh4UBiAQBBwUBiAQBB4SBB4QBBwQBBwUBiIWCCIYCCIWCCIWCCIUCCASBh4SBh4UBiASBiAQBB4QBBwQBBwWCCAUBiAUCCAWCCIUBiAQBBwQBB4QBB4SBh4YCiQYCCIUBiAUCCIUCCAWCCIWCCIWCCAUBiAUBiAUCCAYCCQWCCIWCCIWCCIWCCISBh4UBiAGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgMDAwSEhIODg4QEBASEhIODg4MDAwICAgKCgoKCgoKCgoKCgoKCgoODg4ODg4MDAwKCgoKCgoMDAwODg4ODg4MDAwMDAwKCgoMDAwODg4ODg4MDAwKCgoKCgoKCgoKCgoICAgKCgoODg4SEhISEhIODg4SEhIQEBAICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAYIBggICAgKCgoMDAwMDAwODg4QEBAQEBASEhIQEBAQEBAODg4ODg4ODg4MDAwMDAwMDAwKCgoICAgICAgICAgICAgGBgYICAgICAgGBgYGBgYGBgYICAgICAgICAgKCgoMDAwMDAwODg4ODg4ODg4QEBAQEBASEhISEhIQEBAODg4ODg4MDAwMDAwKCgoICAgICAgIBggIBgYGBgYGBgYGBgYSBiAUBiASBh4SBh4UBiAWCCIUBiAUBiAWCCIYCiQUCCISBiAQBh4UCCAWCCIWCCIWCCIWCCIYCCIUBiAUBiAWCCAWCCAWCCIWCCAUBiAWCCIUCCAUBiASBiAUBiAUBiASBh4SBh4UBiAUBiASBiAUBiAYCCIUBh4SBB4SBh4SBiASBh4UBiAUCCAUBiASBh4UBiAUCCIUBiAQECYMHC4MGi4MGi4MGi4MGi4MGi4OGi4OGjAOGjAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAQHDAQHDAQHjAQECYQAhwQBB4OBBwUBiASBiAQBB4UBiAQBB4SBB4QBBwQBB4UBiAWCCIWCCIUCCAWCCIWCCAUBiAUBiAUBiASBiAQBB4QBB4QBB4WCCIUBiAWCCIYCCQUBiAQBBwQBB4QBBwSBh4YCCIYCCIUBiAUCCIUBiAWCCIWCCIWCCIUBiAUBiAUBiAYCCQYCCIWCCIWCCIYCCISBh4UBiAEBAQGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoSEhIUFBQSEhIQEBAMDAwMDAwKCgoICAgICAgICAgKCgoKCgoKCgoMDAwODg4ODg4MDAwMDAwMDAwODg4MDAwMDAwODg4ODg4ODg4KCgoKCgoKCgoKCgoICAgICAgKCgoMDAwMDAwODg4SEhISEhIWFhYODg4ICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICgoKCgoMDAwODg4ODg4ODg4QEBAQEBAQEBAODg4ODg4ODg4MDAwKCgoKCgoKCgoKCggGBgYGBgYGBgYGBgYICAgICAgEBAQEBAQGBgYGBgYICAgKCggKCggICAgKCgoMDAwODg4ODg4QEBAQEBAQEBAQEBAODg4ODg4MDAwMDAwKCgoKCgoICAgICAgICAgICAgGBgYGBgYGBgYUBiAUBiASBh4QBB4UBiAWBiIUBiAUBh4WCCIWCCISBiAQBB4SBh4UCCIYCCIWCCAWCCIYCCIYCCIUBiAUBiAWBiAWBiAWCCIUBiAUBiAUBiAUBiASBiASBiAUBiASBiASBh4SBh4UBiAUBiASBh4SBh4WCCIUBiASBh4UBiAUBiASBiAUBiASBiASBh4SBh4SBh4SCCAUBiAUCCAOFioMHC4MGi4MGi4MGi4MGi4OGi4OGjAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAQHDAQHDAQHDAQDCQQAhwSBh4QBBwUBiASBh4SBB4UBiAQBB4SBh4QBBwSBh4UBiAWCCIWCCIUBiAWCCIWCCIUBiAUBiAUBiAUBiAQBB4QBB4QBB4WCCIUBiAWCCIYCCQUBiAOBBwQBh4QBB4UBiAWCCIYCCIUBiAUBiAUBiAUCCIWCCIWCCAUBiAUBiAUBiAYCCQYCCIUCCAWCCIWCCISBh4UCCAGBAYGBgYGBgYGBgYGBgYGBgYIBgYGBgYICAgICAgKCgoQEBAWFhYYGBgUFBQKCgoKCgoKCgoICAgICAgICAgICAgICAgKCgoKCgoMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwKCgoICAgICAgICAgICAgICAgICAgKCgoKCgoODg4YGBgWFhYSEhIKCgoKCgoICAgICAgGBgYIBgYGBgYGBgYGBgYGBgYGBAYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgICgoMDAwMDAwQEA4QEBASEhIQEBAODg4ODg4MDAwMDAwKCgwICAgICAgICAgGBgYGBgYEBAQEBAQEBAQGBgYGBgYEBAQEBAQEBAQGBgYGBgYICAgICAgICAgKCgoMDAwODg4ODg4ODg4ODg4SEhIQEBAQEBAODg4MDAwKCgoKCgoICAoICAgICAgICAgICAgGBgYGBgYGBgYUBiAUBiASBh4SBh4UBiAUBiASBh4UBiAWCCIWCCISBh4QBBwSBh4WCCAYCiIUCCAWCCIYCCIYCCIUBiAUBiAWCCAUBiAWCCIUBiAUBiAUBiASBh4SBh4SBiAUBiAUBiASBh4SBh4UBiAUBiASBB4SBh4UBiAUBiASBh4UBiAWCCASBiAUBiASBiASBB4SBB4SBh4SCCAUBiAUBiAQFCgMHC4MGi4MGi4MGi4OGi4OGjAOHC4OGi4OHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAQHDAQHjAQGi4QCiAQBBwSBh4QBBwUBh4SBh4SBB4UBiAQBB4UBiAQBBwSBh4WCCIWCCIWCCIWCCAWCCIWCCISBiAUBiAUBiASBh4SBh4SBh4UBiAYCiQWCCAWCCIYCiQUBiAOBBwSBh4QBB4UBiAWCCIYCCIUBiAUBiASBiAUBiAWCCIWCCAUBiAUBiAUBiAWCCIWCCIWCCAUCCAWCCIUBiAUCCAGBgYGBAYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoMDAwQEBAUFBQSEhIKCgoKCgoICAgICAgICAgGBgYICAgGBgYGBgYKCgoMDAwKCgoKCgoMDAwMDAwMDAwMDAwKCgoKCgoMDAwKCgoICAgGBgYICAgGBgYGBgYICAgICAgKCgoKCgoODg4UFBQQEBAODg4MDAwICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYIBgYICAgICAgICAgICAgICAgKCgoMDAwOEA4SEhIUFBQQEhAODg4MDgwKDAwKCgoKCgoICAgICAgGBgYGBgYGBgYEBAQEBAQEAgIGBAQEBAQEAgIEBAQEBAQEBAQGBgYGBgYGBgYICAgKCgoMDAwMDAwMDAwODg4ODg4UFBQQEBAQEBAMDAwMDAwKCgoICAgICAgGCAYICAgICAgICAgIBgYGBgYGBgYUBiAUBiASBh4SBh4SBh4SBh4SBh4UBiAWCCAWCCISBiAQBB4SBh4UBiAYCCIUBiAWCCIWCCIWCCISBiAUBiAWCCAUCCAWCCIUBh4UBiASBh4SBh4SBh4SBiAUBiAUBiASBh4SBh4UBiAUBiASBB4SBh4UBiAUBiAUBiAUBiAUBiAUBiAUBiASBh4QBBwSBB4SBh4SCCAUBiASBB4QEigMHC4MGi4MGi4MGi4MGi4OGi4OGjAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAQHDAQHjAQGi4QCCASBBwUBiAQBBwUBiAQBB4SBB4UBiASBh4UBiAOBBwSBh4UCCAWCCIWCCAUBiAWCCIWCCAUBiAUBiAUBiASBiASBiASBiAUBiAYCiQWCCAWCCIYCiQUCCAQBBwSBh4SBh4UBiAWCCAYCCIUBiAUBiASBh4UBiAWCCIUBiAUBiASBiAUBiAYCCQWCCIWCCAUBiAWCCIWBiAWCCAGBgYGBgYGBgYGBgYGBgYIBgYIBggICAgICAgICAgKCgoKCgoMDAwMDAwODg4ODg4MDAwKCgoICAgICAgGBgYEBAQICAgICAgGBgYICAgKCgoKCgoMDAwMDAwMDAwMDAwMDAwKCgoKCgoGBgYGBgYKCgoGBgYGBgYICAgICAgICAgKCgoODg4QEBAODg4MDAwKCgoKCgoICAgICAgICAgICAgGBggGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgICAgKCgoMDAwQEA4SEhIUFBQSEhIODg4MDAwKDAoKCgoICggICAgICAgGBgYGBgYGBgYEBAQEBAQCAgIEBAIEBAQCAgIEBAQEBAQEBAQGBgYEBAQGBgYICAgKCgoKCgoKDAoMDAwMDgwODg4UFBQSEhIQEBAMDgwKDAoKCgoICAgICAgGBgYICAgICAgICAgGBgYGBgYGBgYUBiAUBiASBiASBh4SBh4SBB4SBB4WCCAWCCAWCCIUBiASBB4UBiASBiAWCCISBiAWCCIWCCIYCCQSBh4UBiAUBiAUBiAWCCISBh4UBh4SBh4UBh4UBh4SBh4UBiAUBiASBh4SBh4UBiAUBiASBh4SBh4SBiASBh4UBiAWCCIUBiAUBiAWBiAQBB4QBBwSBB4QBh4SCCAUBiAUBB4QEiYMHC4MGi4MGi4MGi4MGi4OGi4OGi4OGjAOGjAOGjAOHDAOGjAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAQHDAQHDAQHjIQGC4QBiASBB4UBiAQBB4SBB4QBB4QBB4SBh4UBiAUBiAOBBwUBiAUCCAWCCIWBiAUBiAWCCAWCCIWCCAUBiAWCCAWCCAUBiAUBh4WCCAYCiQWCCIWCCIYCiQWCCIQBB4SBiASBiAUBiAUCCAWCCIUBiAUBiAQBh4UBiAWCCISBiAUBiASBiASBiAYCCQWCCIWCCIUBiAYCCIWCCAWCCIGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgICAgKCgoKCgoODg4ODg4ODg4ODg4MDAwMDAwKCgoKCgoICAgEBAQEBAQICAgGBgYEBAQGBgYMDAwMDAwMDAwMDAwMDAwMDAwICAgGBgYEBAQICAgGBgYEBAQGBgYICAgKCgoKCgoMDAwMDAwQEBAODg4ODg4MDAwKCgoKCAgICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYIBggICAgICAgICAgKCgoMDAwQEBASEhIWFhYQEBAODg4MDAwKCgoICAgIBgYICAgICAgGBgYGBgYICAgGBgYGBgYEBAQEBAQGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAYGBAYGBAYGBAYGBgYIBggKCgoQDhAODA4ODg4ICAoIBggGBAYGBAYGBAYGBAYGBggGBAYIBggGBAYGBAYGBAYSBh4SBh4SBiASBh4SBh4SBB4SBB4WCCAWCCAWBiISBiASBB4UBiASBiAYCCISBiAWCCIWCCIYCCQSBh4UBiAUBiASBiAWCCASBiASBh4SBB4UBB4UBh4SBh4SBiASBiASBh4SBh4UBiAUBiASBh4SBh4SBh4SBB4UBiAYCCISBiAUBiAUBiAQBB4QBBwQBB4SBh4SCCAUBiAUBB4SDiQMGiwMGi4MGi4MGi4MGi4MGi4OGi4OGi4OGi4OGi4OGi4OHDAOGjAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAQHDAQHDAQHjIQGCwQBiAUBh4UBiAQBB4QBBwQBBwQBB4SBiAUBiAUBiAQBB4UBiAUCCAWCCIUCCAUBiAWCCIWCCIWCCIWCCAWCCIWCCAUBiAUBiAWCCIYCiQWCCIWCCIYCCIWCCISBB4UBiASBiAWCCAUCCAWCCISBiAUBiAQBh4SBiAUBiASBiAUBiASBh4SBh4YCCIWCCIWCCIUBiAWCCIWCCAYCCIGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgKCgoKCgoKCgoQEBASEhIWFhYQEBAMDAwKCgoKCgoKCgoICAgGBgYEBAQGBgYICAgGBgYGBgYICAgKCgoKCgoMDAwKCgoKCgoGBgYEBAQGBgYGBgYEBAQEBAQGBgYKCgoKCgoKCgoMDAwODg4WFhYSEhISEhIMDAwKCgoKCgoICAgICAgICAgICAgIBggGBgYGBgYGBgYGBgYGBgQGBgQGBgYGBgYGBgYGBgYGCAgGBgYICAgICAgKCgoMDAwQEBAUFBIWFhYQEBIODg4MDAwKCgoICAgICAgGBgYGBgYGBgYGBgYEBAQEBAQGBgYICAgGBgYKCAoaCCIcBiQcBiQeCCYeCCYeCCYeCCYeCCYgCCggCCggCCgiCiokDiwmEC4oEi4qFC4oEi4mEC4kDiwiCiogCiggCCggCCgiDCogCioiDCoiCiogCiogCigSBh4SBh4SBiASBiASBh4SBB4SBB4UBiAUBiAUBiASBiASBh4UBiASBh4WCCISBiAYCCIWCCIYCCIQBB4UBiAUBiASBiAUBiASBh4SBh4QBB4SBB4SBB4SBB4SBh4SBiASBiASBh4SBh4SBiASBiASBh4SBh4QBB4UBh4WCCISBh4SBiASBh4QBB4QBB4SBB4SBh4UCCISBiAUBB4UDCQOGiwMHC4MGi4MGi4MGi4OGi4OGi4OGi4OGi4OHC4OHC4OHC4OHC4OHC4OHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAQHDAQHjIQFCoQBB4UBiAWCCIQBB4QBBwQBBwSBB4UBiAWCCAUBiAUBiAUBiAUCCAWCCAUCCIUCCAWCCIWCCIWCCIUCCAWCCIWCCAUBiAUBiAUBiAYCCQYCCIWCCIWCCIWCCISBh4UBiAUCCAUCCAUCCAWCCISBiAUBiASBh4UBiAUBiASBiAUBiASBh4SBiAWCCIWCCIWCCISBiAYCCIWCCIWCCIGBgYGBgYGBgYGBgYIBgYICAgICAgICAgICAgICAgKCgoMDAwQEBASEhIYGBgODg4MDAwKCgoKCgoICAgKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYKCgoKCgoKCgoKCgoKCgoODg4YGBgUFBQSEhIODg4KCgoKCgoICAgICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgICAgKCgoMDAwSEhIUFBQYFhgQEBAODg4MDAwKCgoICAgICAgICAgGBgYGBgYGBgYEBAQEBAQGBgYKCgoICAgKCAogCCgiCCwiCiwkCi4kCi4kCi4kCi4kCi4mCjAmCjAoDDIqDjQsEDYwFDoyGDw0GjwyGDwwFDosEDYoDjIoDDImDDAmCjAoDjIoDDIqDjQoDjIoDDIoDDISBh4SBh4SBiASBiASBh4QBB4QBBwWBiAUBiAUBiASBh4QBh4UBiASBh4WCCISBiAYCCIWCCIWCCIQBh4UBiAUBiASBiAWCCASBh4SBh4QBBwQBBwQBBwSBB4SBh4SBiASBiASBh4SBh4SBh4SBiASBiASBh4SBB4SBh4WCCISBiAUBiAUBiASBiASBiASBiASBh4UCCISBiAUBB4UDCQOGi4MGi4MGi4MGi4MGi4OGi4OGi4OGi4OHC4OHDAOHDAOHC4OHDAOHC4OHC4OHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAOHDAQHDAQHjAQEigSBB4UCCAWCCIQBB4QBBwQBBwQBBwWCCAWCCIUBiAUBiAWCCAUBiAUBiAUBiAUBiAWCCIWCCIWCCIUBiAWCCIWCCIUBiAUBiAUBiIYCCQYCCIUCCAWCCIWCCISBh4UCCAWCCIWCCIUCCAWCCISBiAUBiASBh4UBiAUCCASBiAUBiASBh4UCCAWCCQWCCIWCCIUBiAYCiQWCCIWCCIGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgKCgoKCgoMDAwSEhIUFBQYGBgQEBAMDAwKCgoICAgICAgICAgICAgICAgGBgYGBgYICAgICAgGBgYEBAQICAgICAgEBAQEBAQEBgQEBgQEBgQEBAIEBgQEBgQGCAYGCAYGCAYGCAYICggMDgwWGBYUFBISFBIMDAoICggGCAYGCAYGBgQEBgQEBgQEBgQEBgQEBAIEBAIEBAQGBgYGBgYGBgYGBgYGBgYGCAgICAgICAgICAgICAgKCgoMDAwUFBIWFhYYGBgSEhIMDAwMDAwICAgICAgICAgICAgGBgYGBgYGBgYEBAQEBAQICAgKCAoICggKCAoeCCgiCCoiCCoiCiwkCiwiCiwkCiwkCi4kCi4mCjAmDDAoDjIsEDYuFDoyFjw0GDwyFjwuFDgsEDYoDjImDDAmDDAmCjAoDjIoDDIqDjIoDjIoDDImDDAKCgoICAgICAgEBAQEBAQGBgYEBAQEAgICAgICAgICAgICAgICAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgIGBgYKCgoKCgoKCgoICAgEBAQCAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgIEBAQGBgYKCgoKCgoGBgYCAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgICAgICAgICAgIEBAQEBAQEBAQCAgICAgICAgIEBAQEBAQYCiQQBB4QBB4QBBwUBiAOBBwMAhoOBBwSBh4MAhoQBBwQBB4SBh4UBiAQBB4QBB4QBB4WCCIQBB4SBiASBh4QBB4UBh4UCCAQBB4QBB4QBh4UBiAQBh4QBBwOBBwOBBwQBB4QBBwQBBwQBB4SBiAQBBwUBiAQBB4UBiAUBiASBB4QBB4SBh4UBiAQBBwSBh4OAhoMBBoQBBwOAhoMAhoUBiASBB4QBBwQBB4SBiAGBgYGBgYGBgYGBgYGBgYGBgYIBggICAgICAgKCgoKCgoMDAwWFhYWFhYaGhoQEBAMDAwKCgoICAgICAgGBgYGBgYICAgICAgGBgYGBgYEBAQGBgYGBgYICAgICAgOBBIOBBIOBBIOBBQQBBQQBBQQBBQQBBQQBBQQBBQSBhYSBhYUCBoYDBwcDh4cEB4cDh4YDBwUCBoSBhYSBhYQBBQQBBQQBBQQBBQOBBQOBBIOBBIOBBIGBgYGBgYGBgYGBgYGBgYGBgYGBgYIBggICAgICAgKCgoMDAwUFBQWFhYYGBgSEhIMDAwKCgoICggICAgICAgICAgGBgYGBgYGBgYEBAQEBAQICAgICAgICAgKCAogCCgiCCoiCCokCiwkCi4kCiwkCi4kCi4mCjAmCjAoDDIqDjQsEDYwFDoyFjw0GD4yFjwwFDosEDYqDjQoDDImDDAmCjAoDDIoDDIoDDIoDjIoDDIoDDIICAgGBgYGBgYEBAQGBgYGBgYICAgICAgEBAQGBgYGBgYICAgICAgKCgoKCgoMDAwMDg4KCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgGBgYGBgYICAgICAgGBgYGBgYICAgKCgoKCgoKCgoKCgoKCgoKCgoMDAwODg4MDAwKCgoICAgICAgICAgGBgYGBgYGBgYICAgICAgICAgGBgYGBgYICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoMDg4MDAwKCgoKCgoICAgICAgGBgYGBgYEBAQICAYICAgICAgGBgYGBAQGBgYICAgICAgYCiQSBh4QBB4QBB4UBiAOBBwOAhoOBBwQBh4MAhoQBBwQBB4SBh4SBiAQBh4SBh4SBiAYCiISBB4UBiAQBB4QBBwUBiAUBiASBB4SBh4SBh4UBiAQBh4QBBwOBBwQBBwSBh4QBBwQBBwQBB4SBiAQBB4WCCIUBiAUBiAUCCASBh4SBh4SBiAUBiAQBBwQBBwOBBoQBBwOBBwOBBoMAhoSBh4SBh4QBBwSBh4UBiAGBgQGBgQGBgYGBgYGBgYGBgYGCAgGBgYICAgICAoKCgoODg4YGBgaGhocHBwSEhIMDAwKCgoICAgICAgICAgICAgGBgYGBgYGBgYEBAQEBAQGBgYKCgoKCgoKCgogCCoiCCwkCiwkCi4kCi4mCjAmCjAmCjAoCjIoCjIoDDQsDjYuEjo0Fj44Gj46HD44Gj40Fj4wEjosDjYqDDQoCjImCjAmCjAkCi4kCi4kCiwiCCwiCCwGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoMDAwUFBQYGBgYGBgUFBQMDAwKCgoICAgICAgICAgICAgGBgYICAgGBgYEBAQGBgYICAgICAgICAgICAoeCCYgCCggCCggCCoiCCogCCoiCCoiCiwkCiwkCi4kCi4mDDAqDjQuEjYwFDowFjowFDosEjYqDjQoDDAkCi4kCi4kCi4oDDImDDAoDjIoDDAmDDAkCi4EBAQEBAQGBgYGBgYGBgYEBAQGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoMDAwMDAwKCgoICAgICAoICAgICAgICAgICAgICAgGBgYGBgYEBAQEBAQEBgYGBgYICAgICAgICAgICAgICAgICAoKCAoMDAwMDAwKCgoKCgoICAgICAgGBgYEBAYGBgYGBgYGBgYEBgQEBAQGBgYGBgYICAgICAgICAgICAgICAgICAoICAgKCgoMDAwMDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYWCCISBh4QBB4SBh4UBiAOBBoOBBoQBB4QBBwMAhoQBBwSBh4SBiASBiAQBB4SBh4UCCAYCiQSBh4WCCAQBB4QBh4UCCAUBiASBB4SBh4UBiAUBiAQBB4QBBwQBBwSBh4SBh4QBBwQBBwSBh4SBh4SBh4WCCIUBiAWCCAWCCISBh4SBiASBiAWCCISBB4QBB4OAhoQBBwQBB4OBBoOBBoSBh4SBh4QBBwSBh4UBiAGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgKCgoMDAwODg4YGBgcHBweHh4UFBQMDAwKCgoICAgICAgICAgICAgGBgYGBgYGBgYEBAQEBAQICAgKCgoKCgoKCgogCCgiCCoiCCoiCiwkCiwkCi4kCi4kCi4mCjAmCjAoDDIqDjQsEDgwFDw0GD42Gj42GD4wFDwuEjgqDjQoDDImCjAmCi4kCi4kCi4iCiwiCiogCCogCCoGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgKCgoMDAwWFhYaGhoYGBgUFBQODg4KCgoICAgICAgICAgGBgYGBgYGBgYGBgYEBAQGBgYICAgGBgYICAgGBgYIBgoGBAgGBAgGBAgIBAgGBAgIBAgIBAgIBgoIBgoKBgoMCAwOCg4UEBQaGBwYFhoYFhoQDBAMCg4KCAwKBgoIBgoIBgoMCg4KCAwMCg4KCAwKBgoIBgoEBAQEBAQEBAQGBgYGBgYGBgYEBAQGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoMDAwODg4MDAwICAoKCgoICgoICAoICAoICAgICAgGBgYGBgYGBgYEBAQGBgYICAgICAgICAgICAoICAoKCgoKCgoKCgoMDAwODg4MDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYEBAQGBgYGBgYGBgYICAgICAgICAoICAoICgoKCgoICAoMDAwODg4MDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYEBAQGBgQGBgYGBgYGBgYEBAQEBAQUCCIQBB4QBBwUBiAUBiAOBBwOBBwSBB4QBBwOBBoQBB4SBh4WCCIUBiAQBB4SBiAWCCIYCiQQBB4UCCASBh4SBh4WCCIUBiAQBh4SBiAUBiASBiASBh4QBBwQBBwSBiASBh4QBB4QBB4SBh4SBh4UBh4WCCAUBiAUCCAYCiQSBiASBiAUBiAWCCISBiAQBB4OBBwQBBwSBh4OBBwOBBoSBh4WCCIQBBwQBB4UBiAGBgYGBgYGBgYGBgYGBgYGBgYICAYICAgICAgKCgoMDAwODg4aGhoeHh4eHh4WFhYODg4MDAwKCgoICAgICAgICAgGBgYGBgYGBgYEBAQEBAQICAgICAgKCgoKCgoeCCgiCCoiCCoiCiwkCiwkCi4kCi4kCi4mCjAmCjAmDDAoDjIsEDYwFDo0Fj42GD40GD4wFDosEDYqDjQoDDImCjAmCi4kCi4kCi4iCiwiCCogCCogCCoGBgYGBgYGBgYGBgYGBgYIBggGBgYGBgYICAgICAgKCgwMDAwWFhYaGhoaGhoWFhYODg4KCgoICAgICAgICAgICAgGBgYGBgYGBgYGBgYICAgICAgGBgYICAgICAgICAgICAgICAgGBgYGBgQGBgYGBgYGCAYICAgICAgICggKCgoMDgwWFhYgICAcHhwgICAQEhAMDAwKCgoICAgICAYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQCAgIEBAQGBgYEBAQEBAQEBAQGBgYGBgYGBgYICAgICAgKCgoMDAwQEBAODg4KCgoICgoKCgoKCgoICAoICAgICAgICAgGBgYGBgYGBgYGBgYICAgICAgICAoICAoKCgoKCgoICgoKCgoQDhAQEBAMDAwKCgoICAgGBgYGBgYGBgYGBgYEBAQEBAQGBgYGBgYGBgYICAgICAgICAgICAoKCgoKCgoICgoKCgoODg4QEBAMDAwKCgoICAgICAgGBgYGBgYGBgYEBAQEBAQEBAQGBgYGBgYEBAQEAgQEBAQGBgYWCCISBh4QBBwUBiAUBiAOBBwOBBwSBh4QBBwQBBwSBB4SBh4WCCISBiASBiAUBiAWCCIYCiQSBiAWCCISBiASBh4YCiIUBiASBiAUBiASBiASBiAUBiASBB4QBBwUBiAQBh4QBB4QBB4UBiASBB4UBh4UCCASBiAUCCAYCiQSBiAUBiAUBiAYCCIUBiASBB4QBBwOBBwUBiAOBBwMAhoSBh4WCCIQBB4QBB4UBiIGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoMDAwODg4aGhoeHh4eHh4YGBgODg4MDAwKCgoKCgoICAgICAgGBgYGBgYGBgYEBAQGBgYICAgICAgICAgKCgogCCokCi4kCi4kCi4mCjAmCjAoCjIoCjIoCjIoCjIqDDQsDjYuEDoyFD42Fj44GD42Fj4yFD4uEjosDjYqDDQoCjIoCjImCjAmCjAkCi4kCi4kCiwiCCwGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoMDAoODAwYGBgaGhoaGhoYGBgODg4KCgoICAgICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgGBgYICAgICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgICAgKCgoODg4WFhYgICAcHBwgICASEhIMDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYCAgIEBAQGBgYGBgYEBAQCAgQGBgQGBgYGBgYICAgICAgKCgoODg4UFBQQEBAKCgoICgoKCgoKCgoKCgoICAoICAgIBggGBgYICAgICAgGBgYICAgICAgKCgoKCgoKCgoKCgoICgoMDAwSEhISEhIMDAwKCgoICAgIBgYGBgYGBgYEBAQCAgIEBAQGBgYICAgGBgYIBggICAgICAoKCgoKCgoKCgoICgoKCgoQEBAUFBQODg4KCgoICAgICAgGBgYGBgYGBgQCAgQEBAQGBgYGBgYGBgYEBAQCAgIEBAQGBgYUBiASBB4QBB4WCCAUBiAOAhwQBBwUBiAQBBwQBBwSBB4UBiAWCCISBiAUBiAUBiAWCCIYCiQUBiAYCiQUBiAUBiAYCCISBiAUBiAUBiASBiASBiAUBiASBBwQBB4WCCISBh4SBB4QBBwUCCASBh4UBiAUBh4SBiAUCCIYCiQUBiAUBiAUCCAYCiQUBiASBh4QBBwOBBoUBiASBBwOAhoQBh4WCCIQBh4SBB4UBiAGBgYGBgYGBgYGBgYGBgYGBgYGCAYICAgICAgKCgoMDAwODg4aGhogICAeHh4YGBgODg4KCgoKCgoKCgoICAgGBgYGBgYGBgYGBgYEBAQGBgYICAgICAgICAgKCgoUBhgUBhgUBhgUBhoUBhoWBhoWBhoWBhoWCBwWCBwWCBwYCh4cDCAeDiQiFCgkFCgiEigeDiIaDCAYCB4WCBwWBhwWBhwWBhoUBhoUBhoUBhgUBhgUBhgGBgYGBgYGBgYGBgYGBgYGBgYGCAYGBgYICAgKCggMDAoODg4aGhocHBwcHBwYGBgODg4KCgoKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICgoICAgGCAYICAgGBgYGBgYGBgYGBgYGBgYICAgICAgICAgKCgoMDAwWFhYgICAcHBwgICASEhIMDAwKDAoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYCAgIEBAQGBgYGBgYEBAQEBAQEBAQGBgYGBgYICAgICAgKCgoODg4WFhYSEhIKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYICAgICAoKCgoKCgoKCgoKCgoKCgoMDAwUFBQUFBQMDAwKCgoICAgICAgGBgYGBgYEBAQEBAIEBAQGBgYGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoSEhIWFhYODg4KCgoICAgICAgGBgYGBgYEBAQEBAQEBAQGBgYGBgYGBgYEBAQCAgIGBgYGBgYQBB4SBB4SBiAYCCISBh4OBBwSBB4UCCAQBBwOBBwSBh4UBiAWCCISBiAUBiAUCCAWCCIaCiQWCCAYCiQUBiAUBiAWCCIQBh4UBiAUBiASBiASBiASBh4QBBwSBh4WBiASBh4SBiASBh4WCCIUBiAUCCASBh4UBiAUCCAYCiQUBiAUBiAUBiAWCCIUBiASBiAQBB4OBBwUBiAUBiAOAhwQBBwWCCIUBiASBB4QBh4GBgYGBgYGBgYGBgYGBgYIBgYIBggICAgICAgKCgoMDAwODg4aGhogICAeHh4aGhoQEBAMDAwKCgoICAgICAgGBgYGBgYGBgYGBgYEBAQICAgICAgGBgYICAgICAgICAgGBgYGCAYEBgQEBAIEBgQEBgQEBgQGBgQGCAYGCAYICgYKDAoSFBIcHhwaHBocHhwOEA4KDAgICAYGCAYGBgQEBgQEBgQEBgQEBgQEBgQEBgQEBgQGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgKCgoMDAwODg4YGBgeHh4cHBwYGBgODg4KCgoKCgoICAgICAgGBgYGBgYGBgYGBgYEBAQGBgYICAgICAgICAgKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoMDAwWFhYgICAeHh4gICASEhIMDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBAQGBgYGBgYEBAQEBAQEBAQGBgYGCAgICAgKCAoKCgoODg4WFhYSEhIKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoKCgoMDAwWFBYUFBQMDAwKCgoICAgICAgGBgYGBgYEBAQEBAQGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoSEhIWFhYODg4KCgoKCAoICAgGCAgGBgYEBAQEBAQEBAQGBgYGBgYGBgYEBAQEBAQGBgYGBgYQBB4SBiAUBiAWCCIQBB4QBBwSBB4UCCAQBBwQBBwSBh4SBh4WCCISBiAWCCIUCCAYCiQaCiYWCCIYCiQUBiAUBiAWCCISBh4WCCIWCCISBiAUBiASBh4QBB4UBiAWCCIQBB4SBh4SBiAYCiQUBiAUCCISBiAUBiAWCCAaDCYWCCAWCCAUBiAWCCIUBiASBB4QBB4QBBwUBiAUBiAQBBwQBBwWCCIUCCASBh4QBB4GBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoMDAwODg4cHBweHh4eHh4aGhoODg4KCgoICAgICAgICAgICAgGBgYGBgYGBgYGBgYICAgICAgGBgYICAgICAgICAgICAgICAgGBgYGBgYGBgYGBgYICAgICAgICAgICggKCgoODg4WFhYgICAcHBwgICASEhIMDAwKCgwICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAYICAgICAgICAgICAgKCgoMDAwODg4aGhoeHh4cHBwYGBgODg4MDAwKCgoICAgICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoKCAoICAgGBgYEBAQGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoMDAwWFhYgICAeHh4eHh4SEhIODg4KCgoKCggICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQGBgYGBgYEBAQEBAQGBgYGBgYICAgICAgKCgoODg4WFhYUFBQMDAwICgoKCgoKCgoKCgoKCAoICAgGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoKCgoODg4WFhYUFBQODAwKCgoICAgICAgGBgYEBgYEBAQEBAQGBgYGBgYGBgYGBgYGBgYICAgKCAoKCgoKCgoKCgoICgoMDAwUFBQWFhYODg4KCgoICAgICAgGBgYGBgYEBAQEBAQGBgYGBgYGBgYGBgYEBAQEBAQGBgYGBgYQBB4UBiAWCCIWCCIQBBwQBBwSBiAUCCISBB4QBBwSBh4SBh4WCCIUBiAWCCIWCCAYCiQaCiQWCCIaCiQUBiAUBiAYCCIUBiAWCCIYCiIUBiAUBiAUBiAQBB4UBiAWCCIQBh4SBiASBiAYCiQSBiAUCCISBiAWCCIYCCIcDCYWCCIWCCIWCCAYCCIWCCASBh4QBB4QBBwSBiAWCCIQBB4QBBwUBiAWCCIUCCAQBB4GBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoMDAwODg4cHBweHh4eHh4aGhoODg4KCgoKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgGBgYICAgICAgICAgGBgYICAgGBgYGBgYGBgYGBgYGBgYICAgICAgICAgKCgoMDAwWFhYgICAcHBwgICASEhIMDAwMDAoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGCAYIBgYICAgICAgKCgoMDAwODg4aGhoeIB4eHh4YGBgODg4MDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCAoKCgoKCAoICAgGBgYEBAQGBgYGBgYGBgYGBgYICAgICAgKCgoMDAwMDAwWFhYgICAeHBweHh4SEhIODg4MDAwKCgoICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBAQGBgYGBgYEBAQEBAQGBgYGBgYICAgICAgKCgoODg4WFhYUFhQMDAwICAgICAoKCgoKCgoKCgoICAgGBgYGBgYGBgYGBgYGBgYGBggICAgKCgoKCgoKCgoICAoKCAoODg4WFhYUFBQMDAwKCgoICAgICAgGBgYEBAQEBAQEBAQGBgYGBgYGBgYGBgYGBgYICAgKCgoKCgoKCgoKCAoICAgMDAwUFhQWFhYODg4KCgoICAgICAgGBgYGBgYEBAQEBAQGBgYGBgYGBgYGBgYEBAQEBAQGBgYGBgYSBiAWCCAYCCIWCCIOBBwQBBwWCCAWCCIQBB4SBB4SBh4SBiAYCiIWCCIYCCIWCCIaDCYaCiQWCCIaDCYWCCIUBiAYCiIWCCAYCCQYCiQUBiAWCCIWCCISBB4WCCAWCCIQBh4UBiAUBiAYCiQUBiAWCCIUBiAWCCIYCCQcDigWCCIWCCIWCCIYCCIYCCIQBh4SBh4QBB4SBiAWCCISBh4OBBwUBiAYCCIYCiISBiAGBgYGBgYGBgYGBgYGBgYGCAYICAgICAgICAgKCgoMDAwODg4cHBwgICAeHh4aGhoODg4KCgoKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoICAgICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgICAgKCgoMDAwWFhYgICAcHBwgICASEhIMDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGCAYICAgICAgMDAwODg4YGBgeHh4eHh4YGBgODg4MDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgKCgoKCAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoMDAwWFhYeHh4eHh4eHh4SEBAMDAwKCgoICAgICAgICAgICAYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBgYGBgYGBgYGBgYEBAQGBgYGBgYICAgICAgKCgoMDA4WFhYWFhYMDAwICAgICAoKCgoKCgoKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoKCgoKCgoICAgKCgoQEBAYGBgSFBQMDAwICAgICAgICAgGBgYGBgYEBAQGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoKCgoKCgoICAoICAgMDAwWFhYWFhYMDA4KCgoICAgICAgGBgYGBgYEBAQGBgYGBgYGBgYGBgYGBgYEBAYEBgYGBgYGBgYUBiAWCCIWCCIWCCIOBBwQBBwWCCIUBiAQBB4SBiASBB4SBiAYCiQYCCIYCiIWCCIcDiYaDCQYCCIcDCYWCCIUBiAYCiIWCCIYCiQaDCYUCCAWCiIYCCISBiAWCCIWCCAQBh4UCCAUBiAaCiQUBiAYCCIUBiAWCCIYCiQcDigWCCIWCCIWCCIYCCQYCCISBB4UBiASBh4SBh4WCCISBiAOBBwUBiAWCCIWCCIWBiAGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgKCgoMDAwODg4aGhoeHh4eHh4aGhoODg4KCgoKCgoICAgICAgICAgGBgYGBgYGBgYEBAQGBgYICAgICAgICAgKCgoICAgICAgGBgYEBAQGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoMDAwWFhYgICAeHh4gICASEhIODg4KCgoICAgICAgICAgGCAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgMDAwODg4YGBgeHh4cHhwYGBgODg4MDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoMDAwMDAwWFhYeHh4eHh4eHh4QEBAMDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBAQGBgYGBgYGBgYEBAQEBAQGBgYGBgYICAgICAgKCgoMDAwUFBYWFhYMDA4ICAgICAoKCgoKCgoICggICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoKCgoKCgoICAgKCgoQEBAYGBgSEhIMDAwKCgoICAgICAgGBgYGBgYEBAQEBAQGBgYGBgYGBgYGBgYGBgYICAgICggKCgoKCgoICAoICAgMDAwWFhYWFhYMDAwKCgoICAgICAgGBgYGBgYEBAQEBAQGBgYGBgYGBgYGBgYEBAQEBAQGBgQGBgYWBiAWCCIUCCAUCCAOBBwSBB4WCCIUBiASBh4UBiAQBB4UBiAYCiQYCCIYCCIWCCIcDiYaDCQYCiQeDigYCiQSBiAYCiQYCCIYCiQcDCYUCCIYCiQWCCISBh4WCCIWCCASBiAWCCISBiAcDCYUBiAYCCIUBiIWCCIaCiQeDigWCCIWCCIWCCIYCiQWCCISBiAUBiAUBiAUBiAWCCAUBiAQBBwUBiAWCCAWCCAWCCIGBgYGBgYGBgYGBgYGCAYICAgICAgICAgICAgKCgoMDAwODg4aGhogICAeHh4YGBgODg4MDAwKCgoICAgICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgKCAoKCgoKCAoICAgGBgYEBAQGBgYGBgYGBgYGBgYICAgICAgKCgoMDAwMDAwWFhYgICAcHBweHh4SEhIODg4KCgoKCggICAgICAgICAgICAYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKDAwODg4aGhgeHh4cHBwYGBgODg4MDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoMDAwODg4UFBQeHh4cHBweHh4QEBAMDAwKCgoICAgGBggGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgQEBgQEBgQCBAICBAICBAIEBgQCBAICBAICBAIEBgIGBgQGCAQGCAYGCAYKDAoSEhAUFhIKDAoGCAYGCAYICgYICggICggGCAYEBgQEBgQGBgQEBgQEBgQGCAQICAYICggICggICgYGCAYGCAYOEA4UFhQOEA4KCggGCAYGCAYGCAQEBgQEBAICBAICBAIEBAIEBgQGBgQEBgQGBgQGCAYICggICggICgYGCAYICgYMDAoSFhIQEhAKDAoGCAYGCAYGCAQEBgQEBgICBAICBAICBAIEBgQEBgQEBgICBAICBAIEBgQEBgQWCCAUCCAUBiAUBiAOBBwUBh4WCCISBh4SBh4UCCASBiAWCCIYCiQYCiQWCCIWCCAcDiYYCiQaDCQgDigYCiQUCCAYCiQYCCIYCiQeDigUCCIaCiQWCCISBh4WCCIWCCIUBiAWCCISBiAcDCYUBiAYCiQUCCIYCiQaDCYeDigWCCIWCCIWCCIYCiQWCCIUBiASBiAUBiAUBiAUBiAUBiAOBBwSBh4UBiAUBiAUBiAGBgYGBgYGBgYGBgYGBgYGBgYIBgYICAgICAgICAgMDAwODg4aGhogICAeHh4YGBgODg4MDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCAgKCgoKCAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoMDAwUFBQeHh4eHh4eHh4SEhIODg4KCgoICAgICAgICAgICAgICAYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgKCAgMDAwMDAwYGBgeHh4eHh4aGhoODg4MDAwICAgICAgICAgGBgYGBgYGBgYEBAQGBgYICAgICAgICAgKCAoKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoMDAwODg4WFhYeHh4cHBweHh4QEBAMDAwKCgoICAgIBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYCAgICAgICAgICAgIAAgIAAgICAgICAgIAAgIAAgACAgICAgICAgICAgIEBAQEBgQGBgYGBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBgYGBgYGBgYEBAQCBAICAgICAgICAgICAgIAAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYGBgYEBgQEBAQCBAICAgICAgICAgICAgACAgICAgICAgICAgICAgICAgIAAAICAgICAgIUCCAUCCASBh4SBh4QBBwUBh4WCCIUBiAUBiAUBiASBh4WCCIYCiQYCiQYCCIWCCIaDCYaDCYcDiYgECoaCiQUBiAYCiQYCiQaCiQeDigUCCAaCiQYCiQUBiAWCCIUCCIWCCIYCCIUCCAcDigUBiAYCiQUCCIaCiQcDCYeDigYCCIWCCIWCCIYCCIWCCIUBiASBiAUCCAWCCAWCCIUCCAQBB4SBh4SBiASBiASBiAGBgYGBgYGBgYGBgYGBgYGBgYGBgYGCAYICAgICAgMDAwODg4YGBgeHh4eHh4YGBgODg4MDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoMDAwWFhYgICAeHh4eHh4QEBAMDAwKCgoICAgICAgIBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgKCAoKCgwMDAwWFhYgICAeHh4aGhoQEBAMDAwICAgICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgICAgKCgoKCgoICAgICAgICAgGBgYEBAQGBgYGBgYGBgYICAgICAgICAgMDAwODg4WFhYgICAeHh4cHBwODg4MDAwKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYOAhIOAhIOAhIOAhIOBBIOBBQQBBQOAhIOAhIOBBQQBBQQBBYSBBYSBhgWCBoaDBwaDBwaDBwWCBoSBhgSBBYQBBYQBBQQBBQOBBQOAhIOAhIOAhIOBBIOBBQOAhIOAhQQBBQQBBQQBBYSBhYUBhoYChwaDBwaDBwYChwUCBoSBhgQBBYQBBQQBBQOBBQOBBIOAhIOAhIOAhIOAhIOAhIOBBQQBBQQBBQQBBYSBBYUBhgWCBoYDBwaDBwaDBwWCBoSBhgSBBYQBBYQBBQOBBQOBBIOAhIQBBQOBBQOAhIOAhIOAhIOAhIOAhIUBiAUBiASBiASBh4QBB4WCCAWCCIUCCIWCCIUCCAUBiAWCCIYCiQYCCQYCiQWCCIaDCYcDCYeDiggECoaDCYWCCIaDCQYCiQaDCYgDigWCCIcDCYYCiQSBiAWCCIWCCIWCCIYCCIWCCIeDigUCCAYCiQWCCIaDCYcDigeDigYCCQYCCQWCCIYCCIWCCIWCCIUCCAWCCAWCCIWCCIWCCISBh4QBB4SBiASBiASBiAGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgMDAwODg4aGhoeHh4cHBwYGBgODg4MDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoMDAwODg4UFBQeHh4cHBweHh4QEBAMDAwKCgoICAgGCAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYIBgYICAgICAgMDAwMDAwUFBQeHh4eHh4aGhoODg4MDAwICAgICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoICAgICAgGBgYEBAQGBgYGBgYGBgYGBgYICAgICAgKCgoODg4WFhYgICAeHh4cHBwODg4MDAwKCgoICAgICAYGBgYGBgYGBgYGBgYGBgYGBgYGBgYeBiYeBiYeBiggBiggCCoiCCoiCCwgCCogCCoiCCoiCCwkCC4mCjAoDDQuEDgyFjw2GDw0FjwuEjoqDjQmCjAkCC4iCCwiCCwgCCogCCoeBigeBiYgCCoiCCwgCCogCCoiCCwiCCwkCi4mDDIqDjYwEjw0GDw2GDwyFDwsEDgoDDIkCjAiCC4iCCwiCCogCCogCCgeBigeBigeBiggCCogCCoiCCwiCCwkCC4mCjAqDjQuEjo0Fjw2GDwyFjwuEDgoDDQmCjAkCC4iCCwiCCogCCogCCoiCCwiCCogCCogBigeBigeBigeBigSBh4UBiIUBiAQBh4QBB4YCCIWCCIUCCIWCCIWCCIUBiAWCCIYCiQYCiQYCiQYCCQcDiYaDCYeECggECoaDCYWCCAaCiQYCiQaDCYgECoWCCIeDigaDCYQBh4YCCIYCiQYCiIYCCIYCiQeECgUCCAaCiQYCiQcDiYcDigeECgYCiQYCiQYCCIYCCIWCCIUBiAWBiAWCCIWCCIWCCIYCiQUBiAOBBwSBh4SBiASBh4GBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgKCAgMDAwODAwYGBgeHh4eHhwaGhoODg4MDAwKCgoICAgICAgGBgYGBgYGBgYEBAQGBgYGBgYICAgICAgKCAgKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoMDAwODg4UFBQeHh4cHBweHh4QEBAMDAwKCgoICAgGBggGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgMDAwMDAwUFBQeHh4cHBwcHBwQEBAMDAwICAgICAgICAgGBgYGBgYGBgYGBgYICAgICAgICAgKCgoKCgoKCgoKCgoICAgICAgICAgGBgYGBgYGBgYGBgYICAgICAgICAgMDAwODg4WFhYgICAeHh4aGhoODg4MDAwICAoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYeBigeBigeBiggCCogCCoiCCwiCCwgCCogCCoiCCwiCCwkCC4mCjAoDDQsEDgyEjw0Fj4yFD4uEDgoDDQmCjIkCC4iCC4iCCwiCCwgCCoeCCgeBiggCCoiCCwgCCogCCoiCCwiCCwkCDAmCjIqDjYuEjoyFD40Fj4wEjwsDjYoDDIkCjAkCC4iCCwiCCwgCCogCCogCCgeBiggCCggCCoiCCwiCCwiCC4kCC4mCjIqDDQuEDgyFD40Fj4yEjwsEDgoDDQmCjAkCC4iCCwiCCwgCCogCCoiCCwiCCwgCCogCCoeBigeBigeBigQBB4WCCAUBiASBB4SBB4WCCIWCCIWCCIWCCIWBiAUBiAWCCIYCiQYCCIYCiQYCiQeDigaDCYeECggECoaDCYWCCIaCiQYCiIcDCYgECgWCiQeECgeDigSBh4YCiIYCiQYCiQYCCIYCiQeECgWCCIcDCYcDCYeECgeDiggECgaCiQaCiQYCCIYCCIWCCIWBiIWCCIWBiAWCCIWCiQYCCQUBiAOBBwSBiASBiAQBB4GBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgKCggMDAwMDAwWGBYeHh4eHh4aGhoODg4MDAwICAgICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgICAgKCAoKCAoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoMDAwODg4WFhYeHh4cHBwcHBwQEBAMDAwKCgoICAgIBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBggGCAgICAgICAgKCgoMDAwSEhIeHh4cHBweHh4SEhIMDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgICAgKCgoKCgoICggICAgICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgMDAwODg4YGBgcHBweHh4YGBgMDg4MDAwICAgICAgICAgGCAYGCAYGBgYGBgYGBgYGBgYGBgYeBigeBigeBiggCCogCCoiCCwiCCwgCCogCCoiCCwiCCwkCC4mCjAoDDQsEDgyFDw0Fj4yFD4uEDgqDDQmCjIkCC4iCC4iCCwiCCwgCCoeCCgeBiggCCoiCCwgCCogCCoiCCwiCC4kCDAmCjIqDjYuEjoyFj40Fj4wEjwsDjYoDDIkCjAkCC4iCCwiCCwgCCogCCogCCgeBiggCCggCCoiCCwiCCwiCC4kCC4mCjIqDDQuEDgyFD40Fj4yFDwsEDgoDDQmCjAkCC4iCCwiCCwgCCogCCoiCCwiCCwgCCogCCoeBigeBigeBigQBBwUBiASBh4QBB4SBh4WCCIYCiQWCCIWCCIUCCIUCCIWCCIYCiQYCCQaCiQaDCQeDigcDiggECogECocDiYYCCIaDCQYCiQcDCYeECgYCiQgECoeDigSBiAYCiQYCiQaCiQWCCIYCiQeDigYCiQeDigcDCYgECoeECggECocDCYaDCYYCiIYCiIWCCIWCCIWCCIWCCIWCCIYCiQYCiQUCCAQBB4SBB4UBiAQBh4GBgYGBgYGBgYGBgYGBgYGBgYGBgYIBgYICAgICAgKCgoMDAwWFhYeHh4eHh4aGhoODg4MDAwICAgICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoKCgoICAgICAgICAgGBgYEBAQGBgYGBgYGBgYGBgYICAgICAgKCgoODg4WFhYgICAeHh4cHBwODg4MDAwKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoMCgoODg4eHh4gICAeHh4UFBQMDAwICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBgYICAgKCgoMDAwODg4aGhocHBweHh4WFhYODg4MCgoICAgICAgICAgGBggGBgYGBgYGBgYGBgYGBgYGBgYeBigeBigeBiggCCggCCoiCCwiCCwgCCogCCoiCCwiCCwkCC4mCjAoDDQsEDgyFDw0Fj4yFD4uEDgqDDQmCjIkCi4iCC4iCCwiCCogCCoeCCgeBiggCCoiCCwgCCogCCoiCCwiCC4kCjAmCjIqDjYuEjoyFj40Fj4wEjwsDjYoDDIkCjAkCC4iCCwiCCwgCCogCCogCCgeBiggCCggCCoiCCoiCCwiCC4kCi4mCjIqDDQuEDgyFD40Fj4yFDwsEDgoDDQmCjAkCC4iCCwiCCwgCCogCCoiCCwiCCwgCCogCCgeBigeBigeBigQBBwSBiASBh4SBh4UBiAYCiQYCiQaCiQYCCIWCCIWCCIYCiQaCiYYCiQaDCYaDCYeDigeDigiEiwgEiocDiYYCiQcDiYcDCYcDCYeECgcDCYiEiweDigUBiAYCiQYCiQaCiQYCiQYCiQeDigaDCYgECocDiggECogECogECocDiYcDiYYCiQaCiQYCiQYCCIYCCIWCCIYCiQYCiQaCiQWCCIQBh4SBh4UBiASBh4GBgYGBgYGBgYGBgYGBgYGBgYIBggIBggICAgICAgMDAwMDg4UFBQeHh4eHh4aGhoQEBAMDAwICAgICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoODg4WFhYgICAeHh4aGhoODg4MDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGCAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYIBgYICAgICAoKDAwODg4cHBwgICAgICAWFhYMDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgICAgKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoQEBAcHBweHh4gICAUFBQMDAwKCgoKCggICAgICAYGBgYGBgYGBgYGBgYGBgYGBgYGBgYeBigeBigeBiggCCggCCoiCCwiCCwgCCogCCoiCCwiCCwkCC4mCjAoDDQsEDgyFD40Fj4yFD4uEDoqDDQmCjIkCC4iCC4iCCwiCCogCCoeCCgeBiggCCoiCCwgCCogCCwiCCwiCC4kCjAmCjIqDjYwEjo0Fj40Fj4yFDwsDjgoDDIkCjAkCC4iCCwiCCwgCCogCCogCCgeBiggCCggCCoiCCoiCCwiCC4kCC4mCjIqDDQuEDoyFD40Fj4yFD4sEDgoDDQmCjAkCC4iCCwiCCwgCCogCCoiCCwiCCwgCCogCCgeBigeBigeBigQBBwUCCASBh4SBiAUBiAaCiQaCiQaDCYYCiQWCCIWCCIYCCIaCiYaCiQcDCYcDiggECgeDigiEiwgECocDiYaCiQeECgcDCYcDCYeECgeDigkFCweECgUBiAaCiQYCiQaCiYaCiQaDCQeECgcDigiEiweDigiEioiEiogEioeECgeDigaCiQaCiQYCiQYCCIYCCIWCCIaCiQaCiQaDCQWCCISBh4SBh4UCCASBh4GBgYGBgYGBgYGBgYGBgYGBgYGCAYICAgICAgICAgKCgwMDAwUFBQeHh4cHBweHh4SEhIMDAwICAgICAgICAgGBgYGBgYGBgYGBgYICAgICAgICAgICAgKCgoKCgoKCgoICAgICAgICAgGBgYGBgYGBgYGBgYICAgICAgICAgMDAwODg4WFhYeHh4eHh4aGhoODg4MDAwICAgICAgICAgIBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBggICAgKCgoKDAwODg4YGBgeHh4eHh4WFhYMDAwKCgoICAgICAgGBgYGBgYICAgGBgYGBgYGBgYICAgKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoKCgoQEBAeHh4eHh4gICASEhIMDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYeBigeBigeBiggCCggCCoiCCwiCCwgCCogCCoiCCwiCCwkCC4mCjAoDDQsEDgyFD40Fj4yFj4uEDoqDDQmCjIkCC4iCC4iCCwiCCogCCoeCCgeBiggCCoiCCwgCCogCCwiCCwiCC4kCjAmCjIqDjYwEjw0Fj40Fj4yFDwsEDgoDDImCjAkCC4iCCwiCCwgCCogCCogCCgeBiggCCggCCoiCCoiCCwiCC4kCC4mCjIqDjQuEDoyFj40Fj4yFD4sEDgoDDQmCjAkCC4iCCwiCCwgCCogCCoiCCwiCCwgCCogCCgeBigeBigeBigOBBwWCCIUCCAUBiAWCCIaCiQaDCYaDCYYCiQYCCQWCCIYCiQcDCYYCiQcDiYeDiggECgeDigiEiwgEiocDiYcDCYgEioaDiYcDiggEioeDigkFCweECgUBiAaCiQaCiQaCiYaCiQcDiggECocDiYiEiogDiokFCwiEioiEiogECoeDigaCiQcDCYaDCYWCCIYCiQYCCIaCiQaDCYaCiQWCCIUBiAUBiAYCiIUCCAGBgYGBgYGBgYGBgYGBgYGBgYGBggGBggICAgICAgKCgoMDAwSEhIeHh4cHBweHh4SEhIMDAwKCgoICAgICAgGBgYGBgYGBgYGBgYICAgICAgICAgICAgKCgoKCgoICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgMDAwODg4aGhocHBweHh4YGBgODA4MDAwICAgICAgICAgGCAYGBgYGBgYGBgYGBgYGBgYGBgYICAgGBgYGBgYGBgYGBgYGBgYIBgYICAYICAgICAgKCgoMDAwODg4YGBggICAgICAYGBgMDAwKCgoICAgICAgGBgYGBgYGBgYGBgYEBAQGBgYICAgKCgoKCgoKCgoKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoMDAwSEhIcHBwcHBweHB4QEBAMDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgeBigeBigeBiggCCogCCoiCCwiCCwgCCogCCoiCCwiCCwkCC4mCjAoDDQuEDgyFD40Fj4yFj4uEDoqDDQmCjIkCi4iCC4iCCwiCCogCCoeCCgeBiggCCoiCCwgCCoiCCoiCCwiCC4kCjAmCjIqDjYwEjw0Fj40Fj4yFDwsEDgoDDImCjAkCC4iCCwiCCwgCCogCCogCCgeBiggCCggCCoiCCoiCCwiCC4kCi4mCjIqDjQuEDoyFj40Fj4yFD4uEDgoDDQmCjAkCC4iCCwiCCwgCCogCCoiCCwiCCwgCCogCCoeBigeBigeBigQBB4YCiQWCCIUCCAWCCIaDCYaDCYcDCYYCiQYCiQUCCAaCiQcDCYaDCYcDiYeDiggECoeDigkEiwiEiocDigcDCYiFCoeECgeECggEiogEComFi4gECoWCCIaDCYaDCQcDCYcDCgeDigiEiogECokFCwgEComFi4gEioiEiogECoeECgcDCYeDigaDCYYCCIYCiQYCiQaDCYcDCYaDCYYCiQUBiAWCCAaCiQYCiIGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoMCgoQDg4eHh4eHh4eHh4SEhIMDAwKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgMDAwODg4aGhoeHh4gICAUFBQMDAwKCgoKCggICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgGBgYGBgYGBgYGBgYGBgYGBgYGCAgICAgICAgKCgoKCgoODg4YGBggICAgICAaGhoMDAwKCgoICAgICAgICAgGBgYGBgYEBAQEBAQGBgYICAgKCgoKCgoKCgoKCgoKCAoGBgYGBgYEBAQGBgYGBgYGBgYICAgICAgKCgoMDAwSEhIeHh4cHBwcHB4QEBAMDAwKCgoICggICAgICAgIBgYGBgYGBgYGBgYGBgYGBgYIBggeBigeBigeBiggCCogCCoiCCwiCCwgCCogCCoiCCwiCCwkCC4mCjAoDDQuEDgyFD42GD40Fj4uEDoqDDQmCjIkCjAiCC4iCCwiCCogCCoeBigeBiggCCoiCCwgCCoiCCoiCCwkCC4kCjAmDDIqDjYwEjw0Fj42Fj4yFDwsEDgoDDImCjAkCC4iCCwiCCwgCCogCCogCCgeBiggBiggCCoiCCoiCCwiCC4kCjAmCjIqDjYuEDo0Fj42GD4yFD4uEDgoDDQmCjAkCC4iCCwiCCwgCCogCCoiCCwiCCwgCCogCCoeBigeBigeBigSBh4YCiQWCCIWCCIWCCIcDCYcDCYcDCYaDCYYCiQWCCIaCiQcDiYaDCYeDigeECgeDigeDigkFCwgECocDigeDigkFiweECggECoiFCwiFCwoGDAgEioYCiQaDCYaDCYcDCggECogECoiFCwiFCwkFCwgECokFCwgEiogEiogEiogECoeDiggECocDigYCCIaCiQaCiQcDCYcDiYcDiYaCiQWCCIWCCIYCiQYCiQGBggGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAYICAgICAoKCgoODg4cHBwgICAgICAWFhYMDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoQEBAcHBweHh4gICAUFBQMDAwKCgoICAgICAgIBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAYGBgYGBgYGBgYGBggICAgICAgICAgICAgKCgoKCgoMDAwWFhYeHh4eHh4aGhoODg4MDAwKCgoICAgICAgGBgYGBgYEBAQEBAQGBgYICAgKCgoKCgoKCgoKCgoKCgoGBgYEBAQEBAQGBgYGBgYGBgYICAgICAgKCgoMDAwUFBQgICAeHh4cHBwQEBAMDAwKCgoICAoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgeBigeBigeBiggCCggCCoiCCwiCCwgCCogCCoiCCwiCCwkCC4mCjIqDDQuEDoyFj42GD40Fj4uEjoqDDQmCjIkCjAiCC4iCCwiCCogCCoeBigeBiggCCoiCCwgCCoiCCwiCCwkCC4kCjAoDDIsDjYwEjw0Fj42GD4yFD4sEDgoDDQmCjAkCC4iCCwiCCwgCCogCCogCCgeBiggBiggCCoiCCoiCCwiCC4kCjAmCjIqDjYuEjo0Fj42GD4yFj4uEDoqDDQmCjIkCC4iCCwiCCwgCCogCCoiCCwiCCwgCCogCCgeBigeBigeBigSBh4cDCYYCiQWCCIYCiQaDCQaCiYaCiQaCiYaCiYYCCIYCiQeDigcDCYeDigeDigeDiggECgiEiwgECoeDiggECgkFiweDigiFCwkFCwmFi4oGDAiEiwWCiQeDigcDigeECgiEioiFCokFCwkFi4kFCwiEiokFCwiEiwgECogECogECoeDiggECoeECoYCCQcDCYaDCYcDCYcDigeDigaCiYWCCIWCiIcDCYaDCQICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICgoKDAwODg4aGhoeHh4gICAWFhYMDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoKCgoKCgoKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoKCgoQEBAcHBweHh4eHh4SEhIMDAwKCgoICAgICAYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoMDAwUFBQgHh4eHh4aGhoODg4KCgoKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoKCgoKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoMDAwWFhYeHh4eHh4aGhoODg4KDAwICgoICAgGBggGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgeBigeBigeBiggCCggCCoiCCwiCCwgCCogCCoiCCwiCCwkCC4mCjIqDDQuEDoyFj42GD40Fj4uEjoqDDQmCjIkCjAiCC4iCCwiCCogCCoeCCgeBiggCCoiCCwgCCoiCCwiCCwkCC4kCjAoDDIsDjYwEjw2Fj42GD4yFD4sEDgoDDQmCjAkCC4iCCwiCCwgCCogCCogCCgeBiggCCggCCoiCCoiCCwiCC4kCjAmCjIqDjYuEjo0Fj42GD4yFj4uEDoqDDQmCjIkCC4iCCwiCCwgCCogCCoiCCwiCCwgCCogCCgeBigeBigeBigUCCAcDiYaCiQYCCIYCCQaCiQaCiQaCiQaCiQaCiYYCiQaDCQeDigcDCYcDigeDigeDigeDiggECogECgeECggECgkFiweDigkFi4kFi4mGDAoGDAiFCwWCiIgEioeECggECgmFi4kFi4kFi4mGC4kFiwgECoiEiwgECogECogECggECoeDiggECogECoYCiQcDCYaDCYcDiYeDigeDigaCiYYCCIaCiQcDigaDiYICAgGBgYGBgYGBgYGBgYGBgYIBgYIBgYICAgICAgKCgoKDAwODg4YGBggHiAgICAWFhYMDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoKCgoKCgoKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoMDAwSEhIeHh4cHBwcHBwQEBAMDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCggKCgoMDAwUFBQgICAeHh4cHBwODg4KCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYKCgoKCgoKCgoKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoMDAwWFhYeHh4gICAYGBgODg4KDAwKCgoICAgICAgIBgYIBgYGBgYGBgYGBgYGBgYGBgYICAgeBigeBigeBiggCCogCCoiCCwiCCwiCCogCCoiCCwiCC4kCC4mCjAqDDQuEDo0Fj42GD40Fj4wEjoqDDQmCjIkCi4iCC4iCCwiCCwgCCoeCCgeBiggCCoiCCwgCCoiCCwiCCwkCC4kCjAoDDIsDjYwEjw2Fj42GD4yFD4sEDgoDDQmCjAkCC4iCCwiCCwgCCogCCogCCgeBiggCCggCCoiCCwiCCwiCC4kCi4mCjIqDjYwEjo0Fj42GD40Fj4uEDoqDDQmCjAkCC4iCC4iCCwgCCoiCCoiCCwiCCwgCCogCCoeBigeBigeBigWCCIcDigcDCYaCiQYCiQcDCYaDCYaCiQaDCYcDCYaCiQcDCYgECgaDCYcDCYeDigeECgcDCYgECoeECggEiogEioiFCwcDigmGDAkFi4mGC4oHDIiFCwYCiQiFCwgEigiEiomGC4mGC4kFi4mGC4mGC4gECogEioeDiggECogECgeDigcDCYgECoeDigYCiQeDiYcDigcDigeDigeDigcDCYYCiQcDCYcDigcDigICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgKCgoKCgoODg4YGBggICAgICAYGBgMDAwKCgoICAgICAgGBgYGBgYGBgYEBAQEBAQGBgYICAgKCgoKCgoKCgoKCgoKCgoGBgYEBAQEBAQGBgYGBgYGBgYICAgICAgKCgoKCgoSEhIgICAeHh4cHBwQEBAMDAwKCgoICgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYIBggICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoMDAwSFBQeHh4eHh4eHh4ODg4MDAwKCgoICAgICAgGBgYGBgYGBgYEBAQEBAQICAgKCgoKCgoKCgoKCgoICAgGBgYEBAQEBAQGBgYGBgYGBgYICAgICAgKCgoMDAwYGBggICAgICAYGBgODg4KCgoKCgoICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgeBigeBigeBiggCCogCCoiCCwiCCwiCCogCCoiCCwiCC4kCC4mCjIqDDQuEDo0Fj44GD40Fj4wEjoqDjYmCjIkCjAkCC4iCCwiCCwgCCogCCgeBigiCCoiCCwgCCoiCCwiCCwkCC4kCjAoDDIsDjYyFDw2GD42GD4yFD4uEDgoDDQmCjAkCC4iCCwiCCwgCCogCCogCCgeBiggCCggCCoiCCwiCCwkCC4kCjAmCjIqDjYwEjo0Fj44GD40Fj4uEDoqDDQmCjIkCC4iCC4iCCwgCCoiCCoiCCwiCCwgCCogCCoeBigeBigeBigWCCIeDigeDigaDCYYCiQeDiYaDCYaDCYcDCYcDCgaCiQaCiQgECgaCiQcDCYeDigeECgcDiYeECgeDigeECgeDiggEiocDigmGC4kFi4mGDAoGjAgEiwaDCQkFCwkFiwiFCwmGC4kFi4kFiwmGC4mGC4eECggECoeDigeECgeDigcDigYCiQeECgcDigYCiQeDigeDigeDigcDigeDigcDCYaDCYcDigeECgcECgICAgICAYGBgYGBgYGBgYGBgYICAYICAgICAgICAgKCgoKCgoMDAwWFhYeHh4eHh4YGBgODg4KCgoICAgICAgGBgYGBgYGBgYEBAQEBAQGBgYICAgKCgoKCgoKCgoKCgoKCgoGBgYEBAQEBAQGBgYGBgYGBgYICAgICAgKCgoMDAwUFBQgICAeHh4aGhoODg4KDAwKCgoICAgICAgICAgGCAgGCAgGBgYGBgYGBgYGBgYICAgICAgICAgGBgYGBgYGBgYGBgYICAYICAgICAgICAgKCAoKCgoMDAwSEhIeHh4eHh4eHh4QEBAMDAwKCgoICAgICAgGBgYGBgYEBAQEBAQGBgYICAgKCgoKCgoKCgoKCgoICAgGBgYEBAQEBAQGBgYGBgYGBgYICAgICAgKCgoODg4YGBgeHh4eHh4WFhYMDAwKCgoKCgoICAgICAgICAgICAYGBgYGBgYGBgYGBgYGCAYICAgeCCgeCCggCCggCCoiCCwiCCwiCCwiCCwgCCwiCCwkCC4kCjAmCjIqDDYuEjo0Fj44Gj42Fj4wEjwqDjYmCjIkCjAkCC4iCCwiCCwiCCogCCgeCCgiCCwiCCwgCCoiCCwiCCwkCC4mCjAoDDQsDjgyFD42GD44Gj40Fj4uEDooDDQmCjAkCC4kCC4iCCwiCCwgCCogCCoeCCggCCoiCCoiCCwiCCwkCC4kCjAmCjIsDjYwEjw2Fj44Gj40Fj4uEjoqDDYmCjIkCjAkCC4iCCwgCCwiCCwiCCwiCCwiCCwgCCogCCgeCCgeCCgWCiIeDigeDigaDCYaDCYeDigcDigcDCYcDCYeDigaCiQaCiQeECgYCiQaCiYeDigeDigaDCYcDiYaDCYcDiYeDigeECgeEComFi4kFCwmGDAoGi4kFCwcDiYmGDAkFiwiFComGC4kFiwiFCwoGjAkFiweECgeECgeDigeECgcDiYcDCYYCiQeDigcDigYCiQcDigcDigcDigeDigeDigcDCYcDCYcDCggECoeECgKCggICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoMDAwUFBQeHh4eHh4aGhoODg4MDAwKCgoICAgGBgYGBgYGBgYGBAYGBgYGBgYKCgoMDAwKCgoKCgoKCgoKCgoGBgYGBgQEBAQGBgYGBgYGBgYICAgICAgKCgoMDAwWFhYeHh4eHh4aGBgODg4MDAwKCgoICAgICAgICAYGBgYGBgYGBgYGBgYGBgYGCAYICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGCAgICAgICAgKCgoMDAwQEBAcHBwcHBweHh4QEBAMDAwKCgoICAgICAgGBgYGBgYGBgYEBAQGBgYICAgMDAwKCgoKCgoMDAwKCgoGBgYGBgYGBAYGBgYGBgYGBgYICAgKCgoMDAwODg4aGhoeHh4eHh4UFBQMDAwKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgeBiYeBiYeBiggBiggCCoiCCoiCCwgCCogCCoiCCoiCCwkCC4mCjAoDDQuEDgyFjw2GDw0FjwuEjoqDjQmCjAkCC4iCCwiCCwgCCogCCoeBigeBiYgCCoiCCwgCCogCCoiCCwiCCwkCi4mDDIqDjYwEjw0GDw2GDwyFDwsEDgoDDIkCjAiCC4iCCwiCCogCCogCCgeBigeBigeBiggCCogCCoiCCwiCCwkCC4mCjAqDjQuEjo0Fjw2GDwyFjwuEDgoDDQmCjAkCC4iCCwiCCogCCogCCoiCCwiCCogCCogBigeBigeBigeBigYCiQiEioeDigaDCQaDCYeDigeECoaDCYcDCYeDigaCiQaCiQeDigYCiQYCiQcDigeDigaCiQcDCYYCiQaDCYeDigeDiggEiokFi4kFCwmGC4kGC4kFC4eECgmGC4iFCoiFCokFiwiFCwkFCwmGDAkFiweECoeDigaDCYcDigcDiYaCiQWCCIeDigcDigYCiQeDigcDCgaDCYeDiggECgaDCYcDCYcDCYgEiwgEioICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgKCgoMDAwUFBQeHhweHh4aGhoODg4MDAwKCgoICAgICAgGBgYGBgYGBAYGBgYICAgKCgoKCgoKCgoKCgoMDAwKCgoICAgGBgYEBAQGBgYGBgYGBgYICAgICAgKCgoMDAwWFhYeHh4cHBwYGBgODg4MDAwKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgKCgoMDAwQEBAcHBwcHBweHh4SEhIMDAwKCgoICAgICAgGBgYGBgYGBgYEBAQICAgKCgoKCgoKCgoKCgoKCgoKCgoICAgGBgYGBAYGBgYGBgYICAgICAgKCgoMDAwODg4aGhoeHh4eHh4UFBQMDAwKCgoICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgOAhIOAhIOAhIOAhIOBBIOBBQQBBQOAhIOAhIOBBQQBBQQBBYSBBYSBhgWCBoaDBwaDBwaDBwWCBoSBhgSBBYQBBYQBBQQBBQOBBQOAhIOAhIOAhIOBBIOBBQOAhIOAhQQBBQQBBQQBBYSBhYUBhoYChwaDBwaDBwYChwUCBoSBhgQBBYQBBQQBBQOBBQOBBIOAhIOAhIOAhIOAhIOAhIOBBQQBBQQBBQQBBYSBBYUBhgWCBoYDBwaDBwaDBwWCBoSBhgSBBYQBBYQBBQOBBQOBBIOAhIQBBQOBBQOAhIOAhIOAhIOAhIOAhIaDCYiEioeDigcDiYaDCQcDCYeDigcDCYaDCYeDigaCiQWCCIcDigYCiIWCCIaDCYcDigaCiQcDCYYCiQYCiQcDCYcDCYgEiokFCwiEiokFCwiFCwkFC4iFCwkFiwgEioeECoiFCwiEioiFCwkFi4kFiwgECocDigaDCYcDiYcDCYYCiQWCCIcDigaCiQWCCIcDigaDCYaDCYeDiggECgYCiQeDigcDiYgECogEioICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICggKCgoMDgwWFhYeHh4eHh4aGhoODg4MDAwKCgoICAgIBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoKCgoICAgGBgYGBAQGBgYGBgYGBgYICAgKCgoKCgoMDAwWFhYeHh4eHh4aGhoODg4MDAwKCgoICAgICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgGCAYGBgYGBgYGBgYGBggGBggICAgICAgICAgKCgoMDAwSEhIeHh4cHBweHh4SEhIMDAwKCgoICAgICAgGBgYGBgYGBgYEBAQGBgYICAgKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYIBgYICAgKCgoMDAwODg4aGhoeHh4eHh4WFhYMDgwKCgoICggICAgICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgCAgICAgICAgICAgIAAgIAAgICAgICAgIAAgIAAgACAgICAgICAgICAgIEBAQEBgQGBgYGBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBgYGBgYGBgYEBAQCBAICAgICAgICAgICAgIAAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYGBgYEBgQEBAQCBAICAgICAgICAgICAgACAgICAgICAgICAgICAgICAgIAAAICAgICAgIcDiYiEiwcDiYcDiYaDCYaDCYcDCYcDCYYCiYcDCYYCiISBh4aCiQWCiIWCCIaDCYcDigYCiQYCiQWCCIaCiQcDigYCiQgEioiFCwgEioiFCwgEiokFC4kFCwiFCwgECgcDCYiEiwgEiogEioiFCwiFCogECocDCYaCiYcDCYcDCYYCiQWCCIaDCYWCCIUBiAaDCYaCiYaDCYcDCYeDigYCiYgECgcDiYgECogEiwICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgKCgoKCgoMDgwWFhYeHh4gICAaGhoMDAwKCgoICAgICAgGBgYGBgYGBgYEBAQEBAQGBgYICAgKCgoKCgoKCgoKCgoICAgGBgYGBgYEBAQGBgYGBgYGBgYICAgICAgKCgoMDAwUFBQgICAeHh4aGhoODg4MDAwKCgoKCAgICAgICAgIBgYGBgYGBgYGBgYGBgYGBgYICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoMDAwSEhIeHh4eHh4eHh4QEBAMDAwKCgoICAgICAgGBgYGBgYGBgYEBAQEBAQGBgYKCgoKCgoKCgoKCgoICAgGBgYEBAQEBAQGBgYGBgYGBgYICAgICAgKCgoMDAwaGhogICAeHh4WFhYMDgwKCgoKCgoICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgGBgYGBgYEBgQGBgYGBgYEBgQEBAQGBgYGBgYGBgYGCAYICAgKDAoSEhISEhIODg4KCgoICAgICAgICAgGCAgGBgYGBgYGBgYICAgICAgGCAYGBgYGBgYICAgICAgICAgICggKCgoQEBASFBIQEBAKCgoICAgGCAYGBgYGBgYEBgQEBAQGBgQGBgYGCAgICAgGBgYGBgYGBgYGCAgICAgICAgICAgKCgoODg4SEhISEhIKDAoICAgGCAYGBgYGBgYGBgYEBAQEBgQGBgYGCAYICAgGCAYGBgYGBgYGBgYICAgeDigkFCwaDCYaDCYaDCQYCiQaDCYaDCYWCCIYCiQYCiIQBB4YCiIWCCIWCCIaDCYaDCYYCiQWCCIUBiAaCiQcDigYCCIgEioiFCwgEiogECoeECgiFCweECogECoeDigaCiQgECggEiogECoiFCwgECoeECgaDCYYCiQaDCYcDCYYCCIWCCIYCiQUBiAUCCAaCiYWCCIYCiQcDCYcDiYaCiQeECgcDCYiEiogEioICAgGBgYGBgYGBgYGBgYGBggGCAgICAgICAgICAgKCgoKCgoMDAwWFhYeHh4gICAaGhoODgwKCgoICAgICAgICAgGBgYGBgYEBAQEBAQGBgYICAgKCgoKCgoKCgoKCgoKCgoGBgYEBAQEBAQGBgYGBgYGBgYICAgICAgKCgoMDAwUFBQgICAeHh4aGhoODg4KDAwKCgoKCgoICAgICAgGCAYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgGBgYGBgYGBgYGBgYGCAgGCAgICAgICAgKCgoKCgoMDAwSEBIcHBweHh4eHh4QEBAMDAwKCgoICAgICAgGBgYGBgYEBAQEBAQGBAQICAgKCgoKCgoKCgoKCgoICAgGBgYEBAQEBAQGBgYGBgYICAgICAgICAgKCgoODgwaGhogICAeHh4WFhYMDAwKCgoKCgoICAgICAgICAgGCAgGBggGBgYGBgYGBgYGBgYICAgICAgGBggGCAYGBgYGBgYGBgYGCAYGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoMCgwSEhISEhIMDAwKCgoKCgoICAgICAgGBgYGBgYGBgYGCAYICAgICAgGBgYGBgYGBgYGBggICAgICAgKCgoKCgoODg4UFBQQEBAKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoMDAwSEhISEhIKCgwKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYGCAgICAgGBgYGBgYGBgYGCAYICAgeECgkFCwYDCQaDCYaDCYYCCIaDCYaDCYWCCIYCiQYCiQQBBwWCCIWCCIUBiAYCiQaDCQUCCIUCCIUBiAaDCYcDCYWCCIeECoiEioeECgeDigcDCYeECgeECogECgcDiYYCiIeDiggECoeECggECoeDigcDigYCiQWCCIYCiQaDCQWCCIWCCIWCCISBh4WCCIaCiQWCCIYCiQcDCYaDCYYCiQeDigYCiQiEiogEioICAgICAgGBgYGBgYGBgYGBgYGCAYICAYICAgICAgKCAoKCgoMDAwUFBQeHh4eHh4aGhoODg4MDAwKCgoICAgGBgYGBgYGBgYEBAQEBAQGBgYICAgKCgoKCgoKCgoKCgoKCgoGBgYEBAQEBAQGBgYGBgYGBgYICAgICAgKCgoMDAwUFBQeHh4eHh4aGBoODg4KDAwKCgoICAgICAgICAgICAgGCAgGBggGBgYGBgYGBgYICAgICAgICAgGBgYGBgYGBgYGBgYGCAYGCAYICAYICAgICAgKCgoMDAwQEBIcHBwcHhweHh4QEBAMDAwKCgoICAgICAgGBgYGBgYGBgYEBAQGBgYICAgKCgoKCgoKCgoKCgoICAgGBgYEBAQEBAQGBgYGBgYGBgYICAgKCgoMDAwODg4aGhoeHh4eHh4UFBQMDAwKCgoKCAoICAgICAgICAYGCAYGBgYGBgYGBgYGBgYICAgICAgICAgGBgYGBgYGBgYEBgQEBAQGBgYGBgYGBgYEBgQEBAQGBgYGBgYICAgKCgoMDAwUFBQSEhIMDAwKCgoICAgICAgICAgGBgYGBgYGBgYGCAYICAgICAgGBgYGBgYGBgYGBgYICAgICAgICgoKCgoODg4UFBQSEhIMDAwKCgoICAgGBgYGBgYEBAQGBgQGBgYGBgYGBgYICAgGCAYGBgYGBgYGBgYICAgICAgICAgKCgoMDAwSEhIUFBQMDAwKCgoICAgGBgYGBgYEBAQEBgQGBgYGBgYGBgYGBgYGBgYEBgYGBgYGBgYGBgYeDigiEiwYCiQYCiQaDCYWCCIaDCYaCiQYCiIWCCIYCiIOBBoWCCAUCCASBiAWCCIYCiQSBiAUBiASBh4aDCYcDCYWCCIcDCYgECgcDigcDCYcDCYaDCYeDigeDigcDigUBiAcDCYeECgeDigeDigcDCYcDCYWCCIUBiAYCCIaCiQUBiAUBiAWCCIQBBwWCCAWCCIWCCAYCiQaDCYaDCYYCCIcDigWCCIgECoeECgKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAoKCgoMDAwUFBQeHh4eHh4aGhoODg4MDAwKCgoICAgGBgYGBgYGBgYEBAQEBAQGBgYKCgoMDAwKCgoKCgoKCgoKCgoICAYGBgYEBAQGBgYGBgYGBgYICAgICAgKCgoMDAwWFhYgICAeHh4YGBgODg4KCgoKCgoICAgICAgICAYGBgYGBgYGBgYGBgYGBgYGCAYICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgKCgoKDAwQEBAcHBwcHBweHh4QEBAMDAwKCgoICAgGBgYGBgYGBgYGBgYEBAQGBgYICAgMDAwKCgoKCgoMDAoKCgoGBgYEBAQEBAQGBgYGBgYGBgYICAgKCgoMDAwODg4aGhoeHh4gICAUFBQMDAwKCgoICAoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgGBgYGBgYGBgYGBgYGBgQGBAQGBgYGBgYGBgQEBAQEBAQGBgYGBgYICAgKCgoODg4WFhYQEBAKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYICAYICAgGBgYGBgYGBgYGBgYGBgYIBggICAgICAoKCgoMDAwSEhIUFhYODg4KCgoICAgGBgYGBgYEBAQEBAQGBgQGBgYGBgYICAgICAYGBgYGBgYGBgYGBgYICAgICAoKCgoKCgoQEBAWFhYODg4KCgoICAgGBgYGBgYEBAQEBAQGBgQGBgYGBgYGBgYGBgYEBAQGBgYGBgYGBgYcDCYgEioYCiQaCiQaDCYUBiAaDCYYCiQWCCIUBiAUBiAKAhoUBh4UBiAQBB4UCCIWCCISBh4SBh4SBh4cDCYaDCQUBiAaDCYeDigcDigaDCYaCiQaCiQeDigaDCYcDCYUBiAaDCQcDiYeDigcDCYaDCYaDCYUBiAUBiAWCCIaCiQSBiASBh4UBiAMBBoUBiAUBiAUCCAWCCIaCiQaCiQWCCIcDCYWCCIgECgcDiYKCAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCAoKCgoMDAwUFBQeHh4eHh4aGhoODg4MDAwKCgoICAgICAgGBgYGBgYGBAYGBAQICAgKCgoMDAwKCgoKCgoMDAwKCgoICAgGBgYEBAQGBgYGBgYGBgYICAgICAgKCgoMDAwWFhYgICAeHh4YGBgMDAwMCgoKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgKCgoMDAwQEBAcHBwcHBweHh4SEhIMDAwKCgoICAgICAgGBgYGBgYGBgYEBAQGBgYICAgKCgoKDAoKCgoMDAwKCgoICAgGBAQGBAYGBgYGBgYICAgICAgKCgoMDAwODg4aGhoeHh4eHh4UFBIMDAwKCgoKCAoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgQGBgYGBgYICAgKCgoSEhIWFhYODg4KCgoKCgoICAgICAgGBgYGBgYGBgYGBgYICAgICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoSEhIWGBYQEBAKCgoGBgYGBgYGBgYGBgQGBgYGBgYGBgYGBgYICAgICAgGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoODg4WFhYSEhIKCgoICAgGBgYGBgYGBgQGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYaCiYgECoYCiQYCiQcDiYUBiAYCiQWCCIUCCAUBiASBh4KAhgQBh4UBiAOBBwSBiAUBiASBh4SBh4UBiAcDCYaCiQWCCIaDCYeDigcDCYaCiQWCCAWCCIgECoYCiQaDCYUCCAaCiQaDCYcDiYaDCYaDCYaDCYUBiASBiAUBiAWCCIQBh4SBh4UBiAIAhgSBh4SBiAUBiAUCCIYCiIWCCIaCiQcDCYWCCIeECgcDiYICAgICAgGBgYGBgYGBgYGBgYGBgYGCAgICAgICAgICAgKCgoMDAwSEhIcHBweHh4aGhoODg4MDAwKCgoICAgICAgGBgYGBgYGBgYGBgYICAgKCgoKCgoKCgoKCgoKCgoKCgoICAoGBgYEBAQGBgYGBgYGBgYICAgKCgoKCgoMDAwWFhYeHh4cHBwWFhYODg4MDAwKCgoICAgICAgIBggGBgYGBgYGBgYGBgYGBgYIBggICAgICAgICAgGCAYGBgYGBgYGBgYGBgYGBggICAgICAgICAgKCgoMDAwQEBAaGhocHBweHh4SEhIMDAwKCgoKCgoICAgGBgYGBgYGBgYEBAQIBggICgoKCgoKCgoKCgoKCgoKCgoICAgGBgYGBgYGBgYGBgYICAgICAgKCgoMDAwODg4aGhoeHh4cHBwSEhIMDAwKCgoICAgICAgICAgGCAgGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoUFBQWFhYMDAwKCgoKCAoICAgGBgYGBgYGBgYGBgYGBgYGBggICAgICAgGBggGBgYGBgYGBgYGBgYGCAYICAgKCgoKCgoODg4YGBoSEhIKCgoIBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgGBggGBgYGBgYGBgYGBgYGBgYICAgKCgoKCgoMDAwWFhYUFBQKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBggGBgYGBgYGBgYGBgYGBggaDCQgECoaCiQYCiIcDCYUBiAWCCIWCCASBiASBh4SBh4MAhoOBBwUBiAOBBwQBh4UBiASBh4SBB4SBiAaDCYaCiQWCCIYCiQcDigcDCYYCCIUBiAWCCIiEiwaCiYYCiQUCCAYCiQYCiQaDCQYCiQaDCYaDCYUBiASBh4SBiAUCCAOBBwQBB4SBh4IAhYSBh4SBh4UBiAUCCAWCiIUBiAaCiQaCiQWCiIeECocDCYICAgICAgGCAYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgKCgoMDAwSEhIcHBwcHBweHh4QEBAMDAwKCgoICAgICAgGBgYGBgYGBgYGBgYICAgKCgoKCgoKCgoKCgoKCgoKCgoICAgGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoODg4YGBgeHh4eHh4WFhYODg4MDAwKCgoICAgICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgICAgGBgYGBgYGBgYGBgYGCAYICAgICAgICAgKCgoMDAwODg4aGhocHBweHh4UFBQMDAwKCgoICAgICAgGBgYGBgYGBgYGBgYICAYICAgKCgoKCgoKCgoKCgoKCgoICAgGBgYGBgYGBgYGBgYICAgICAgKCgoMDAwQEBAeHh4cHBwcHBwSEhIMDAwKCgoICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGCAYICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoUFBQSEhIKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgICAgIBggGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoMDAwWFhYSEhIKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoSEhIUFBQKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYICAYGCAgGBgYGBgYGBgYGBgYGBggYCiQgECgaCiQWCCIaCiQSBiAUCCAWBiASBh4QBB4QBB4MAhoOAhoSBB4QBBwQBB4SBh4QBh4SBBwUBiAaDCQYCiQUBiAYCiQcDigaDCQWCCAUBiAWCCIgECwaCiQYCCQUBiAWCCIYCiQYCCIYCiQaDCYaDCQUBiAQBB4QBB4UBh4QBBwQBB4OBBwKAhgQBB4QBB4SBh4UBiAWCCIQBB4YCiQWCCAYCiIgECoaDCYICAgICAgGCAYGCAYGBgYGBgYGBgYGBgYICAgICAgICAgKCgoMDAwSEhIcHBwcHBweHh4QEBAMDAwKCgoICAgICAgGBgYGBgYGBgYICAgICAgICAgKCgoKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYICAgICAgICAgKCgoODg4aGhoeHh4cHBwWFhYMDAwKCgwICAoICAgICAgIBgYGBgYGBgYGBgYGBgYGCAYICAgICAgICAgICAgICAYGBgYGBgYGBgYGBgYGBgYIBgYICAgICAgKCgoMDAwODg4aGhoaGhoeHh4WFhYMDAwKCgoICAgICAgICAgGBgYGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoICAgICAgICAgGBgYGBgYGBgYICAgICAgKCgoMDAwQEBAeHh4cHBwcHBwSEhIMDAwKCgoICAgICAgICAgGBgYGBgYGBgYGBgYGCAYGCAYICAgICAgICAgGCAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgKDAoUFBQODg4KCgoICAgICAgICAYICAgGBgYGBgYGBgYGBgYICAgICAgICAgIBggGBgYGBgYGBgYGBgYICAgICAYICAgKCgoKCgoSEhISEhIKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgICAgGBgYGBgYGBgYGBgYICAgICAYICAgICAgKCgoODg4UFBQKDAoICAgICAgICAgGBgYGBgYGBgYGBgYIBgYICAgGBgYGBgYGBgYGBgYGBgYaCiQeDigWCCIUBiAWCCISBh4UBiASBh4SBB4QBBwQBBwOBBoMAhoSBB4QBBwOBBwSBh4QBB4QBBwUCCAaDCQYCiIUBh4WCCIaDCYYCiQUBiASBh4WCiIgECoYCiQWCCISBiAUCCAYCCIYCCIWCCIaDCYaDCQUBiAQBBwQBB4SBB4OBBwSBB4QBBwKAhgOBBwQBBwQBB4SBiAWCCAQBh4UCCAUCCAWCCIcDCgcDigICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgKCgoMDAwUFBQaGhocHBwcHBwQEBAMDAwKCgoICAgICAgGBgYGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoICggICAgGBgYGBgYGBgYICAgICAgICAgKCgoODg4YGBgeHh4aGhoWFhYODg4KCgoICgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGCAgICAgICAgICAgGCAYGBgYGBgYGBgYGBgYGBgYGCAgICAgICAgKCgoMDAwQEBAaGhoaGhoeHh4UFBQMDAwKCgoICAgICAgICAgGBgYGBgYGBgYICAgKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYICAgICAgKCgoMDAwQEBAcHBwcHBwaGhoUFBQMDAwKCgoICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgMDAwUFBQODg4ICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYIBggICAgKCgoSEhIUEhQKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYIBgYICAgICAgODg4UFBQMDAwICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYaDCYcDCYUCCIUBiAUBiASBh4SBiAQBB4QBBwOAhoQBBwOBBoMAhoQBB4QBBwOBBwQBB4QBB4OBBwUCCAYCiQWCCIUBiAUBiAaCiQYCiISBiASBh4YCiQeECoYCCIUBiASBh4SBiAWCCAWCCIYCCIaDCYaCiQUBh4QBBwOBBwQBBwOAhoQBBwOBBoMAhoQBBwQBBwQBB4SBh4UBiASBh4SBiAWCCIWCCIaCiQcDigICAgGCAYGBgYGBgYGBgYGBgYGBgYGBgYGCAYICAgICAgKCgoMDAwSEhIaGhoeHh4cHBwQEBAMDAwKCgoICAgICAgICAgGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoICgoICAgGBgYGBgYGCAgICAgICAgICAgKCgoODg4YGBgeHh4aGhoWFhYODg4KCgoICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgGCAYGBgYGBgYGBgYGBgYGBgYGBgYGCAYICAgICAgICAgMDAwQEBAYGBgaGhoeHh4UFBQMDAwKCgoICggICAgICAgGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYICAgICAgICAgKCgoMDAwQEBAcHBwcHBwYGBgSEhIMDAwKCgoICAgICAgGCAYGBgYGBgYGBgYGBgYGBgYGBgYGCAYICAgIBgYGBgYGBgYGBgYGBgYGBggGBgYGBgYGBgYGBgYGBgYICAgICAgICAgMDAwUFBQODg4ICAoGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgIBgYICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoSEhISEhIKCgoICAgICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAoODg4UFBQMDAwICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgGBgYGBgYGBgYGBgYaDCYaCiQWCCISBiAUBiASBh4QBBwQBB4QBBwMAhoOAhoOBBwMAhgQBBwQBBwOBBoOBBwQBB4OBBoUCCAWCCISBiAUBiASBh4YCiQWCCISBh4SBB4aDCYeDigWCCIUBiAQBB4QBh4UBiAUCCAYCCQYCiQYCiQSBh4QBBwOBBoOBBoOAhoOBBwOAhoMAhoQBBwQBBwQBBwSBiASBh4SBB4SBiAWCCIYCiIYCCIaDCQICAgGCAYIBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoMDAwQEBAYGBgcHBwcHBwODg4KCgoICAgICAgICAgICAgGBgYGBgYICAgICAgICgoKCgoKCgoKCgoKCgoKCgoICAgICAgGCAgGBgYGBgYICAgICAgICAgKCgoMDAwYGBgeHh4aGhoUFBQMDg4KCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYIBgYGBgYICAgICAgGCAYGBgYIBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgMDAwODg4WFhYaGhoeHh4SEhIMDAwKCgoICAgICAgICAgGBgYGBgYICAgICAgICAgKCgoKCgoKCgoKCgoICgoICAgICAgGBgYGBgYICAgICAgICAgICAgKCgoODg4cHBwcHBwYGBgQEBAMDAwKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYIBgYGCAYICAgGBgYGBgYGBggGBgYGBgYICAgGBgYGBgYGBgYGBgYICAgICAgICAoKCgoODg4QEBAMDAwKCgoGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgGBgYICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoODg4SEBIMDAwKCgoICAoICAgGBgYGBgYGBgYGBgYGBgYICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYKCgoMDAwQEBAODg4KCgoICAoICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgGBgYGBgYGBgYaDCYYCCQWCiIQBB4SBB4SBh4QBBwOBBwOBBwMAhoOAhoOBBwMAhgOBBwQBBwMAhoOBBwQBBwOAhoUCCAWCCISBh4UBiAQBB4WCCIWCCISBB4SBB4aDCQcDigUBiASBh4QBB4QBB4UBiASBiAWCCIWCCIWCCIQBB4OAhoMAhoOBBwOAhoQBBwMAhoOBBoQBBwQBBwQBBwSBh4SBB4SBB4SBh4SBiAWCCIWCCIYCiQICAgICAgIBggICAgICAgICAYICAYICAYGCAYGBgYICAgKCgoMDAwQEBAYGBgcHBwcHBwODg4MDAwKCgoICAgICAgGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoKCAoICAgICAgGBgYGBgYGBgYICAgICAgICAgKCgoMDAwWFhYeHh4YGBgUFBQODg4KCgoICAgGCAgGBgYGBgYGBgYGBgYGBgYGCAYICAYIBggICAgICAgICAgIBggICAgICAgICAgGCAYGCAYICAYGCAYIBggKCAoMDAwODg4WFhYaGhoeHh4SEhIMDAwMCgoICAgICAgICAgGBgYGBgYGBgYICAYICAgKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYICAgICAgKCgoMDAwODg4cHBwcHBwYGBgQEBIMDAwKCgoICAgGBgYGCAYICAYICAYICAYICAgICAgIBggICAgICAgICAgICAgICAgGBgYGBgYICAgIBggGBgYGBgYGBgYICAgICAgKCgoKCgoODg4ODg4MDAwKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoMDAwQEBAMDAwKCgoKCgoICAgGBgYGBgYGBgYGBgYICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoMDAwODg4ODg4KCgoKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYICAYICAgGBgYGBgYGBgYaDCYWCCIWCCIQBBwQBBwQBB4QBB4OBBwOBBoOBBoOAhoOBBwMAhgOBBwQBBwMAhoQBBwQBBwOAhoUCCAWCCIQBh4UBiAQBB4WBiAUBiAQBB4SBh4aDCQaDCYUBiASBh4QBB4QBBwSBiASBiAUCCIWCCIWCCISBB4MAhoMAhoQBBwOBBoOBBwMAhgQBBwQBBwQBBwQBBwSBh4SBh4SBh4SBB4SBh4WCCIUBiAYCiQICAgICAgICAgICAgICAgICAgICAgICAgGCAgGBgYICAgKCgoMDAwQEBAWFhYeHh4eHh4QEBAMDAwKCgoICAgICAgGBgYGBgYGBgYGBgYIBggICAgKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYICAgICAgKCgoMDAwODg4YGBgeHh4YGBgSEhIMDg4MDAwICAgGBgYICAYICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgGCAYGBgYICAoMDAwODg4UFBQaGhogICAUFBQMDAwMDAwKCgoICAgGBgYGBgYGBgYGBgYGBgYICAgKCAgKCgoKCgoKCgoICAgIBggGBgYGBgYGBgYGBgYICAgICAgKCgoMDAwQEBAeHh4cHBwWFhYQEBAMDAwKCgoICAgGBgYGCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgGBgYGBgYICAgICAgGBgYGBgYGBgYGCAYICAgKCgoKCgoMDAwODg4MDAwKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYGBggICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoMDAwODg4MDAwKCgoKCgoICAgGBgYGBgYGBgYGBgYICAgICAgICAgGBggGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoMDAwODg4MDAwKCgoKCgoICAgGCAYGBgYGBgYGBgYICAgICAgICAgICAgGBgYGBgYGBgYaDCYUBiAWCCIOBBwOBBoQBBwQBB4OBBoMAhoOBBoOAhoMAhoMAhgOBBwQBBwMAhoQBBwQBBwOAhoUCCAWCCASBB4UBiAQBBwUBiAUBiAQBBwSBB4aCiQaCiQSBiASBh4QBBwQBBwSBiAUBiAUCCAWCCIWCCISBh4MAhoMAhoOBBwQBBwQBBwMAhgOBBwQBBwQBBwQBBwSBB4QBh4QBBwQBBwQBh4UBiASBiAYCiQICAgICAgICAgICAgICAgICAgICAgICAgGBgYICAgICAgKCgoMDAwODg4WFhYcHBweHh4SEhIMDAwKCgoICAgGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYICAgKCAoMDAwODg4aGhogICAYGBgSEhIMDAwKCgoICAgGCAgGCAYIBggICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgGBgYICAgICAgICAgKCgoODg4UFBQaGhogICAWFhYMDAwKCgoICAgGBgYGBgYGBgYGBgYGBgYICAgICAgKCAgKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYICAgKCgoMDAwSEhIeHh4cHBwWFhYODg4MDAwKCgoICAgICAgGBgYICAgICAgICAgICAgICAgICAgICAgICAgICAgGCAYGBggGBggGBgYICAgICAgGBgYGBgYGBgYGCAYICAgKCgoKCgoMDAwMDAwMDAwKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoMDAwMDAwKCgoKCgoKCgoICAgGBgYGBgYGBgYGBgYICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoMDAwMDAwMDAwKCgoKCgoICAgGCAYGBgYGBgYGBgYIBggICAgICAgICAgICAgGBgYICAYaCiQUBiAUBiAQBBwMAhoQBBwQBB4OAhoMAhoOBBoMAhoMAhoMAhgOBBoQBBwMAhgOBBwQBBwOAhoUBiAUCCASBiAUBiAOBBwSBh4UBiAOBBwSBB4aCiQWCCISBiAQBB4QBBwOBBwSBh4SBh4UBiAUCCAWCCISBh4MAhoOBBoQBBwQBBwQBBwMAhgQBBwQAhwQBBwQBBwSBB4QBB4QBB4QBBwSBh4UBiAQBB4YCiQICAgICAgICAgICAgICAgICAgIBggIBggGBgYGBgYICAgICAgMDAwODg4WFhYeHh4eHh4SEhIKCgoKCggICAgGBgYGBgYGBgYIBgYICAgICAgICgoICgoICgoICgoKCgoKCgoICAgICAgICAgGBgYGBgYGBgYICAgICAgKCgoODg4cHBweHh4YGBgQEBAMDAwKCgoICAgICAgGBgYGBgYICAgICAgICAgICAgICAgICAgICAgICggICAgICAgICAgICAgICAgICAgIBggGBgYGBgYICAgICAgKCgoMDAwSEhIcHBwgICAWFhYMDAwKCgoICAgGBgYGBgYGBgYGBgYICAgICAgICgoKCgoICgoICgoICgoICgoICAgICAgIBgYGBgYGBgYGBgYICAgKCggKCgoSEhIeHh4cHBwWFhYODg4MDAwICAgICAgGBgYGBgYIBggIBggICAgICAgICAgICAgICAgICAgKCgoICAgICAgICAgGBgYICAgICAgGCAYGBgYGBgYICAgICAgKCgoKCgoMDAwMDA4MDAwKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgMDAwMDAwMDAwKCgoKCgoKCgoICAgGBgYGBgYGBgYICAYICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoMDAwMDA4MDAwKCgoKCgoICAgICAgGBgYGBgYGCAYICAYICAgICAgICAgICAgGBgYICAgWCCASBh4SBh4QBBwMAhgQBBwQBB4MAhgOAhoMAhoMAhoOAhoMAhgOBBoQBB4MAhgOBBwQBB4MAhoUBiAUBiASBh4SBh4OBBwQBB4SBh4OBBoSBBwYCiIWCCASBh4QBB4QBBwOBBwSBiASBh4UBiAUBiAWCCASBh4MAhoOBBoQBBwOBBwOBBoKAhgQBBwOBBwQBBwQBBwSBh4QBBwQBB4OAhwQBB4SBh4QBBwWCCIICAgICAgICAgICAgICAgICAgICAgICAgGCAYGBgYICAgKCgoMDAwMDAwUFBQeHh4gIB4SEhIKCgoKCAgICAgGBgYGBgYGBgYGBgYICAgICAgICAgICAoICAoICAgICAoKCgoICggICAgICAgGBgYGBgYGBgYICAgICAgKCgoODg4cHBweHh4YGBgODg4MDAwKCgoICAgGCAYGBgYICAgICAgICAgICAgICAgICAgICAgICAgICgoICAgICAgICAgICAgICAgICAgICAgICAgGBgYICAgKCgoKCgoMDAwQEBAcHBwgICAYGBgMDAwKCgoICAgICAgGBgYGBgYGBgYICAgICAgICAgICAoICAoICAoICAoICAgICAgICAgGBgYGBgYGBgYGBgYICAgKCAgKCgoSEhIgICAcHBwSEhIMDAwMDAwKCgoICAgGBgYGCAYICAgICAgICAgICAgICAgICAgICAgICAgKCgoKCgoICAgICAgGBgYGBgYICAgICAgGBgYGBgYGBgYICAgKCgoQEBAUFBQQEBAQEBAMDAwICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGCAgICAgKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYKCgoODg4QEBAQEBAUFBQODg4KCAoICAgGBgYGBgYGBgYICAgICAgICAgGCAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgMDAwQEBAQEBAUFBQQEBAKCgoICAgGBgYGBgYGBgYICAgICAgICAgICAgICAgICAgGBgYICAgUBh4QBB4QBBwQBBwKAhgOAhoQBBwMAhoKAhgKAhgOAhoOAhoMAhgOAhoQBB4MBBoOBBwSBB4OBBoUCCAUBiAQBB4SBh4QBBwQBB4SBh4OBBoSBBwYCCIUBiASBh4QBB4OBBwOBBwUBiASBh4SBiASBiAWCCASBh4OAhoQBBwQBBwQBBwOBBoKAhgQBBwOBBwQBBwQBBwSBiAQBBwQBBwMAhgQBBwQBB4QBBwUCCAICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoMDAwSEhIeHh4eHh4SEhIKCgoICAgICAgGBgYGBgYICAgICAgICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgICAgGBgYGBgYGBgYICAgICAgKCgoODg4cHBweHh4WFhYODg4MDAwKCgoKCgoICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoMDAwODg4aGhogICAWFhYMDAwKCgoICAgGCAgGBgYICAgICAgICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgGBgYGBgYICAgICAgKCgoSEhIeICAcHBwQEBAMDAwKCgoKCggICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoKCgoKCgoKCgoICAgGBgYGBgYICAgICAgGBgYGBgYGBgYICAgICAgMDAwWFhYSEhISEhIQEBAICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYKCgoSEhISEhISEhIUFBQMDAwICAgICAgGBgYGBgYGCAgICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgQEBASEhISEhIWFhYMDAwICAgICAgGBgYGBgYGBgYICAgICAgICAgICAgICAgICAgGBggICAgUBh4QBBwOBBoOBBoKAhYMAhoQBBwMAhoIAhgKAhgOAhoMAhoMAhoOAhoQBBwOBBoQBBwSBB4OBBoWCCASBiAQBB4SBh4QBBwQBB4SBB4OAhoSBh4WCCISBh4SBh4QBB4OBBwQBBwUBiASBh4SBh4SBh4WCCAUBiAQBBwQBBwQBBwQBBwOAhoKAhgQBBwQBBwQBBwQBBwSBiASBB4QBBwKAhgQBBwQBBwQBBwUCCAICgoICAgICAgICAgICAgICAgICAgICAgIBggICAgICAgICAgKCgoMDAwSEhIeIB4cHBwQEBAMDAwKCgoICAgGBgYGBgYICAgICAgICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgIBggGBgYGBgYKCggKCgoODg4aGhogHh4UFBQMDAwKCgoICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoICAgICAgICAgICAgICAgICAgICAgGBggICAgICAgICAgKCgoMDAwODg4cHBweHh4UFBQMDAwKCgoICAgGBgYGBgYICAgICAgICAgICAgICAgKCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgGBgYGBgYICAgKCgoMDAwQEBAcHBwcHBwODg4MDAwKCgoICAgICAgICAgIBggICAgICAgICAgICAgICAgICAgICAgKCgoKCgoKCgoKCgoICAgGBgYGBgYICAgICAgICAgGBgYGBgYICAgICAgICAgMDAwSEhIODg4MDg4ICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYKCgoODg4QEBASEhIKCgoICAgICAgICAgGBgYGBgYICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgMDg4ODg4SEhIMDAwICAgICAgICAgGBgYGBgYICAgICAgICAgICAgICAgICAgGCAYIBggICAgSBiAQBBwOAhoOBBoKAhgMAhoQBBwMAhgKAhgKAhgMAhoMAhoMAhoMAhoQBBwOBBoQBB4SBB4QBBwWCCISBh4QBB4SBh4QBBwQBh4QBBwOBBoSBh4WCCIQBB4SBB4QBB4QBBwQBBwUBiASBiASBh4SBh4UCCAUBiAQBBwQBBwQBBwOBBwOAhoMAhgQBBwQBBwQBBwQBBwUBiAQBB4QBBwKAhgOBBwOBBwQBBwUBiAKCgoICAoICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoSEhIgICAcHBwQEBAKCgwKCgoICAgGBgYICAgIBggGBgYICAgICAgICAgKCggKCgoKCgoKCgoICAgICAgICAgICAYGCAgICAgGBgYICAgICgoKCgoODg4YGBggICAWFhYMDAwKCgoICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICgoKCgoICAoICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoODg4eHh4eHh4UFBQMDAwKCgoICAgICAgIBgYICAgGBgYICAgICAgICAgICAgKCgoKCgoKCggICAgICAgICAgGBgYIBggICAgGBgYICAgKCgoKCgwQEBAcHBweHh4QEBAKCgoKCgoICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoKCgoKCgoICAoGBgYEBAYGBgYICAgICAgIBggGBgYICAgKCgoMDAwMDAwKCgoMDAwMDAwMDAwICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYKCgoMDAwMDAwMDAwMCgoMDAwMDAwKCgoGBgYGBgYICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgMDAwMDAwMDAwKCgoMDAwMDAwKCgoICAgGBgYIBggICAgICAoKCgoICAoICAgGBgYIBggKCAoQBh4QBBwMAhoOBBoKAhgOBBoSBBwMAhgKAhgKAhgOAhoOAhoMAhoMAhoQBBwOBBoQBB4QBB4QBBwWCCISBB4SBB4SBh4QBB4QBh4QBBwOBBoSBh4WCCISBB4SBh4QBBwQBBwQBB4UBiASBiASBiASBh4UBiASBh4OBBwQBBwQBBwOBBwMAhoMAhgSBBwQBBwQBBwQBBwUBiAQBB4QBBwMAhgQBBwOBBwQBBwSBiAKCgoKCgoICAgICAgICAgICAgICAgICAgICAgIBggICAgICAgICAgMDAwSEhIeHh4cHBwQEBAKCgoICAgICAgICAgICAgICAgGBgYICAgICAgICAgICgoKCgoKCgoKCgoICAgICAgICAgGBgYGBgYICAgIBggICAgICAgKCgoODg4YGBggICAWFhYMDAwKCgoICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICgoKCgoKCgoKCgoKCggICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoODg4cHBweHh4UFBQMDAwKCgoICAgICAgICAgICAgGBgYICAgICAgICAgICAgKCgoKCgoICgoICAgICAgICAgGBgYICAgICAgICAgICAgICAgKCgoQEBAcHBweHh4QEBAMDAwICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoKCgoKDAoKCgoKCgoGBgYEBAQGBgYKCAoICAgGBgYGBgYICAgKCgoMDAwSEhIWFhYUFBQQEBAODg4ICAgGBgYGBgYGBgYGBAYGBgYGBgYGBgYGBgYICAgKCgoICAgGBgYGBgYGBgQGBgYGBgYGBgYGBgYKCgoODg4QEBAUFBQWFhYQEBAKCgoICAoICAgGBgYGBgYICAgICAgICAgGBgYGBgYGBgYGBgYGBAYGBgYGBgYGBgYICAoODg4QEBAUFBQWFhYSEhIMDAwKCgoICAgGBgYGBgYICAgKCgoKCgoKCgoICAgGBgYIBggKCAoOBBwQBBwOAhoOAhoKAhgOBBoSBBwKAhgKAhgMAhgOBBwOBBwOAhoMAhoQBBwOBBwQBh4QBBwOBBwWCCIQBB4QBBwSBh4QBBwQBB4QBBwOBBwSBh4WCCISBiASBB4QBBwQBBwSBB4UBiASBiASBiASBB4UBiASBh4OBBwOBBwQBBwOBBwMAhoOAhoSBBwQBBwQBBwQBBwUBiAQBB4QBBwOAhoQBBwOBBwQBBwSBh4MCgoKCgoKCgoKCAgICAgICAgICAgICAgICAgIBggICAgICAgKCgoMDAwQEBIcHBwcGhwQEBAKCgoICAgICAgGBgYICAgICAgICAYICAgICAgICAgKCgoKCgoKCgoKCgoICAgICAgICAgICAgICAgICAgGBgYGBgYICAgKCgoODg4WFhgeHh4UFBQMDAwKCgoICAgICAgGBggICAgICAgICAgICAgICAgICAgKCAgKCgoKCgoMDAoKCgoKCgoKCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoODg4aGhoeHh4UFBQMDAwICAoICAgGBgYGBgYICAgIBgYICAgICAgICAgICAgKCgoKCgoKCgoICAgICAgICAgICAYICAgICAgGBgYICAgICAgKCgoQEBAcHBwcHBwQDhAMDAwICAgICAgICAgICAgICAgICAgICAgICAgICAgKCAgKCgoKCgoMCgoMDAwKCgoICAgGBgYGBgYGBgYICAgGBgYGBgYGBgYICAgICAgICAgKCgoQEBIWFhYSEhAKCgoGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgMDAoUFBQWFhYQEBAKCgoICAgICAgGBgYGBgYGBgYICAgICAoICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYKCgoSEhAWFhYQEBIKCgoICAgICAgICAgGBgYGBgYGBgYICAoKCgoKCgoICAgGBgYIBggKCgoOBBwQBBwOBBoOBBoMAhgOBBoQBBwMAhgKAhgMAhoQBBwOBBwOAhoOBBoQBBwQBBwQBB4QBBwOBBwWCCIQBB4QBBwQBh4QBBwSBB4SBh4OBBwSBh4WCCIUBiASBB4QBBwQBBwSBB4UBiAQBh4SBiAQBB4UCCAUBiAOBBwQBBwSBB4QBBwMAhoOAhoSBB4QBBwQBBwQBBwSBiASBh4QBBwOAhoQBB4QBBwQBBwSBB4MCgoKCgoKCgoICAgICAgICAgICAgICAgICAgIBggGBgYICAgMDAwMDAwQEBAaGhocHBwQEBAKCgoICAoICAgGBgYICAgICAgICAgICAgICAgICAgKCgoKCgoKCgoKCgoICAgICAgICAgICAgICAgICAgGBgYGBgYICAgKCgoMDAwYGBgcHBwSEhIMDAwMDAwKCgoICAgGBggICAgICAgICAgICAgICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoODg4WFhYcHBwUFBQMDAwKCgoICAgGBgYGCAgICAgICAgICAgICAgICAgKCAoKCgoKCgoKCgoICAgICAgICAgICAgICAgICAgGBgYICAgICAoKCgoQEBAcHBwaGhoODg4KDAoICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoKCgoMCgoKCgoKCgoICAgGBgYEBAYGBgYICAgGBgYGBgYGBgYICAgICAgMDAwKCgoKCgoKCgoKCgoICAgGBgYGBAQGBgYGBgYGBgYGBgYGBgYGBgYIBggICAoKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgQGBgYKCgoKCgoKCgoKCgoMDAwMDAwICAgGBgYGBgYGBgYGBgYICAgICgoIBggGBgYGBgYGBgYGBgYGBgYGBgYGBAQGBgYICAgKCgoKCgoKCgoKCgoMDAwICAgICAgGBgYGBgYGBgYICAgKCgoKCgoICAgGBgYGBgYKCAoQBh4OBBwOBBoQBBoMAhgOBBwQBBwMAhgMAhoOBBoQBBwOBBwMAhoQBBwQBB4QBBwQBB4QBBwQBBwUCCAQBB4OBBwQBh4QBBwSBh4SBh4OBBwSBh4YCCISBiASBh4QBB4QBBwSBB4SBh4QBB4SBh4QBB4UBiAUBiAQBB4QBB4SBh4QBB4MAhoOBBoSBh4QBBwQBB4QBBwSBiASBiAQBBwOAhoQBB4QBB4QBBwSBh4KDAoKCgoKCgoICAgICAgICAgICAgICAgICAgICAgICAgKCgoMDAwODg4QEBAaGhoaGhoQEBAKCgoICAgICAgICAgICAgICAgICAgICAgKCggKCgoKCgoKCgoKCgwKCgoKCgoICAgICAgICAgICAgICAgICAgICAYICAgKCgoODg4YGBgcHBwSEhIODg4MDAwKCgoICAgIBggICAgICAgICAgICAgICAgICAgKCgoKCgoKCgoKDAwKCgoKCgoICggICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoODg4UFBQcHBwUFBQMDAwICAoICAgICAYICAgICAgICAgICAgKCAgKCAoKCgoKCgoKCgoKCgoKCgoKCggICAgICAgICAgICAgICAgIBgYICAgKCgoQEBAaGhoYGBgODg4KCgoICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoKCgoKDAoKCgoICggICAgGBgYEBAQEBAQICAgGBgYGBgYEBAQGBgYICAgQEA4SEhIODg4MDAwKCgoICAgICAgGBgYGBgQEBAQEBAQEBAQGBgYGBgYICAgKCgoKCgoICAgGBgYEBgQEBAQEBAQEBAQGBgYGBgYICAgICAgKCgoMDgwQEBASEhIMDAwGBgYGBgYEBAYGBgYGBgYICAgKCgoICAgGBgYGBgYEBAQEBAQEBAQGBgQGBgYICAgICAgKCgoMDAwODg4SEhIQEA4ICAgGBgYEBAQGBgYGBgYICAgKCgoKCgoICAgGBgYGBgYICAgSBh4OBBwOBBoOBBoMAhgOBBwQBB4KAhgOAhoOBBoQBBwOBBwMBBoQBBwSBh4QBBwSBh4QBBwQBBwUBiAQBB4OBBwQBh4QBBwSBiASBiAOBBwUBh4YCiQUBiASBiAQBB4QBB4QBB4SBh4QBB4SBh4QBB4UBiAUBiAQBB4QBB4SBh4SBB4OBBoOBBoSBh4QBB4QBB4QBB4UCCASBh4QBBwOBBoSBB4SBB4QBBwSBh4MCgoKCgoKCgoICAgICAgICAgICAgICAgICAgICAgICAgKCgoMDAwODg4SEhIaGhoaGhoQEBAKCgoICAgICAgICAgKCAoICAgICAgICAgICAgKCAgKCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgICAgICAgICAYICAgKCgoODg4WFhYcHBwUFBQODg4ODg4KCgoICAgICAgICAgICAgICAgICAgICAgICAgKCgoKCgoKCgoMDAoKCgoKCgoICggICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoODg4UFBQYGBgSEhIKCgoICAgICAgICAgKCAoICAgICAgICAgICggICAgKCgoKCgoKCgoKCgoKCAgICAgICAgICAgICAgKCAoICAgICAgICAgKCgoODg4WFhYWFhYODg4KCgoICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoKCgoMCgoKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYEBAQGBgYGBgYICAgMDAwQEBAMDAwKCgoICAgICAgICAgGBgYGBAQEBAQEBAQGBAYGBgYICAgKCgoKCgoICAgGBgYEBAQEBAQEBAQGBgYICAgICAgICAgKCgoKCgoODg4QEBAKCgoIBggGBgYGBgQEBAQGBgYGBgYICAgKCgoICAgGBgYGBAYEBAQEBAQGBAQGBgYICAYICAgICAgKCgoMDAwQEBAMDAwICAgGBgYGBgYEBAQGBgYGBgYICAgICAgKCgoICAgGBgYGBgYICAgQBB4OBBwOBBwOBBoMAhgQBBwSBB4KAhgOAhoOBBoQBBwOBBwOAhoQBBwSBh4QBB4SBiAQBB4QBB4UBiAQBB4OBBwSBh4QBBwUBiASBiAOBBwUBh4YCiQWCCIUBiAQBB4QBB4QBh4SBh4QBB4QBh4QBB4UBiAUBiAQBB4SBB4SBh4SBB4OAhoOBBwSBh4QBB4QBh4QBh4WCCISBh4QBB4OBBoSBh4SBB4QBBwSBB4KCgoKCgoKCgoKCgoKCgoICAgICAgKCggICAgICAgICAgKDAoODg4ODg4SEhIYGBgUFBQODg4KCgoICAgICAgICAgKCAoICAgICAgICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgKCAoICAgICAgICAgKCgoMDAwUFBQaGhoUFBQODg4ODg4MDAwICAgICAgICAgICAgICAgICAgICAgICggKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgICggICAgICAgICAgICAgICAgKCgoMDAwSEBAUFBQODg4ICgoICAgICAgICAgKCAgICAgICAgICAoICAgICAgKCgoKCgoKCgoKDAoKCgoICAgICAgICAgICAgKCAgICAgICAgICAgICAgMDAwSEhISEhIODg4KCgoICAgICAgICAgICAgICAgKCggICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgMDAwKCgoICAgGBgYGBgYICAgICAgGBgYGBgYGBgYGBgYICAgICgoKCgoICAgGBgYGBgYGBgYGBgYICAgICAgGBgYGBgYICAgMDAwMDAwGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICgoICAgGBgYGBgYGBgYGBgYICAgICAgGBgYGBgYICAgKCgoMDAwICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYIBggICAgKCgoICAgGBgYGBgYICAgQBBwOBBwOBBwOBBwMAhgQBB4SBB4MAhgOBBoOBBoQBB4OBBwOAhoQBBwQBh4QBh4UBiAQBB4SBh4UCCAQBB4QBBwSBB4OBBwUBiASBiAQBBwUCCAaCiQWCCIUBiAQBB4QBB4SBiASBh4QBB4SBh4QBh4UBiAUCCASBiASBiASBiAQBB4MAhoOBBwSBh4QBB4SBh4SBh4WCCIUBiAQBBwQBBwSBh4SBh4QBBwQBBwKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgICAgKCgoODg4ODg4QEBAQEhAQEBAODgwICAgICAgICAgKCgoICgoICAgICAgKCgoICAoKCgoMDAwKCgoKCgoMDAwMDAwICAgICAgICAgICAgICAgICAgICAgICAgICAgMDAwQEBAUFBQSEhIODg4ODg4MDAwKCgoICAgICAgICAgKCgoICggKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgICAgKCgoMDAwQDhAQEBAMDAwICAgICAgICAgICAgICggICAgICAgKCgoICAoKCgoMDAwKCgoKCgoMDAwKCgoICAoKCgoICAgICAgICAgICAgICAgICAgICAgKCgoODg4QEBAMDA4KCgoICAgICAgICAgICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgGBgYIBggICAYICAgGBgYGBgYGBgYGBgYICAgKCgoODg4ODg4ICAgKCgoICAgGBgYEBAYGBgYICAgICAgICAgICAgGBgYICAgICAgKCgoICAgGBgYICAgICAgICAgICAgGBgYEBAYGBggKCgoICAgKCgoODg4MDAwKCgoGBgYGBgYGBgYGBgYGBgYICAgICAgICAgGBgYICAgICAgICAgICAgGBgYEBAYGBgYICAgKCgoICAgODg4ODg4KCgoICAgGBgYGBgYGBgYGBgYICAgICAgICgoICAgGBgYGBgYICAgQBBwOBBwOBBwOBBwMAhgQBB4QBBwOAhoOBBoOBBwQBB4QBBwOBBwQBBwSBh4SBh4UBiASBh4SBiAUCCASBh4QBB4SBB4OBBwUBiAUBiAQBB4UCCAYCiQUCCAUCCAQBBwQBBwSBh4SBh4QBBwSBh4SBh4SBiAWCCIWCCIUBiASBiAQBB4OBBoQBBwSBh4SBh4UBiASBiAWCCIUCCAQBB4QBBwUBiASBh4QBBwQBBwKCgoKCgoKCgoKCgoMDAwKCgoKCgoKCgoKCgoKCgoICAgICAgMCgoMDAwQEBASEhISEhISEhIQEBAMDAwICAoKCgoICAgICAgICAgKCgoMCgwMDAwMDAwKCgoKCgoMDAwMDAwKCgoKCgoICggICAgICAgKCgoICAgICAgKDAoODg4QEBAQEBAQEBAMDAwMDAwKCgoICAgKCAgICAgKCgoKCgoKCgoMDAwMDAwKCgoKCgoKCgoKCgoKCgoKCgoKCgoMDAwKCgoKCgoKCgoKCgoICgoKCAoICAgICAgICAgKDAoODg4ODg4KCgoICAgICAgICAgKCgoKCAoICAgICAgKCgoKCgoMDAwMDAwKCgoKCgoMDAwMDAwMCgwKCgoICAgICAgICAgKCgoKCggICAgICAgICAgMDAwODg4MDAwKCgoICAgICAgICAgICAoKCgoKCgoKCgoKCgoMDAwKCgoKCgoKCgoKCgoKCggICAgICAgICAgICAgGBgYICAYICAgGBgYGBgYGBgYGBgYKCgoYFhYYGBgQEBIKCgoKCgoKCgoGBgYEBAQGBgYGBgYICAYICAYICAYICAgICAgKCAgICAgGCAYICAYICAYGBgYEBAYEBAQICAgKCgoKCgoMDAwSEhIaGhoUFBQICAgGBgYGBgYGBgYGCAYICAYICAgICAgICAgICAYICAYICAYGBgYGBgYEBAQGBgYKCgoKCgoKCgoQEBIYGBgYFhYKCgoGBgYGBgYGBgYGBgYICAgICAgICAgICAgICAgIBggGBgYICAgOBBwOBBwQBBwQBBwMAhgSBh4QBBwOBBoOBBwQBBwQBB4QBB4OBBwQBB4SBiASBiAUBiAUBiAUBiAUCCAUBiAQBh4QBB4OBBwUBiAUBiASBB4WCCIYCiQUBiAUCCAQBBwQBBwSBh4SBh4SBBwSBB4SBiAUBiAWCCIaCiQWCCIUBiASBB4OAhoQBBwSBh4SBiAWCCAUCCAWCCIWCCISBh4SBh4UCCAUBiASBB4OBBwKCgoKCgoKCgoKCgoMDAwKCgoKCgoKDAwKCgoKCgoICAgICAgICAgMDAwWFhYUFBQUFBQcHBwYGBgODg4KCgoICAgICAgICAgICAgKCgoMDAwMDAwKCgoKCgoKCgoKCgoMDAwMDAwMDAoKCgoICAgICAgICAgKCgoMDAwUFBQcHBwWFhYUFBQWFhYODg4ICAgICAgICAgKCAgKCgoKCgoKCgoKCgoMDAwMDAwKCgoKCgoKCgoKCgoKCgoKCgoKCgoMDAwKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgKCgoKDAoKCgoICAgKCAoKCgoICAgICAgICAgICAgKCgoMDAwMDAwMDAwKCgoKCgoKCgoMDAwMDAwKCgoICAgICAgICAgICAgKCgoKCAoICAgICAgKCgoKCgoKCAgICAgICAgICAgKCgoKCgoKCgoKDAwKCgoKCgoMDAwKCgoKCgoKCgoKCgoICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBAQGBgYGBgYODg4aGhoYGBgMDAwKCgoKCgoKCgoGBgYEBAQGBgYGBgYGBgYGBgYICAgICAgICAgICAgGBgYGBgYGBgYEBAYGBgQICAgKCgoKCgoKCgoMDg4YGBgaGhoMDAwGBgYEBAQEBAQEBAQGBgYIBgYICAgICAgICAgGBgYGBgYGBgYGBgYEBAQGBgYKCgoKCgoKCgoMDAwYGBgaGhoODg4GBgYGBgYEBAQEBAQGBgYGBgYICAYICAgICAgICAgICAgGCAYICAgQBBwQBBwQBBwOBBwMAhgSBh4QBBwOBBoQBBwOBBwQBB4QBB4QBBwQBB4SBiAUBiAUBiAWCCAWCCIUCCAUBiAQBh4QBh4QBB4SBiAWCCASBiAWCCIWCCIUBiAUBiAQBB4QBBwSBB4SBB4SBBwSBB4UBiAUBiAWCCIaCiQWCCIUCCASBB4MAhoQBBwSBiASBiAWCCIWCCIWCCIWCCISBiASBh4UCCAUCCASBB4QBBwKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCAgICAgICAgIBgYKCgoQEBASEhIWFhYUFBQMDAwICAgKCgoKCgoICAgICAgICAgKCgoMDAwMDAwKCgoKCgoKCgoKCgoMDAwMDAwMDAwKCgoICAgICAgICAgICAgKCgoMDAwWFhYYGBgSEhQSEhIODg4ICAgICAgICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICgoKCAoICAgICAgICAgICAgICAgKDAwKCgoKCgoKCAoICAgICAgICAgICAgICAgKCgoMDAwMDAwKCgoKCgoKCgoKCgoMDAwMDAwKCgoICAoICAgICAgICAgICAgICAgKCAoKCgoMDAwKCgoICAgICAgICAgICAgKCAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQGBgYGBgYMDAwSEhIKCgoICAgICAgICAoICAgGBgYGBgYGBgYGBgYGBgYGBggICAgICAgICAgGBgYGBgYGBgYGBgYICAYICAgICAoICAgICAgMDAwSEhIMDAwGBgYGBgYEBAQEBAQEBAQGBgYGBgYGBggICAgGBggGBgYGBgYGBgYGBgYGBgYICAgICAoICAgICAgKCgoSEhIMDAwGBgYGBgYEBAQEBAQEBAQGBgYGBgYGBgYGBgYICAgICAgGBgYGBgYGBgYQBBwQBBwOBBwOBBwMAhoUBh4SBB4QBBwQBBwOBBwQBB4SBh4QBB4QBB4UBiAUBiAUBiAWCCIYCCIWCCAUCCAQBB4QBB4QBB4SBiAWCCASBiAUBiAWCCIUBiASBh4QBB4QBBwQBB4SBB4QBBwSBh4WCCAUBiAWCCIaCiQYCiIWCCASBh4OBBwQBh4SBiAUBiAWCCIWCCIWCCIWCCIUBiAUBiAWCCIWCCISBB4QBB4KCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgICAgGBgYICAgMDAwQEBAODg4KCgoKCgoMDAwMDAwKCgwICAgGBgYICAgKCgoMDAwMDAwKCgoKCgoKCgoKCgoMDAwMDAwMDAwKCgoGBgYICAgKCgoKDAwKCgoKCAoKCgoQEBASEhIQEBAKCgoIBggICAgICAgICAgKCAoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgICAgICAgICAgKCgoKCgoICggICAgKCgoKCgoICAgICAgGBggKCgoMDAwMDAwMDAwKCgoKCgoKCgoMDAwMDAwKCgoICAgGBgYICAgKCgoKCgoICgoICAgKCgoKCgoICAgICAgICAgICAgICAgICAgICggKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgGBgYGBgYGBgYEBAQGBgYGBgYEBAQEBAQEBAQGBgYGBgYICAgMDAwQEBAKCgoICAgIBggICAYIBgYIBgYGBgYGBgYGBgYIBgYICAgICAgKCAoICAgGBgYGBgYGBgYGBgYIBgYICAYIBgYICAgICAgMDAwQEBAKCgoICAgGBgYEBAQEBAQEBAQEBAQGBgYGBgYICAgICAgIBgYGBgYGBgYGBgYIBgYIBgYICAYIBggICAgKCgoQEBAMDAwICAgGBgYGBgYEBAQEBAQEBAQGBgYGBgYGBgYIBgYICAgGBgYGBgYGBgYQBBwQBB4QBBwQBBwMAhoSBh4SBB4QBBwQBBwQBBwQBh4SBiASBh4SBh4UCCAUCCAWCCIWCCIWCiIWCCAUCCAQBB4QBB4QBB4UBiAWCCIUBiAUCCAWCCASBiASBB4QBBwQBBwSBB4SBB4QBB4UBh4WCCAWCCAWCCIaDCYYCiQWCCASBh4OBBwSBh4UBiAUCCAWCCIWCCIWCCIWCCIWCCAUBiAWCCIWCCISBB4SBh4KCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICggICAgICAgICAgIBgYGBgYICAgKCgoKDAoODg4SEhIQEBAMDAwKCgoICAgGBgYICAgKCgoMDAwMDAwMDAwKCgoKCgoKCgoMDAwMDAwMDAwICAgGBgYICAgKCgoMDAwODg4QEBAMDAwKCgoKCgoKCAgGBgYIBgYICAgICAgICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgICAgICAgICAgICAgKCgoMDg4ODg4MDAwKCgoICAgGBgYGBgYICAoMDAwMDAwMDAwKCgoKCgoMDAwMDAwMDAwKCgoICAgGBgYICAgKCgoMDAwODg4ODg4MDAwKCAgICAgICAgICAgICAgICAgICAgICAgICgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoEBAQEBAQEBAQCBAQCAgICAgIEAgICAgICAgICAgICAgICAgIEBAQEBAQICAgKCgoGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYKCgoGBgYEBAQEBAQCAgICAgICAgICAgICAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYKCgoICAgEBAQEBAQCAgICAgICAgICAgICAgIEBAQEBAQEBAQEBAQEBAQCBAQEBAQUBh4SBh4QBB4SBB4OAhoSBh4SBh4QBBwQBBwQBBwSBh4UBiASBiASBiAYCCIWCCAWCCIYCCIYCCIWCCIUCCIQBB4SBh4QBB4UBiAYCiQWCCIWCCIWCCASBh4SBB4QBB4QBB4SBh4SBh4QBB4SBh4WCCIWCCIWCCIaDCYaCiQWCCISBh4QBBwUBiAUBiAWCCIYCCIUCCIWCCIWCCIWCCIWCCAWCCIWCiISBh4UCCAKCgoKCgoKCgoKCgoKCgoKCAgKCggKCggICAgICAgICAgGBgYGBgYGBgYICAgODg4UFBQaGhoWFhYODg4KCgoKCgoICAgGBgYICAgKCgoMDAwODg4MDAwKCgoKCgoMDAwODgwMDAwMDAwICAgGBgYGBgYICAgKCgoMDA4UFBQYGBgSEhIMDAwKCgoGCAYGBgYGBgYICAgICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgKCgoICAgICAgICAgIBggGBgYGBgYIBggICAgMDAwUFBQUFBQODg4MDAwKCgoICAgGBgYGBgYKCgoMDAwODg4MDAwKCgoKCgoMDAwODg4MDAwKCgoICAgGBgYICAgKCgoKCgoMDgwSEhIWFhYODg4ICAgIBggIBgYGBgYGBgYICAgICAgICAgKCggKCggKCAgKCgoKCgoKCgoKCgoKCgoEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQICAgKCgoGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAYICAgKCgoGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYKCgoICAgEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQWCCIUBh4UBiASBh4OBBoUBiASBiAQBB4QBB4QBBwSBh4UBiAUBiAUBiAaCiQUCCIYCCIYCiIWCCIWCCIUCCAQBBwSBh4QBB4UCCAcDCYWCCIWCCIUCCASBh4QBB4SBh4UCCAUBiASBh4SBB4SBiAWCCIYCiIWCCIaDCQaDCYWCCISBiASBh4UCCAWCCAWCCIYCCIUBiAWCCIWCCAWCCIYCiIWCiIYCiQUBiAWCCIKCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgGBgYGBgYGBgYICAgICAgKCgoSEhIYGBgQEBAKCgoKCgoMDAwKCgoICAgGBgYICAgKCgoMDAwODgwMDAwKCgoKCgoMDAwODg4MDAwKCgoICAgGBgYIBggICAgMCgoMDAwMDAwUFBQaGhoWFhQKCgoICAgICAgGBgYGBgYGBgYICAgICAgICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgICAgGCAgGBgYGBgYGBgYGBgYICAgKCgoSEhISEhIMDAwKCgoMDAwKCgoICAgIBggICAgICAgMDAwODAwODgwMDAwKCgoMDAwODgwMDAwKCgoICAgGBgYICAgKCgoKDAwKCgoMDAwQEBAUFBQMDAwICAgGCAYGBgYGBgYGBgYGBgYICAgICAgICAgICAgKCgoKCgoKCgoKCgoKCgoEBAQCAgICAgICAgICAAIAAAACAgICAgIAAAAAAAAAAAAAAAACAgICBAQICAoODg4GBgYCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQICAgODg4GBgYCBAQCAgIAAAAAAAAAAAAAAAACAgICAgIEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBgYODg4ICAoCBAQCAgIAAAAAAAAAAAAAAAACAgICAgICAgICAgICAgICAgICAgICAgIYCiQUBh4WCCISBh4OBBwWCCAUBiAQBB4SBB4QBB4UBiAUCCAWCCIWCCIaCiQWCCIYCiQWCCIWCCIWCCIUBiAQBBwUBiASBh4WCCIcDCYYCiQWCCIUBiAQBB4QBB4SBh4WCCIYCCIUBiASBiAUBiAWCCIYCCIUCCIcDCYcDCYWCCIUBiASBiAWCCIWCCIWCCIYCiQWCCAWCCIWCCIWCCIYCiQYCiQaCiYUBiAYCiIKCgoKCgoKCgoKCgoKCgoKCgoICgoICAgICAgGBgYGBgYIBgYGBgYICAgKCgoMDAwMDAwMDAwMDAwODg4MDAwKCgoICAgGBgYICAgKCgoKCgoMDAwODA4MDAwKCgoMDAwODg4MDAwKCgoICAgGBgYIBggKCAoKCgoMDAwKCgoMDAwODg4ODg4MDAwICAgGBgYICAYGBgYGBgYICAYICAgICAoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYICAgMDAoMDAwMDAwMDAwODg4ODg4KCgoICAgGBgYICAgICAgKCgoMDAwODg4MDAwMDAwODA4MDAwKCgoKCgoICAgGBgYICAgKCgoMDAwODg4MDAwMDAwMDAwMDAwKCgoGCAYGBgYGBgYGBgYGBgYICAgICAgICgoKCgoKCgoKCgoKCgoKCgoKCgoEBAQEBAQCAgICAgICAgICAgICAgICAgICAgAAAAACAgACAgICAgIEBAQKCgoODhAGBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQICAgODg4GBgYCAgQCAgICAgIAAgAAAAACAgICAgICAgIEBAQEBAICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYODhAKCgoEBAQCAgICAgICAgAAAAACAgACAgICAgICAgICAgICAgICAgICAgICAgIYCCISBh4WCCIUBiAQBBwWCCIUCCASBiASBh4QBB4UBiAUCCIWCCIUCCAaDCQWCCIYCCQWCCIWBiAUBiASBh4QBBwUBiAUBiAYCCIcDCYYCiQWCCISBiASBh4SBh4UCCAWCCIYCiQUCCASBh4SBiAWCCIWCCIWCCIcDiYcDCYWCCISBiASBiAWCCIWCCIYCCIYCiQWBiAWCCAUCCAWCCIYCiQYCiQaDCYUBiAWCCIKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgIBgYGBgYGBgYGBgYICAgKCgoKCgoKCgoODg4QEBAUFBQWFhYMDAoICAgGBgYGBgYGCAYICAgKCgoMDAwMDAwMDAwMDAwMDAwMDAwKDAwKCgoICAgGBgYGBgYICAgKCgoUFBIUFBQQEBAODg4KCgoKCgoKCgoICAgGBgYGBgYGBgYGBgYICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgGBgYGBgYGBgYGBgYICAgKCgoKCgoODg4QEBASEhIWFhYODg4ICAgGBgYGBgYGBgYICAgKCgoMDAwMDAwMDAwMDAwMDAwMDAwKCgoICAgGCAYGBgYGBgYICAgMDAoWFhYUFBQQEBAODg4KCgoKCgoKCgoICAgGBgYGBgYGBgYIBgYICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoEBAQCAgICAgICAgICAgICAAICAgICAgICAgACAAACAgICAgICAgICAgIKCgoQEBAGBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgICBAQEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQKCgoODg4GBgYCAgICAgICAgIAAgACAAACAgICAgICAgIEBAQCBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYQEBAKCgoCAgICAgICAgICAgICAAACAgACAgICAgICAgICAgICAgICAgICAgICAgIUCCISBh4UCCIWCCISBh4YCCIWCCISBiASBh4SBB4UBiAWCCIWCCIUBiAaDCYYCCIYCCQYCCIUBiAUBiASBh4QBBwUBiAUBiAWCCIeDiYYCiQWCCISBiASBh4SBh4WCCIYCCIYCiQWCCISBh4SBiAUBiAWCCIUCCAcDCYaDCYWCCIUBiASBiAUCCIWCiIYCCIYCiIUCCAUBiAUBiAWCCIaCiQaDCQYCiYUBiAWCCIKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCAgICAgGBgYGBgQICAgKCAgKCgoMDAwMDAwODg4SEhISEhIKCgoGBgYGBgYEBgYGBgYICAgICAgKCgoMDAwMDAwMDAwMDAwMDAwMDAwKCgoKCgoICAgGBgYGBgYGBgYGBggMDAwUFBQUFBQODg4ODg4KCgoKCgoKCgoICAgGBgYGBgYGBgYICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgGBgYGBgYGBgYICAgICggKCgoMDAwMDAwSEhIUEhQMDAwGBgYGBgYEBAQGBgYGBggICAgKCgoKCgoMDAwMDAwMDAwMDAwMDAwKCgoICAgICAgGBgYEBgYGBgYGBgYKCgoSEhISEhIODg4MDAwKCgoKCgoKCAgICAgGBgQGBgYICAgKCAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoEBAQCAgICAgICAgICAgICAAACAgICAgIAAgAAAAACAgACAgICAgICAgIICAgODg4GBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgICBAIEBAQEBAQCBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQICAgODg4GBgYCAgICAgICAgICAgAAAAAAAgACAgICAgIEBAQCBAICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYODg4ICAgCAgICAgICAgICAgAAAAAAAgACAgICAgICAgICAgICAgICAgICAgICAgIUBiASBB4UCCAWCCIUBiAWCCIWCCIUBiAUBiASBiAUBiAUCCAWCCAUBiAaDCYYCiQaCiQWCCIUBiAUBiAQBBwQBBwWCCIUCCAWCCIcDigaDCQYCiQSBh4SBh4UCCAWCCIWCCIYCiQUCCISBh4UBiASBiAWCCAUCCAaDCYaCiQWCCIUBiASBiAUCCAWCiIWCCAWCCIUCCASBiASBiAWCCIaCiQaDCYYDCYUBiAUCCAKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgGBgYICAgKCgoICAgICAgKCgoMDAwODg4ODg4ICAgGBgYICAgGBgYICAgICAgICAgICAgKCgoKCgoMDAwMDAwMCgwMDAwMDAwKCgoKCAgICAgICAgGBgYGBgYGBgYGBgYICAgQEBAQEBAMDAwKCgoKCgoICAgKCgoICAgGBgYGBgYICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgGBgYGBgYKCgoICgoICAgKCgoKCgoODg4QEBAKCgoGBgYICAgGBgYGBgYICAgICAgICAgKCggKCgoMDAwMDAwMDAwMDAwKCgoKCgoICAgICAgICAgICAgGBgYICAgGBgYICAgODg4ODg4MDAwICAgICAgICAgKCgoICAgGBgYICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoEBAQCAgICAgICAgICAgICAAICAgICAgIAAgIAAAACAgACAgICAgICAgIICAgODg4GBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgICBAIEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQICAgODg4GBgYCAgICAgICAgICAgAAAAAAAgICAgICAgIEBAQEBAICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYODg4ICAgCAgICAgICAgICAgAAAAAAAgICAgICAgICAgICAgICAgICAgICAgICAgIUBiAQBBwUBiAYCiQUBiAYCCQWCCIWCCISBiAUBiAUBiAUBiAWCCIUCCAcDCYYCiQYCiQWCCASBiAUBiAOBBwQBBwWCCIUCCIWCCIeDigaDCYYCiQSBh4SBiAYCCIYCiIWCCIWCCIUCCIQBh4UBiASBiAWCCIYCCIaCiQYCiQWCCIUBiASBiAUCCAWCCIWCCIWCCIUCCASBiASBiAWCCIaDCYcDCYaDCYSBh4UBiAKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgICAgKCgoKCgoICAgICAgKCgoMDAwMDAwKCgoKCgoKCgoICAgICAgKCgoKCgoICAgICgoKCgoKCgoKDAwKDAwKDAwMDAwMCgwKCgoKCgoICAgKCgoKCgoICAgICAgKCAgICAgICAgMDAwMDAwKCgoICAgICAgKCgoKCgoICAgGBgYICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAYKCgoKCgoICAgICAgICAgMDAwMDAwMDAwKCgoKCgoICAgICAgKCgoKCgoKCgoICggKCgoKCgoMDAwKDAwKDAwKDAwKCgoKCgoICgoICAgKCgoKCgoICAgICAgKCgoKCgoKCgoMDAwMDAwICAgICAgICAgKCgoKCgoICAgICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoEBAQCAgICAgICAgICAgICAgACAgICAgIAAgIAAAAAAgACAgICAgICAgIICAgODg4GBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAIEBAQEBAQCBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQICAgODg4GBgYCAgICAgICAgIAAgAAAAACAgICAgICAgIEBAQEBAICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYODg4ICAgCAgICAgICAgIAAgAAAAAAAgICAgICAgICAgICAgICAgICAgICAgICAgISBh4QBBwUBiAYCCIUBiAYCCIWCCAWCCASBiAUBiAUBiIUBiAWCCIUBiAcDCYaCiQYCiQUBiASBh4UBiAOBBwQBBwWCCIWCCIUCCIeDigcDCYYCiQUBiASBiAaCiQYCCIWCCAWCCIUCCAQBh4UBiASBiAWCCIYCCQYCCIWCCIWBiASBiASBiAUCCAWCCIWCCIWCCIUCCISBh4SBh4UBiAaCiQcDCYaDCYSBh4UBiAKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgKCAoKCggGBgYGBgYICAgMDAwMDAwWFhYWFhYODg4ICAgICAgICAgICAgICAgICAgICAgKCgoKCgoMDAwKDAoKDAoMDAwMDAwKCgoKCgoICAgICAgICAgKCgoICAgICAgMDAwQEBAUFBQMDAwMDAwICAgGBgYGBgYKCgoKCgoICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgKCgoICAgGBgYICAgMDAwMDAwUFBQYGBgQEBAKCggICAgICAgICAgICAgICAgICAgKCgoKCgoMDAwKDAwKDAoMDAwKCgoKCgoICAgICAgICAgICAgICAgICAgICAgODg4WFhYWFhYMDAwMDAwICAgGBgYGBgYKCggKCAoICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoEBAQEBAQCBAICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIKCgoQEBAGBgYEBAQCAgICAgICAgICAgICAgICAgICAgICBAQEBAQEBAQEBAQEBAQCBAICAgICAgICAgICAgICAgICAgICBAQEBAQICAgQEBAIBgYCAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQCBAQCAgICAgICAgICAgICAgICAgICAgIEBAQGBgYQEBAKCgoCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgISBh4QBBwSBh4WCCIUBiAWCCIUBiAWCCASBiAUCCAWCCIUCCAWCCIUBiAcDigaDCYYCiQSBiASBh4UBiAQBBwQBBwWCCIUCCAUBiAeDigcDCYWCCISBh4SBiAYCCQWCCIUBiAWCCISBiAQBh4UBiASBiAWCCIYCCIWCCIUCCIUBiASBiASBh4SBiAWCCIWCCIWCCIUBiASBh4SBh4SBiAaCiQcDigaDCYSBh4UBiAKCgoKCgoKCgoKCgoKCgoKCgoKDAoMDAwICAgICAgGBgYGBgYICAgMDAwODg4YGBgcHBwYGBoKCgoGBgYGBgYGBgYICAgKCgoKCgoKCgoKCgoKCgoMDAoKCgoKCgoMCgwMDAoKCgoKCgoKCgoKCgoICAgGBgYGBgYGBgYICAgYGBgcHBwWFhYODg4MDAwICAgGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoMDAwKCgoICAgICAgGBgYGBgYMDAwODg4UFBQaGhocHB4QEBAGBgYGBgYGBgYGBgYICAoKCgoKCgoKCgoKCgoMDAoKCgoKCgoMDAoKCgoKCgoKCgoKCgoKCgoICAgGBgYGBgYGBgYKCgoYGBocHBwWFhYODg4MDAwICAgGBgYGBgYICAgICAgMDAwKDAoKCgoKCgoKCgoKCgoKCgoKCgoEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIKCgoQEBAGBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgIEBAQEBAQKCgoQEBAGBgYCAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYQEBAKCgoCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgISBB4QBBwSBh4WCCISBiAUBiAUBiAUCCASBiAUBiAWCCIWCCIWCCISBiAaDCYYCiQYCiISBh4QBB4UBiAQBBwQBBwWCCISBiAUBiAcDigaDCYWCCISBh4UBiAWCCIWCCISBiAUBiASBB4QBBwUBiASBB4WCCIWCCIUCCAUBiAUBiASBB4QBB4UBiAYCCIWCCIUBiAUBiASBh4SBh4SBiAaCiQcDigaDCYSBh4SBh4KCgoKCgoKCgoKCgoKCgoKCgoMDAwKCgoICAgICAgGBgYGCAgMDAwMDAwODg4aGhocHBwODg4GBgYGBgYGBgYGBgYICAgICAgICAgICAoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCggICAgGBgYGBgYGBgYICAgODg4cHBwcHBwQEBAODg4MDAwICAgGBgYICAgICAgKCgoMDAwKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoMCgwMDAwICAgICAgGBgYGBgYKDAwODg4MDAwUFBQeHh4UFBQICAgGBgYGBgYGBgYGBgYICAgICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAoICAgICAgICAgGBgYGBgYGBgYGBgYODg4cHBwaGhoODg4MDAwMDAwGCAgGBgYICAgICAgKCgoMDAwKCgoKCgoKCgoKCgoKCgoKCgoEBAQCAgICAgICAgICAgICAAACAgICAgIAAgAAAAACAgACAgICAgICAgIICAgODg4GBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgICBAIEBAQEBAQCBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQICAgODg4GBgYCAgICAgICAgICAgAAAAAAAgACAgICAgIEBAQCBAICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYODg4ICAgCAgICAgICAgICAgAAAAAAAgACAgICAgICAgICAgICAgICAgICAgICAgIOBBwOBBwSBh4WBiASBh4UBiASBh4UCCASBiAWCCAUCCAWCCIWCCISBh4YCiIYCiQYCCISBBwQBBwSBiAQBBwQBBwWCCIQBh4UBiAaDCQaCiQWCCISBh4UBiAWCCIWCCISBiAUBiASBB4QBBwSBh4QBB4UCCIUBiAUBiAUBiAUBiAQBBwOBBwUBh4WCCIWCCIUBiAUBiASBh4SBh4UBiAYCCIcDCYaCiYSBh4QBB4KCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgGBgYGBgYKCgoMDAwKCgoODg4WFhYODg4ICAgICAgGBgYEBAQGBgYGBggICAgICAgICAgKCAoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgGBgYEBAQGBgYGBgYGBgYQEBAYGBgQEBAKDAwMDAwKCgoGBgYGBgYICAgKCggKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgGBgYGBgYICAgKCgoKCgoKCgoUFBQSEhIICAgGBgYGBgYGBgQGBgYGBgYICAgICAgICAgICAgKCgoKDAoKCgoKCgoKCgoKCgoKCAoICAgICAgICAgGBggGBgYEBAQGBgYICAgICAgODg4UFBQMDAwKCgoMDAwKCgoGBgYGBgYICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoEBAQCAgICAgICAgICAgICAAACAgICAgIAAgIAAAACAgACAgICAgICAgIICAgODg4GBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAIEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQICAgODg4GBgYCAgICAgICAgICAgAAAAAAAgICAgICAgIEBAQEBAICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYODg4ICAgCAgICAgICAgICAgAAAAAAAgICAgICAgICAgICAgICAgICAgICAgICAgIOBB4OBBwQBBwUBiASBB4SBh4SBh4WCCAUBiAWCCAUBiAWCCIWCCISBh4YCCIYCiIYCiIQBBwQBBwSBh4OBBwQBBwUBiAQBB4UBiAYCiQYCiQWCCISBh4UBiAWCCIWCCISBiASBh4SBB4QBBwSBB4QBB4UBiAUBiAUBiASBiASBh4QBBwOBBoSBh4WCCIUBiASBh4UBiASBB4SBh4UBiAUCCIaCiQYCiQSBh4QBB4KCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgGBgYICAgICAgICAgKCgoODg4SEhIODg4KCgoICAgGBgYGBAQGBAQGBgYGBgYICAgICAgKCAoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgICAgGBgYGBgYGBgYGBgYICAgICAgKCgoQEBAQEBAKCgoICAgICAgICAgGBgYICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICgoICAgICAYICAgICAgICAgICAgMDAwSEhIQEBAKCgoICAgGBgYGBgYGBAQGBgYGBgYGCAgICAgICAgKCgoKDAoKCgoKCgoKCgoKCgoKCAoICAgICAgGBgYGBgYGBAQGBAQGBgYICAgKCgoODg4SEhIODg4KCgoICAgICAgICAgGBgYICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoEBAQCAgICAgICAgICAgICAgACAgICAgIAAgIAAAAAAgACAgICAgICAgIICAgODg4GBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAIEBAQEBAQCBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQICAgODg4GBgYCAgICAgICAgIAAgAAAAACAgICAgICAgIEBAQEBAICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYODg4ICAgCAgICAgICAgIAAgAAAAAAAgICAgICAgICAgICAgICAgICAgICAgICAgIQBB4OBBwQBBwSBiAQBB4SBiAQBB4UCCAUCCAUCCASBh4WCCIWCCISBh4WCCIYCCIWCCIOBBoQBBwQBB4QBBwQBBwUBiAUBiASBiAYCiQYCiQWCCISBiAUBiAUCCAWBiASBh4SBB4QBB4QBBwQBBwQBBwUBiAUBiAUBiAUBh4SBB4QBBwOAhoSBB4UBiASBiAQBB4SBh4SBh4UBiAUBiAUBiAYCiQYCiQSBh4QBB4KCgoKCgoKCgoKCgoKCgoKCAgICAgICAgICAgICAgICAgGBgYICAgKCgoUFBQaGhoSEhIKCgoICAgGBgYEBAQEBAQGBAYGBgYGCAgICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYEBAQEBAQGBgYGBgYKCgoODg4WFhYUFBQMDAwICAgGBgYICAgICAgICAgICAgICAgICgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgICAgICAYICAgICAgQEBAaGhoWFhYKCgoICAgGBgYEBAQEBAQEBAQGBgYGCAYICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgGCAgGBgYGBAYEBAQEBAQGBgYICAgKCgoSEhIaGhoUFBQKCgoICAgGBgYICAgICAgICAgICAgICAgKCAgKCgoKCgoKCgoKCgoKCgoEBAQCBAICAgICAgICAgICAgICAgICAgICAgAAAAACAgACAgICAgICAgIKCgoQEBAGBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgQEBAQKCgoQEBAGBgYCAgICAgICAgIAAgAAAAACAgICAgICAgIEBAQEAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYQEBAKCgoCAgICAgICAgICAgAAAAACAgACAgICAgICAgICAgICAgICAgICAgICAgISBh4OBBwOBBwQBh4SBh4SBh4OBBwUBiAUBiAUCCASBh4WCCIWCCISBh4WCCIUCCIUBiAMAhoOBBwQBB4QBBwQBBwUBiAWCCIUBiAWCCIWCCIWCCISBiAUBiAUBiAUBiASBB4SBB4QBB4QBBwQBBwOBBwSBh4UBiAUBB4SBh4QBB4QBB4OBBwQBBwSBiAQBB4QBBwSBB4SBh4UBiAUBiAUBiAWCCIWCCISBh4SBB4KCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgGBggGBggGBggICAgKCgoYGBgeHh4QEBAICAgGBgYGBgYGBgYEBAQGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgGCAYGBgYEBAQGBgYGBgYGBgYICAgMDAwaGhocHBwODg4ICAgICAgGBgYGCAgICAgICAgICAgICAgKCggKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgGCAgGBgYGBgYICAgICAgSEhIcHBwWFhYKCgoICAgGBgYGBgYEBAQEBAQGBgYICAgICAgICggKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYEBAQGBgYGBgYGBgYICAgQEBAeHh4YGBgKCgoICAgGBggGBggGBggICAgICAgICAgICAgKCgoKCgoKCgoKCgoKCgoCBAICAgICAgAAAgAAAgAAAgAAAgAAAgAAAgAAAAAAAgAAAgACAgICBAIKCgoQEBAGCAYCBAICAgICAgAAAgAAAgAAAgAAAgACAgICAgICAgICAgICBAICBAICAgICAgAAAgAAAgAAAgAAAgAAAgACAgIEBAIKCggOEA4GCAYCBAICAgAAAgAAAgAAAAAAAgAAAgACAgACBAICAgICAgICAgIAAgAAAgAAAgAAAgAAAgACAgICBAIGCAYQEBAKCgoCBAICAgIAAgAAAgAAAgAAAgAAAgAAAgAAAgACAgACAgIAAgAAAgAAAgAQBB4OBBwQBBwQBB4SBh4SBh4OBBwSBh4SBiASBh4SBh4UBiAWCCISBh4UCCAUBiAUBiAMAhoQBBwQBB4QBBwQBBwUBiAYCiQUBiAWCCIUBiAWCCISBiAUBiAUBiASBh4QBB4QBB4QBB4QBBwQBBwQBBwSBh4UBiASBh4SBB4QBB4QBB4QBBwQBBwQBB4QBB4QBBwQBB4SBh4SBh4SBh4SBh4UBiAWCCASBh4QBBwKCgoKCgoKCgoKCgoICAgICAgICAgICAgICAgICAgIBggGBgYICAgKCAgWFhYeHh4QEBAICAgICAgGBgYGBAYEBAQGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCAgICAgICAgGBgYEBAQEBAQGBgYGBgYICAgMDAwaGhocHBwMDAwICAgGBgYGBgYICAgICAgICAgICAgICAgICAgKCAoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAoICAgICAgICAgICAgICAgIBggGBgYICAgICAgQEBAeHh4WFhYICAgICAgGBgYGBgYEBAQEBAQGBgYICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYEBAQGBAYGBgYICAgICAgQEBAeHh4WFhYKCAgICAgGBgYIBggICAgICAgICAgICAgICAgICAgKCgoKCgoKCgoKCgoKBAwKBAwKBAwKBAwKBA4KBAwKBAwKBAwMBA4MBA4MBg4MBhAOCBISDBQYEBoaFBwWEBgQChQOCBAMBhAMBg4MBg4MBA4MBA4KBA4KBAwKBAwKBAwKBA4MBA4MBA4KBA4KBAwMBA4MBg4MBg4MBhAOCBASChQYEBoaEhwYEBoSChQOCBIMBhAMBg4MBA4MBA4KBA4KBAwKBAwKBAwKBAwKBAwKBA4MBA4MBg4MBg4MBg4OCBAQChIUDhYaFBwYEhoUDBYQCBIOBhAMBg4MBg4MBA4KBAwKBAwKBA4MBA4MBA4KBAwKBAwKBAwQBBwQBB4SBh4QBBwSBh4SBh4OBBwSBh4SBh4SBh4SBh4SBh4WCCIQBB4WCCISBiASBh4OAhgQBBwQBBwQAhwQBBwUBiAYCiQQBh4WCCAUBiAUBiASBiASBh4SBh4SBh4QBBwQBBwQBB4QBB4QBBwQBBwSBh4SBiASBh4SBB4QBBwSBB4SBB4QBBwQBB4QBB4OBBwSBB4UBiAUBiASBh4SBh4SBh4WCCAUBh4QBBwKCgoKCgoKCgoICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoWFhYeHh4QEBAICAgICAgGBgYEBAQEBAQGBgQGBgYICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgGBggGBgYEBAQEBAQGBgYGBgYICAgMDAwaGhocHBwODAwICAgICAgICAgICAgICAgICAgICAgICAgICAgICggKCgoKCgoKCgoKCgoKCgoKCgoKCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgQEBAeHh4UFBQICAgICAgGBgYGBgYGBAQEBAQGBgYICAgKCggKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgGBgYGBgQEBAQEBAQGBgYICAgICAgQEBAeHh4WFhYKCgoICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoKCgoKCgoiCioiCiokCiwkCi4kCi4kCi4kCi4kCi4kCi4mCjAoDDIqDjQsEDYwFDo0GD42Gj40GD4wFDosEDYoDDImDDAmCjAkCi4kCi4kCiwiCioiCioiCiwkCi4kCi4mCi4kCi4kCi4kCi4mCjAmDDAoDDIsEDYwEjo0Fj42Gj40GD4wFDwsEDYqDjQoDDImCjAmCi4kCi4kCiwiCiwiCioiCioiCiwkCi4kCi4mCjAmDDAoDDIqDjQuEjgyFjw2Gj42GD4yFjwuEjgqDjQoDDImCjAmCi4kCi4kCiwkCi4mCi4kCi4kCiwiCiwiCioQBBwSBh4SBh4QBBwSBB4SBh4QBBwSBh4QBh4SBh4SBh4SBh4UBiAQBBwWCCIUBiAQBB4MAhgQBBwQBBwQAhwQBBwUCCAYCiQOBB4UBiAUBiAUBiASBiAUBh4SBB4SBh4OBBwQBBwQBB4QBB4QBBwQBBwSBh4SBh4SBB4QBBwQBBwSBB4QBB4QBBwQBB4QBB4OBBwSBh4UBiASBiASBh4QBB4SBh4SBh4SBh4QBBwKCgoKCgoKCgoICAgICAgICAgICAgICAgICAgGBggGBgYICAgICAgKCgoWFhYeHh4ODg4ICAgICAgGBgYEBgYGBgYGBgYGBgYICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgIBggGBgYGBAYGBgQGBgYGBgYICAgKCgoaGhoaGhoMDAwICAgICAgGCAgIBggICAgICAgICAgICAgICAgICAgKCAoKCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgICAgICAgGBggGCAYICAYICAgICAgQEBAeHh4UFBQICAgICAgGBgYGBgYGBgYGBAYGBgYICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgGBgYGBgYGBgYEBgYGBgYICAgICAgODg4eHh4UFhYKCgoICAgICAgGBgYGBggICAgICAgICAgICAgICAgICAgKCgoKCgoKCgoiCioiCioiCiwkCi4kCi4kCi4kCiwkCi4mCi4mCjAoDDIqDjQsEDgwFDw2GD44Gj40GD4wFDosEDYoDDImDDAmCjAkCi4kCi4kCiwiCioiCioiCiwkCiwkCi4mCi4kCi4kCi4kCi4mCjAmDDAoDDIsEDYwFDo0GD44Gj42Gj4yFDwsEDYqDjQoDDImCjAkCi4kCi4kCiwiCiwiCioiCioiCiwkCiwkCi4mCjAmDDAoDDIqDjQuEjg0Fj44Gj42Gj4yFjwuEjgqDjQoDDImDDAmCi4kCi4kCiwkCi4kCi4kCi4kCiwiCiwiCioQBBwSBh4SBB4QBBwSBB4SBB4QBBwSBB4QBBwQBB4SBh4SBh4SBiAQBh4WCCIUBiASBB4MAhgQBBwSBB4QBB4SBh4UCCAYCiIOBBwQBh4UBh4SBiASBiAUBiASBB4SBB4QBBwQBBwQBh4QBB4QBBwQBBwSBh4SBh4QBB4QBBwQBBwQBh4QBB4QBBwQBB4QBB4OBBwSBB4UBiASBiASBB4QBB4SBB4SBh4QBB4QBBwKCgoKCgoICAgICAgICAgICAgICAgICAgICAgIBggIBggICAgICAgICAgUFBQeHh4ODg4ICAgICAgGBgYGBgYGBgYGBgYGBgYICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgIBggGBgYGBgYGBgYGBgYGBgYICAgKCgoaGhoaGhoMDAwICAgICAgGBgYIBggICAgICAgICAgICAgICAgICAgICAgKCgoKCgoKCgoKCgoICggICAgICAgICAgICAgICAgICAgICAgICAYIBgYICAgICAgQDg4eHh4UFBQICAgICAgGBgYGBgYGBgYGBgYGBgYICAgKCAoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgGBgYGBgYGBgYGBgYGBgYICAgICAgODg4eHh4UFBQICAgICAgICAgIBggIBggICAgICAgICAgICAgICAgICAgICAgKCgoKCgogCCoiCioiCiwkCiwkCi4kCi4iCiwkCiwkCi4mCi4mDDAoDjIsEDYwFDo0GD42Gj40GD4wFDoqEDQoDDImCjAkCi4kCi4kCiwiCiwgCiogCioiCioiCiwkCiwkCi4kCiwiCiwkCi4kCi4mCjAoDDIqEDQwFDo0GDw2Gj42Gj4wFDosEDYoDjImDDAmCi4kCi4kCiwiCiwiCiogCCogCioiCioiCiwkCi4kCi4mCjAoDDIqDjQuEjgyFjw2Gj42Gj4yFjwuEjgqDjQmDDAmCjAkCi4kCiwiCiwkCiwkCi4kCiwiCiwiCiogCCoOBBoSBh4QBB4QBBwSBB4QBB4SBh4SBB4QBBwQBB4SBh4SBh4SBiASBiAWCCIUBiASBh4MBBoQBBwQBB4SBiAUBiAUBiAWCCAQBBwQBB4QBh4UBiASBiASBh4QBh4QBB4QBB4QBBwQBB4QBBwQBBwQBBwSBh4SBh4QBB4OBBwQBB4QBB4QBB4QBBwQBBwQBB4OAhoQBBwSBiASBiAQBB4QBBwSBB4QBB4QBB4QBBwKCgoKCAoICAoICAgICAgICAgICAgICAgICAgICAgIBgYICAgICAgKCgoUFBQeHh4ODg4ICAgICAgGBgYGBgYGBgYGBgYGBgYICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgIBggGBgYGBgYGBgYGBgYGBgYICAgKCgoaGhoaGhoMDAwICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAoKCAoKCgoKCgoKCgoKCAoICAgICAgICAgICAgICAgICAgICAgGBggICAgICAgICAgQEBAcHBwUFBQICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgGBgYGBgYGBgYGBgYGBgYICAgICAgODg4eHh4UFBQKCgoICAgICAgIBgYICAgICAgICAgICAgICAgICAgICAgICAoKCAoKCgoKBAwKBAwKBAwKBAwKBA4KBAwKBAwKBAwMBA4MBA4MBg4MBhAOCBISDBQYEBoaFBwWEBgQChQOCBAMBhAMBg4MBg4MBA4MBA4KBA4KBAwKBAwKBAwKBA4MBA4MBA4KBA4KBAwMBA4MBg4MBg4MBhAOCBASChQYEBoaEhwYEBoSChQOCBIMBhAMBg4MBA4MBA4KBA4KBAwKBAwKBAwKBAwKBAwKBA4MBA4MBg4MBg4MBg4OCBAQChIUDhYaFBwYEhoUDBYQCBIOBhAMBg4MBg4MBA4KBAwKBAwKBA4MBA4MBA4KBAwKBAwKBAwMBBoQBh4QBB4QBBwQBB4QBB4SBh4SBh4OBBwSBh4SBh4SBh4SBiASBh4WCCIUBiASBh4OBBwQBBwQBB4SBh4UBiAUBiAUCCAOBBwOBBwQBBwSBh4SBiAQBB4QBB4QBB4QBB4QBB4QBB4QBB4QBBwQBB4SBh4SBh4SBB4OBBwQBB4SBB4QBBwQBBwQBBwQBB4OAhoQBBwSBiAUBiAQBB4QBBwSBB4QBB4QBBwQBBwKCgoKCgoKCAoICAgICAgICAgICAgICAgICAgICAgGBggGBggGBgYKCgoUFBQcHBwQEBAICAgICAgGBgYGBgYGBgYGBgYGBgYICAgKCAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYICAgICAgMDAwaGhoYGBgODg4ICAgGCAgICAgIBggICAgICAgICAgICAgICAgICAgICAoICAoKCgoKCgoKCgoICAoICAgICAgICAgICAgICAgICAgICAgGBgYGBgYGBgYICAgQEBAaGhoUFBQICAgICAgICAgGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgQEBAcHBwSEhIKCgoGBgYGBggGBggICAgICAgICAgICAgICAgICAgICAgKCAoKCgoKCgoCBAICAgICAgAAAgAAAgAAAgAAAgAAAgAAAgAAAAAAAgAAAgACAgICBAIKCgoQEBAGCAYCBAICAgICAgAAAgAAAgAAAgAAAgACAgICAgICAgICAgICBAICBAICAgICAgAAAgAAAgAAAgAAAgAAAgACAgIEBAIKCggOEA4GCAYCBAICAgAAAgAAAgAAAAAAAgAAAgACAgACBAICAgICAgICAgIAAgAAAgAAAgAAAgAAAgACAgICBAIGCAYQEBAKCgoCBAICAgIAAgAAAgAAAgAAAgAAAgAAAgAAAgACAgACAgIAAgAAAgAAAgAKAhoQBB4QBB4QBB4SBB4QBB4SBiASBh4QBBwUBiASBB4SBB4SBiASBh4UCCASBiAQBB4QBBwQBB4SBh4SBh4SBiAUBiAUBiAOBBwOBBwOBBoQBB4QBh4QBB4QBB4QBB4SBh4SBh4QBB4QBB4OBBwQBBwSBh4SBh4SBB4OBBwSBB4SBB4QBBwQBBwQBB4QBB4OAhoQBBwSBiAUBiAQBB4QBBwSBB4QBB4QBBwQBBwKCgoKCgoKCgoKCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgMCgoSEhIYGhgQEBAICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgGBggGBgYGBgYGBgYGBgYICAgICAgMDAwYGBgWFhYMDAwICAgGBgYGBggICAgICAgICAgICAgICAgICAgICAgICgoKCgoKCgoKCgoKCgoKCgoKCggICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoODg4YGBgUFBQKCgoICAgGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgQEBAYGBgQEBIMDAoICAgICAgICAgICAgICAgICAgICAgICAgICAgKCAgKCgoKCgoKCgoEBAQCBAICAgICAgICAgICAgICAgICAgICAgAAAAACAgACAgICAgICAgIKCgoQEBAGBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgQEBAQKCgoQEBAGBgYCAgICAgICAgIAAgAAAAACAgICAgICAgIEBAQEAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYQEBAKCgoCAgICAgICAgICAgAAAAACAgACAgICAgICAgICAgICAgICAgICAgICAgIQBh4QBh4QBB4QBB4SBB4QBB4SBh4SBBwQBBwUBiAQBB4SBB4SBiASBiAUBiASBh4QBB4QBBwSBB4SBh4SBh4SBh4SBh4SBh4OBBwQBB4OAhwSBiAQBB4QBB4QBB4QBB4SBh4SBh4QBBwQBBwQBBwQBBwSBh4SBh4SBB4QBBwQBB4QBB4QBB4QBBwQBB4QBB4OBBwQBB4SBiAUBiASBiASBh4SBh4SBh4SBB4SBB4KCgoKCgoKCgoKCggICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoSEhIYGBgQEBAICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCAgICAgGBgYGBgYGBgYGBgYGBgYGBggICAgMDAwWFhYUFBQMDAwICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoICgoICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoODg4WFhYUFBQKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgQEBAYGBgQEBAKCgoICAgICAgICAgICAgICAgICAgICAgICAgICAgKCggKCgoKCgoKCgoEBAQCBAICAgICAgICAgICAgICAgICAgICAgACAAACAgICAgICAgICAgIKCgoQEBAGCAYEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEAgIEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgQEBAQKCgoQEBAGBgYCAgICAgICAgIAAgACAAACAgICAgICAgIEBAQEAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGCAYQEBAKCgoCAgICAgICAgICAgICAAACAgACAgICAgICAgICAgICAgICAgICAgICAgISBh4QBBwQBB4SBh4QBB4QBB4QBBwSBB4QBB4SBh4QBB4SBB4SBh4SBiAUBiAQBB4QBB4OBBwSBB4SBh4SBiAQBh4QBB4SBh4OBBwSBB4QBBwWCCISBB4QBB4SBB4QBB4SBh4SBh4QBBwQBB4QBBwQBBwSBB4SBiASBB4QBB4QBB4QBB4SBB4QBBwQBB4QBB4OBBwQBB4SBiASBiASBh4SBh4SBh4SBh4SBh4QBBwKCgoKCgoKCgoKCgoICggICAgICAgICAgICAgICAgICAgICAgICAgKCgoQEBAYGBgQEBAICgoICAgIBggGBgYGBgYGBgYGBgYIBggICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgODg4WFhYSFBQMDAwICAgICAgICAgICAgICAgICAgICAgICAgICAgKCggKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgICAgICAgICAgICAgICAgODg4WFhYUFBQKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoQEBAWFhYQEBAKCgoICAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoKCgoKCgoKCgoEBAQCBAICAgICAgICAgICAgICAgICAgICAgACAAACAgICAgICAgICAgIKCgoQEBAGCAYEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEAgIEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQKCgoQEBAGBgYCAgICAgICAgIAAgACAAACAgICAgICAgIEBAQEAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGCAYQEBAKCgoCAgICAgICAgICAgICAAACAgACAgICAgICAgICAgICAgICAgICAgICAgISBh4OBBwSBBwSBh4QBBwQBB4QBB4SBB4QBBwQBB4QBBwSBB4SBh4SBiAUBiAQBBwQBB4OAhoSBB4QBB4SBiAQBBwQBBwSBB4QBBwSBB4QBBwUBiAQBB4QBB4SBh4SBB4SBB4SBiAQBBwQBh4QBBwQBBwSBB4SBh4SBB4QBB4QBBwQBB4SBB4QBBwQBBwQBB4OBBwQBBwSBiAUBiASBB4SBh4SBh4SBh4SBh4QBBwKCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgICAgICAgICAgICAgICgoQEBAWFhYQEBAKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYICAgICAgICAgODAwWFhYUFBQMDAwICAgICAgICAgICAgICAgICAgICAgICAgKCAoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCAoKCAgICAgICAgICAgICAgICAgICAgICAgODg4WFhYUFBQKCgoICAgICAgICAYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoICgoICAgGBgYGBgYGBgYGBgYGBgYICAgICAgICAgQEBAWFhYQEBAICgoICAgICAgICAgICAgICAgICAgICAgKCAoKCgoKCgoKCgoKCgoKCgoEBAQCBAICAgICAgICAgICAgICAgICAgICAgACAAACAgICAgICAgICAgIKCgoQEBAGCAYEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEAgIEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQKCgoQDhAGBgYCAgICAgICAgIAAgACAAACAgICAgICAgIEBAQEAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGCAYQEBAKCgoCAgICAgICAgICAgICAAACAgACAgICAgICAgICAgICAgICAgICAgICAgIQBBwQBBwQBBwQBB4QBBwQBB4SBh4SBh4QBBwQBB4QBBwSBB4QBB4SBiAUCCAQBB4QBB4OBBoQBB4QBBwSBiAQBBwQBBwQBB4QBB4QBB4QBBwSBh4QBB4SBh4SBh4SBB4SBh4SBiAOBBwSBh4QBBwQBBwSBh4SBh4QBB4QBBwQBBwQBB4QBBwQBBwQBBwQBB4QBBwSBB4SBiAUBiASBB4SBB4SBh4SBh4SBh4QBBwKCgoKCgoKCgoKCgoKCgoKCAgKCAgICAgICAgICAgICAgICAgICAgICAgOEA4WFhYQEBAICAgICAgGCAYGBgYGBgYGBgYGBgYGBgYICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgODgwWFhYSEhIKCgoICAgICAgICAgICAgICAgICAgKCAgKCAoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCAoKCAgICAgICAgICAgICAgICAgICAgMDAwUFBQUFBQKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgIBggGBgYGBgYGBgYGBgYGBgYICAgICAgQEBAUFhQODg4KCgoICAgICAgICAgICAgICAgICAgKCAgKCAoKCgoKCgoKCgoKCgoKCgoEBAQCBAICAgICAgICAgICAgICAgICAgICAgACAAACAgICAgICAgICAgIKCgoQEBAGCAYEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEAgIEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQKCgoQDhAGBgYCAgICAgICAgIAAgACAAACAgICAgICAgIEBAQEAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGCAYQEBAKCgoCAgICAgICAgICAgICAAACAgACAgICAgICAgICAgICAgICAgICAgICAgIQBBwQBBwQBBwQBB4QBBwQBB4SBh4UBh4QBBwQBBwQBBwQBB4QBB4SBh4UBiASBB4QBBwOBBoQBB4QBBwSBB4QBBwQBB4QBBwQBB4QBB4SBB4SBh4QBB4SBh4SBB4SBB4QBB4SBB4OBBwQBBwQBBwQBBwSBh4SBh4QBBwQBBwQBBwQBB4OBBwQBBwQBBwQBBwOAhwQBBwUBiAUBiASBh4QBB4SBh4SBB4SBB4QBBwKCgoKCgoKCgoKCgoKCgoKCAoICAoICAgICAgICAgICAgICAgICAgKCgoODg4UFBQQEBAICAgICAgGBgYGBgYGBgYGBgYGBgYIBgYICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYICAgICAgODAwUFBQQEBAKCgoICAgICAgICAgICAgICAgICAgICAgICAoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICgoICAoICAgICAgICAgICAgICAgICAgICAgMDAwSEhISEhIKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgIBgYGBgYGBgYGBgYGBgYGBgYICAgICAgQEBAUFBQMDAwKCgoICAgICAgICAgICAgICAgICAgICAoICAoKCgoKCgoKCgoKCgoKCgoEBAQCBAICAgICAgICAgICAAICAgICAgICAgACAAACAgICAgICAgICAgIKCgoQEBAGBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEAgIEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQKCgoODhAGBgYCAgICAgICAgIAAgACAAACAgICAgICAgIEBAQEAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYQEBAKCgoCAgICAgICAgICAgICAAACAgACAgICAgICAgICAgICAgICAgICAgICAgIOBBoOBBwQBB4QBB4QBBwQBBwSBh4UBiAQBB4QBBwQBBwSBB4SBh4SBh4SBh4QBBwQBBwOBBwQBB4QBBwQBBwQBBwQBB4QBBwQBBwQBB4SBB4SBB4QBB4QBB4QBBwQBB4QBBwQBBwOBBwQBBwQBBwQBB4QBBwQBB4QBB4QBBwQBBwQBB4QBBwQBBwQBBwQBBwOAhoQBBwUBiASBiAQBB4QBBwSBB4QBB4QBB4QBBwKCgoKCgoKCgoKCgoKCgoICgoICgoICAgICAgICAgICAgICAgICAgKCAoMDAwUFBQQEBAICAgIBgYGBgYGBgYGBgYGBgYGBgYIBgYICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYICAgMDAwUFBQODg4KCgoICAgICAgICAgICAgICAgICAgICgoICgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICgoKCggICggICAgICAgICAgICAgICAgICAgMDAwQEBASEhIKCgoIBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgGBggGBgYGBgYGBgYGBgYGBgYGBgYICAgQEBASEhIMDAwKCgoICAgICAgICAgICAgICAgICAgKCgoICggKCgoKCgoKCgoKCgoKCgoEBAQCAgICAgICAgICAgICAAICAgICAgICAgACAAACAgICAgICAgICAgIKCgoQEBAGBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEAgIEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQKCgoODg4GBgYCAgICAgICAgIAAgACAAACAgICAgICAgIEBAQEAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYQEBAKCgoCAgICAgICAgICAgICAAACAgACAgICAgICAgICAgICAgICAgICAgICAgIMAhgQBBwQBB4QBB4QBBwQBBwSBh4SBiAQBB4QBh4QBB4SBB4SBh4SBh4SBh4QBBwOAhwOBBwQBBwQBBwQBBwQBBwQBB4QBBwQBBwSBh4QBB4SBB4QBBwQBBwQBBwQBBwQBB4QBBwOBBwQBBwQBBwQBB4QBBwQBB4QBBwQBBwQBB4QBBwOAhwOBBoQBBwQBBwOAhoQBBwUBiAUBiAQBB4QBBwSBBwQBBwQBBwQBBwKCgoKCgoKCgoKCgoKCgoKCggKCgoKCAgICAgICAgICAgICAgICAgKCAoMDAwSEhIODg4ICAgICAgIBgYGBgYGBgYGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYGBgYICAYICAgMDAwSEhIODg4KCgoICAgICAgICAgICAgICAgKCAgKCggKCgoKCggKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCggKCgoKCAgICAgICAgICAgICAgICAgICAgKDAoQEBASEhIKCgoICAgICAgGBgYGBgYGBgYGBgYGCAgICAgICAoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYGBgYIBgYICAgKCAgODg4SEBAMDAwKCAgICAgICAgICAgICAgICAgKCAgKCgoKCggKCgoKCgoKCgoKCgoKCgoEBAQCAgICAgICAgICAgICAAICAgICAgICAgACAAACAgICAgICAgICAgIKCAoQEBAGBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQICggODg4GBgYCAgICAgICAgICAgAAAAAAAgICAgICAgIEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYQEBAKCAoCAgICAgICAgICAgICAAACAgACAgICAgICAgICAgICAgICAgICAgICAgIOBBwOBBwOBBwOBBwOBBwOBBwOBBwOBBwQBBwSBB4SBB4SBh4UBiAUBiASBh4OBBwOBBoOBBoOAhoKAhgKAhgKAhgMAhgKAhgOAhoOBBoOBBoOBBwSBh4WCCIYCCIQBBwQBBwOBBwOBBwQBBwQBBwQBB4QBBwSBh4QBBwOBBwSBh4OBBwMAhoOBBwQBBwQBBwOAhoOBBwSBh4SBh4QBBwQBBwQBBwOBBwQBBwQBBwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQCAgICAgICAgICAgICAAICAgICAgIAAgAAAAACAgICAgICAgICAgIKCAoQDhAGBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgICBAIEBAQEBAQCBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQICAgODg4GBgYCAgICAgICAgICAgAAAAAAAgACAgICAgIEBAQCBAICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYQDhAKCAoCAgICAgICAgICAgIAAAAAAgACAgICAgICAgICAgICAgICAgICAgICAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAASBBwSBh4UBiAUCCAUBiASBh4SBh4WBiAYCCIWCCIWCCAWCCIWCCIWCiIYCiQaCiQcDCYaDCYcDCYcDCYaCiQYCiIWCCIUCCAUBiAUBiAQBh4OBBwOBBwQBBwSBB4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAYBh4aCCIcCCQeCCYgCigiCioiCiwiCiwiCiwiCiwiCiwiCiwiCiwiCiwiCiwiCiwiCiwgCiogCCgeCCYeCCYeCCYKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgICAgKCgoKCgoMDAwKCgoGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgIEBAQICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgICAgKCgoKCgoMDAwKCgoICAgICAgICAgKCgoKCgoMDAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgIICAgMDAwODg4ODg4OEA4QEBAQEBASEhISEhIWFhYWFhYYGBgWFhYYGBgYGBgWFhYWFhYWFhYYGBgWFhYYGBgYGBgWFhYEBAQCAgICAgICAgICAgICAAACAgICAgIAAgAAAAACAgACAgICAgICAgIICAgODhAGBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgICBAIEBAQEBAQCBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQICAgODg4GBgYCAgICAgICAgICAgAAAAAAAgACAgICAgIEBAQCBAICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYODhAICAgCAgICAgICAgICAgAAAAAAAgACAgICAgICAgICAgICAgICAgICAgICAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAOAhoMAhoOAhoOBBwQBBwSBB4SBB4SBh4UBiAWCCAWCCAWCCIWCCIWCCIYCiQaCiQaCiQYCiIYCiQYCiQYCCIWCCAUBiAUBiAUBh4SBh4QBB4QBBwOBBwOBBwQBBwAAAAAAAAAAAAAAAAGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYEBAQEBAQEBAQEBAQEBAQGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYAAAAAAAAcCCIiCiokCi4mDC4mDDAoDDIoDjIoDjQqDjQqDjQqDjQqDjQqDjQqDjQoDjQoDjIoDjImDDAmDDAmDC4kDC4iCioODg4QEBAQEBAQEBASEhISEhIWFhYWFhYYGBgWFhYYGBgYGBgWFhYWFhYUFBQUFBQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgIGBgYMDAwODg4ODg4ODg4QEBAQEBAQEBASEhISEhIWFhYWFhYYGBgWFhYYGBgYGBgWFhYWFhYWFhYYGBgWFhYYGBgYGBgWFhYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACBAIICAoKCgoICAgICAgICAgKCgoKCgoKCgoMDAwMDAwODg4ODg4ODg4QEBAQEBASEhIMDAwODg4ODg4ODg4QEBAQEBASEhIEBAQCAgICAgICAgICAgICAAACAgICAgIAAgAAAAACAgACAgICAgICAgIICAgODg4GBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgICBAIEBAQEBAQCBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQICAgODg4GBgYCAgICAgICAgICAgAAAAAAAgACAgICAgIEBAQCBAICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYODg4ICAgCAgICAgICAgICAgAAAAAAAgACAgICAgICAgICAgICAgICAgICAgICAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAKAhgMAhgMAhoOBBoQBBwSBB4SBh4WCCAYCiIaCiQYCiQYCiQYCiQYCiQYCiIYCiQYCiIYCCIYCCQWCCIWCCAUBiAUBiAUBiAUBiASBh4SBh4QBB4QBB4QBBwOAhwAAAAAAAAAAAAAAAAICAgGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYICAgAAAAAAAAaCCAiCiwoDDIqDjYuEjgwEjowFDwwFDwwFDwwFjwwFjwwFjwwFDwwFDwwFDwwFDwwFDouEjosEDgqDjQmDDAgCioGBgYGBgYIBggICAgICAgICAgKCgoMDAwMDAwMDAwMDAwODg4ODg4KCgoMDAwMDAwAAAAAAAAAAAAEBAQAAAAAAAAAAAAAAAAAAAAAAAACAgIEBAQGBAYEBgYGBgYGBgYIBggICAgICAgICAgKCgoMDAwMDAwMDAwMDAwODg4ODg4KCgoMDAwMDAwMDAwMDAwODg4ODg4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgIEBAQEAgQCAgICAgICAgQEBAQEBAQEBAQEBAQEBAQCAgIEBAQEBAQCAgIEBAQEBAQEBAQCAgIEBAQEBAQCAgIEBAQEBAQCAgICAgICAgICAgICAAACAgICAgIAAgAAAAACAgACAgICAgICAgIICAgODg4GBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgICBAIEBAQEBAQCBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQICAgODg4GBgYCAgICAgICAgICAgAAAAAAAgACAgICAgIEBAQCBAICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYODg4ICAgCAgICAgICAgICAgAAAAAAAgACAgICAgICAgICAgICAgICAgICAgICAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAhgMAhgOAhoOBBwQBBwQBBwQBBwQBB4SBB4SBh4UBh4UBiAUBiAWCCAWCCIYCiIYCiQaCiQaCiYaCiQYCiQYCCIYCCIYCCIYCiQWCCIWCCIWBiAUBiAUBiAUBh4AAAAAAAAAAAAAAAAKCgoICAgEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYICAgICAgGBgYICAgICAgGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQICAgMDAwAAAAAAAAaCCAkCiwsEDYyFjw2GD42Gj44HD44HD44HD44HD44HD44HD44HD44HD44HD44HD42HD42Gj40GD4wFDoqDjIiCioEBAQGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgICAgGBgYICAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgICAgGBgYICAgICAgGBgYICAgICAgICAgGBgYICAgICAgGBgYICAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQGBgYGBgYGBgYGBgYGBgYGBgYEBAQGBgYGBgYGBgYGBgYGBgYGBgYEBAQCAgICAgICAgICAgICAAICAgICAgIAAgAAAAACAgACAgICAgICAgIICAgODg4GBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgICBAIEBAQEBAQCBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQICAgODg4GBgYCAgICAgICAgICAgAAAAAAAgACAgICAgIEBAQCBAICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYODg4ICAgCAgICAgICAgICAgAAAAAAAgACAgICAgICAgICAgICAgICAgICAgICAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAOAhoOBBoOBBwOAhoOAhoQBBwSBBwQBB4SBB4UBh4UBiAWCCIWCCIYCCIYCCIYCiQcDCYcDCYcDCYaCiQYCiQYCCIYCCIYCiQYCiQYCiQYCCIWCCIWCCIWCCAUBiAAAAAAAAAAAAAAAAAMDAwICAgEBAQGBgYGBgYGBgYGBgYEBAQEBAQEBAQGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQICAgMDAwAAAAAAAAaCCAkDC4wFDo2Gj44HD46Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj44HD40GD4sEjYiCioEBAQEBAQGBgYGBgYGBgYGBgYGBgYICAgKCgoKCgoKCgoICAgICAgGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgYGBgYGBgYGBgYGBAQEBgYGBgYGBgYGBgYEBAQGBgYGBgYGBgYGBgYGBgYGBgYEBAQGBgYGBgYGBgYGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBAQGBgYEBAYEBgYGBgYEBAQEBAQEBAQGBgYEBAYEBgYGBgYEBAQEBAQEBAQCAgICAgICAgICAgICAAICAgICAgIAAgIAAAACAgACAgICAgICAgIICAgODg4GBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAIEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQICAgODg4GBgYCAgICAgICAgICAgAAAAAAAgICAgICAgIEBAQEBAICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYODg4ICAgCAgICAgICAgICAgAAAAAAAgICAgICAgICAgICAgICAgICAgICAgICAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAhgOAhoOAhoMAhoMAhoOBBwQBBwSBh4UBh4UBiAWCCAYCCIYCiQYCiQYCiQaCiQaCiYaCiQaCiQYCiQYCCIYCCIYCCIYCCQYCiQYCiQYCiQYCCIWCCIUBiAUBiAAAAAAAAAAAAAAAAAODg4KCgoEBAQGBgYGBgYGBgYGBgYGBgYEBAQEBAQGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQKCgoODg4AAAAAAAAaCCAmDDAyFjw4HD46Hj46Hj46ID46ID46ID46ID46ID46ID46ID46ID46ID46ID46Hj46Hj44HD42Gj4uFDgiCioEBAQGBgYGBgYGBgYGBgYEBAQGBgYICAgKCgoMDAwMDAwKCgoGBgYGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQGBgYGBgYGBgYEBAQEBAQGBgYGBgYGBgYEBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQGBgYEBAYEBgYGBgYEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgYEBAQEBAQEBAQEBAQEBAQICAYICAgEBAQEBAQEBAQGBgYICAgICAgICAgGBgYEBAQEBAQGBgYGBgYGBgYGBgYGBgYEBAQCAgICAgICAgICAgICAgICAgICAgIAAgIAAAACAgACAgICAgICAgIICAgODg4GBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAIEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQICAgODg4GBgYCAgICAgICAgICAgAAAAAAAgICAgICAgIEBAQEBAICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYODg4ICAgCAgICAgICAgICAgAAAAAAAgICAgICAgICAgICAgICAgICAgICAgICAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAKAhYKAhgOBBoOBBoOAhoOAhoMAhoOAhoSBBwSBh4UBiAWCCAWCCIWCCIWCCIYCiQYCiQYCCQYCiQYCiQYCCQWCCIWCCIYCCQYCCQWCCISBh4SBh4QBBwUBiASBiAAAAAAAAAAAAAAAAAODg4MDAwEBAQGBgYGBgYEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYODg4QEBAAAAAAAAAaBiAmDjAyGDw4HD46Hj46Hj46ID46ID46ID46ID46ID46ID46ID46ID46ID46ID46Hj46Hj44HD42Gj4uFDgiCioEBAQEBAQEBAQGBgYGBgYEBAQGBgYICAgKCgoKCgoKCgoICAgGBgYGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBAYEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYGBgYGBgYIBggGBgYEBAQEBAQEBAQEBAQEBAQGBgYICAgGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAQEBAQEBAQEBAQGCAgICAgGBgYGBgYEBAQODg4YGBgSEhIeHh4UFBQEBAQEBAQICAgGBgYGBgYGBgYGBgYEBAQCAgICAgICAgICAgICAgACAgICAgIAAgIAAAAAAgACAgICAgICAgIICAgODg4GBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAIEBAQEBAQCBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQICAgODg4GBgYCAgICAgICAgIAAgAAAAACAgICAgICAgIEBAQEBAICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYODg4ICAgCAgICAgICAgIAAgAAAAAAAgICAgICAgICAgICAgICAgICAgICAgICAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAKAhgKAhgOBBwOBBoOBBoOBBoOAhoOAhoOBBwQBBwSBh4UBiAUBiAUBiAUBiAYCiQaCiYaCiYaCiYaCiYYCiQYCiQYCCQWCCISBh4QBB4QBBwQBBwOBBwSBh4UBh4AAAAAAAAAAAAAAAAODg4MDAwEBAQEBAQGBgYEBAQEBAQEBAQEBAQEBAQEBAQGBgYEBAQEBAQGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYODg4QEBAAAAAAAAAaBiAmDjAyGDw2HD46Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj44HD42Gj4uFDgiCioEBAQEBAQEBAQEBgQEBAQEBAQEBAQICAgKCgoODg4SEhIMDAwEBAYEBAQEBgQGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGCAgICAgGBgYGBgYICAgGBgYEBAQEBAQEBAQEBAQEBAQGCAgICAgICAgICAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBAYEBAQEBAQEBAQCAgIEBAQGBgYICAgGBgYGBgYEBAQYGBgSEhIEBAQICAgaGhoGBgYGBgYICAgGBgYGBgYICAgICAgEBAQCAgICAgICAgICAgICAgACAgICAgIAAgIAAAAAAgACAgICAgICAgIICAgODg4GBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAIEBAQEBAQCBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQICAgODg4GBgYCAgICAgICAgIAAgAAAAACAgICAgICAgIEBAQEBAICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYODg4ICAgCAgICAgICAgIAAgAAAAAAAgICAgICAgICAgICAgICAgICAgICAgICAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAKAhgMAhgQBB4QBB4QBBwQBBwOAhoOAhoOBBwQBBwSBB4UBh4WBiAWCCIWCCIYCCQaCiYaCiYaCiQaCiQYCiQYCCIWCCIWCCASBh4QBBwQBBwOBBwOBBwQBB4QBB4AAAAAAAAAAAAAAAAODg4MDAwEBAQEBAQGBgYEBAQEBAQEBAQEBAQEBAQEBAQGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYMDAwODg4AAAAAAAAYBiAmDjAyGDw2HD44Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj44Hj44HD42Gj4uFDgiCioGBgYAAAAAAAAKBA4eDCYmECwoEi4qEjAqEjAoEjAoEi4kECwcCiQIAgoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAQEBAQEBAQGBgYGBgYGCAYGBgYGCAgGBgYGBgYIBggGBgYEBAQCBAQEBAQEBAQEBAQICAgICAgICAgICAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgYEBAQEBAQEAgICAgICAgIEBAQGBgYICAgICAgEBAQWFhYSEhIEBAQGBgYaGhoEBAYGBgYICAgICAgGBgYICAgICAgEBAQCAgICAgICAgICAgICAgACAgICAgIAAgIAAAAAAgACAgICAgICAgIICAgODg4GBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAIEBAQEBAQCBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQICAgODg4GBgYCAgICAgICAgIAAgAAAAACAgICAgICAgIEBAQEBAICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYODg4ICAgCAgICAgICAgIAAgAAAAAAAgICAgICAgICAgICAgICAgICAgICAgICAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAKAhgKAhgQBBwOBBwOBBwOBBwOBBwOBBwOBBwOBBoQBBwQBB4SBh4SBh4SBh4SBh4UBiAUCCAWCCAWCCIWCCIWCCIWCCAUBiASBh4QBBwQBBwQBB4QBB4SBh4SBh4AAAAAAAAAAAAAAAAMDAwKCgoEBAQEBAQGBgYEBAQEBAQEBAQEBAQGBgYGBgYGBgYEBAQEBAQGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYMDAwODg4AAAAAAAAYBh4mDjAyFjw2HD44Hj44Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj44Hj44HD42Gj4uFDggCioEBAQAAAAAAAAcCCQ4Gj48ID4+ID4+ID4+ID4+ID4+ID48ID42GD4WBhwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYGBgYGBgYICAgGBgYEBAQCAgIEBAQEBAQEBAQGBgYGBgYICAgICAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAQCAgICAgICAgIEBAQGBgYICAgICAgGBgYWFhYSEhIEBAQICAgaGhoEBAQGBgYGBgYIBgYGBgYICAgICAgEBAQEBAICAgICAgICAgICAgICAgICAgIAAgIAAgAAAgACAgICAgICAgIKCgoODg4GBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQICAgODg4GBgYCAgICAgICAgIAAgAAAgACAgICAgICAgIEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYODg4KCgoCAgICAgICAgIAAgAAAgAAAgICAgICAgICAgICAgICAgICAgICAgICAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAKAhgKAhgOBBwOAhoOAhoMBBoMAhoMAhoMAhoMAhoMAhoOBBoOBBwQBBwQBB4SBh4UBiAWCCAWCCIYCCIYCiQYCiQYCCIUCCASBh4SBh4QBBwOBBwQBBwWCCAWBiAAAAAAAAAAAAAAAAAMDAwKCgoEBAQGBgYGBgYEBAQEBAQGBgYEBAQGBgYGBgYGBgYEBAQEBAQGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYEBAQGBgYKCgoODg4AAAAAAAAYBh4mDi4yFjw2HD44Hj44Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj46Hj44Hj44Hj44HD42Gj4uFDggCioEBAQAAAAAAAAYCB4uFDgyGDw0Gjw0Gjw0Gjw0Gjw0GjwyGDosEjYUBhgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAYEBAQEBAQEBAQEBAQCAgIEBAQGBgYGBgYGBgYGBgYGBgYICAgGBgYEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgYEBAQEBAQCAgICAgICAgIEBAQGBAQGBgYICAgGBgYWFhYUFBQEBAQMDAwaGhoEBAQGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBAQCBAICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIKCgoQEBAGBgYEBAQCAgICAgICAgICAgICAgICAgICAgICBAQEBAQEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgIEBAQEBAQICAgQEBAGBggCAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQCBAQCAgICAgICAgICAgICAgICAgICAgIEBAQGBgYQEBAKCgoCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAKAhYMAhgQBBwQBBwQBBwQBBwQBBwMAhoMAhoOBBoQBBwSBh4UBh4UBiAWCCAWCCIYCiQYCiIYCiQaDCYcDCYaCiQOBBoQBBwOBBwOBBoOAhoOAhoOBBwUCCAWCCIAAAAAAAAAAAAAAAAMDAwKCgoEBAQGBgYGBgYEBAQEBAQGBgYEBAQEBAQGBgYGBgYEBAQGBgYGBgYGBgYEBAQEBAQEBAQGBgYGBgYEBAQEBAQGBgYEBAQGBgYICAgODg4AAAAAAAAYBh4mDi4yFjw2Gj44HD44Hj44Hj44Hj44Hj44Hj44Hj44Hj46Hj46Hj44Hj44Hj44Hj44Hj42HD40Gj4uFDggCioGBgYAAAACAAIYCB4YCB4WBhwWBhwWBhwWBhwWBhwWBhwWBhwYCB4UBhgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgYEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYGBgYGCAYGBgYEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgYEBAQEBAQCAgICAgICAgIEBAQGBgYGBgYGBgYICAgMDAwSEhIQEBAYGBgQEBAEBAQGBgYEBAQGBgYGBgYGBgYGBgYEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAIKCgoQEBAGBgYEBAQEAgICAgICAgICAgICAgICAgIEAgIEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgIEBAQEBAQKCgoQEBAICAgCAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQEBAQEAgICAgICAgICAgICAgICAgIEAgIEBAQGBgYQEBAKCgoEBAICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAhgOBBwSBh4QBh4SBh4SBh4QBBwQBBwQBBwSBB4SBh4QBB4SBh4UBiAUBiAUBiAUCCAWCCAWCCIWCCIYCCIYCiQYCCIUBiAUBh4UBh4QBB4QBBwQBBwSBh4UBiAAAAAAAAAAAAAAAAAICAoICAgEBAQGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQGBgYGBgYGBgYEBAQEBAQEBAQGBgYGBgYGBgYEBAQEBAQGBgYEBAQGBgYGBgYMDAwAAAAAAAAYBh4mDi4wFjo0Gj42HD44HD44Hj44Hj44Hj44Hj44Hj44Hj44Hj44Hj44Hj44Hj44HD44HD42HD40Gj4uFDggCigGBgYGCAYICAgiDCoqEDQqEDIqEDIqEDIqEDIqEDIqEDIqEDIqEDQeCiQGCAYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgYEBAQEBAQCAgIEBAQEBAQGBgYGBgYGBgYGBgYGBgYGBgYICAgGBgYEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgYEBAQEBAQCAgICAgIEBAQEBAQEBAQGBgYGBgYICAgEBAQGBgYGBgYEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQKCgoQEBAGBgYEBAQEAgICAgICAgICAgICAgICAgICAgIEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgIEBAQEBAQKCgoQEBAICAgEAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgIEAgIEBAQGBgYQEBAKCgoEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAOAhoQBBwSBh4QBh4QBB4OAhoOAhoMAhoMAhoMAhoMAhoOBBwQBBwSBh4SBh4SBh4SBiAWCCAYCCIYCCIYCiQYCiQYCiQaCiQYCiQWCCIUBiAUBiAUBiASBh4UBh4AAAAAAAAAAAAAAAAICAgICAgEBAQGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQGBgYEBAQEBAQEBAQMDAwAAAAAAAAYBh4kDCwuFjg0Gj42HD42HD42HD42HD42HD42HD42HD42HD42HD42HD42HD42HD42HD42HD40Gj4yGDwsEjYgCigICAgICAgICAggCig2Gj48Hj48ID48ID48ID48ID48ID46Hj42GD4cCiIGCAYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgYEBAQCAgIAAAACAgIEBAQGBgYGBgYGBgYGBgYGBgYIBggICAgGBgYEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgYEBAQEBAICAgICAgIEBAQEBAQEBAQGBgYGBgYGBgYGBAQGBgYGBgYGBgYEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQKCgoQEBAGBgYEBAQEAgICAgICAgICAgICAgICAgICAgIEBAQEBAQEBAQEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgIEBAQEBAQKCgoQEBAICAgEAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgIEAgIEBAQGBgYQEBAKCgoEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAKAhYQBBwUBiAUBiAOBBoMAhgMAhoMBBoOBBwOBBwQBh4SBiAUCCAWCCIYCiQYCiQYCiQaCiYaDCYcDCYcDCYaDCYcDCYcDCYcDCYaCiQQBB4QBh4SBh4UCCIWCCIAAAAAAAAAAAAAAAAICAgICAgEBAQGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgGBgYICAgGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQGBgYEBAQEBAQEBAQMDAwAAAAAAAAWBhwgDCosEjQwFjoyGDw0Gjw0Gj40Gj40Gj40Gj40Gj40Gj40Gj40Gj40Gj40Gj40Gj4yGDwyGDwuFjgoEDIeCCQICAgICAgICAgcCiIwFjg0GDw0Gjw0Gjw0Gjw0Gjw0GjwyGDwuFDgYCB4GBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAYEBAQCAgICAgICAgIEBAQGBgYGBgYGBgYGBgYGBgYGBggICAgGBgYEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgYEBAQEAgQCAgICAgIEBAQEBAQEBAQGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEAgIKCgoQDg4GBgYEBAQCAgICAgICAgICAgICAgICAgICAgICBAQEBAIEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgIEAgIEBAQICAgQDg4IBggCAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAICBAQCAgICAgICAgICAgICAgICAgICAgIEBAQGBgYQDg4KCgoEAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAhgQBB4SBh4QBB4QBBwOBBwQBBwQBBwQBB4SBB4SBh4WCCAWCCIYCiIYCiQaDCYaDCYcDCYcDCYcDCYcDiYcDCYcDCYcDCYcDCYeDigaCiQUBiAUBiAWCCIaCiQAAAAAAAAAAAAAAAAICAgICgoGBgYICAgICAgEBAQEBAQGBgYGBgYGBgYEBAQGBgYICAgICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQMDAwAAAAAAAAUBhoeCiYoDjAsEjQuFDguFjgwFjowFjowFjowFjowFjowFjowFjowFjowFjowFjowFjouFjguFDYqEjQkDi4aCCAGBgYGCAYICAoaCCAYBh4WBhwWBh4WBh4WBh4WBh4WBh4WBhwYBiAYCB4GBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAYEBAQEBAQCAgIEBAQEBAQEBAQGBgYGBgYGBgYGBgYGBgYICAgGBgYEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgYEBAQCAgICAgICAgIEBAQEBAQEBAQGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYEBAQCAgICAgICAgICAgICAgACAgICAgIAAAAAAAAAAAACAgICAgICAgIICAgMDAwGBgYEAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAIEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGCAgMDAwGBgYCAgICAgICAgIAAAAAAAAAAAACAgICAgIEBAICAgICAgICAgICAgICAgICAgICAgICAgICAgIEAgIGBgYMDAwICAgCAgICAgICAgIAAAAAAAAAAAACAgICAgICAgICAgICAgICAgICAgICAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAOAhoQBh4SBiASBh4QBB4QBBwQBBwOBBwOBBwQBBwSBBwSBB4SBh4UBiAWCCIWCCIYCCQYCCIYCiQaDCQaCiQaCiQcDCYaDCYaDCYWCCISBh4QBB4SBh4UBiIWCCIAAAAAAAAAAAAAAAAKCgoKCgoGBgYICAgKCgoGBgYEBAQICAgGBgYGBgYGBgYEBAQGBgYGBgYICAgICAgICAgICAgICAgGBgYGBgYICAgICAgGBgYEBAQEBAQEBAQMDAwAAAAAAAAUBhgaCCAiDComDi4oEDAoEDIqEjIqEjIqEjIqEjIqEjIqEjIqEjIqEjIqEjIqEjIqEDIoEDImDjAkDi4gCigWBhwGBgYGBgYICAggDCouEjYuFjYwFjYwFjYwFjYwFjYwFjYuFDYsEjYcCiQGCAYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgYEBAQEBAQEAgQEBAQEBAQEBAQEBAQGBgYEBAQEBgYICAgICAgGBgYEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgYEBAQCAgICAgICAgICAgICAgICAgIGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYCAgICAgICAgICAgIAAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgACAgIGBgYKCgoEBAQCAgICAgIAAAAAAAAAAgAAAgICAAICAgICAgICAgICAgICAgICAgICAgICAgIAAAIAAgAAAgAAAAACAAACAgICAgIGBgYKCgoEBAQCAgIAAAAAAAAAAAAAAAAAAAAAAAACAgICAgICAgICAgICAgICAAIAAgIAAgAAAAAAAAACAgICAgIEBAQKCgoGBgYCAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAhgUBiAUCCAUCCAUBiAUBiAUBiAUBiAQBBwOBBwQBBwQBBwQBh4SBiAUBiAWCCIYCiQYCiQaCiQaDCYcDCYcDiYeDigeDigWCCAWCCAUCCAUCCASBiAWCCIYCiQAAAAAAAAAAAAAAAAMDAwKCgoICAgGBgYKCgoMDAwGBgYICAgICAgGBgYGBgYEBAQEBAQGBgYICAgKCgoICAgICAgICAgICAgICAgKCgoKCgoICAgGBgYGBgYGBgYMDAwAAAAAAAAUBhgUBhoaCCIeCiYgCiggDCgiDCoiDCoiDCoiDCoiDCoiDCoiDCoiDCoiDCoiDCogDCogDCggCigeCiYYBh4SBBgGBgYGBgYGBgYgDCg4HD48ID48ID48ID48ID48ID48ID48ID42Gj4cCiIGCAYICAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBAYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYICAgICAgGBgYEBAQEBAQEBAQEBAQEBgQEBAQEBAQGBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgYEBAQCAgICAgICAgIEBAQEBAQCAgQEBAQEBAQGBgYUFBQWFhYaGhoeHh4KCgoEBAQEBAQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMAhgUBiASBh4QBB4QBB4QBB4QBBwQBBwQBBwQBBwQBBwOBBwQBBwQBB4SBB4UBiAWCCIWCCIYCiQaDCQaDCYcDCYcDCYaDCQYCiQWCCIWCCIUCCIUCCAWCCIcDCYAAAAAAAAAAAAAAAAMDAwMDAwICAgICAgICAgKCgoKCgoICAgICAgICAgGBgYCAgIKCgocHBwcHBwcHBwUFBQGBgYICAgKCgoICAgKCgoKCgoICAgGBgYGBgYICAgMDAwAAAAAAAASBBYQBBQSBBgWBhoYBh4YBh4aCCAaCCAaCCAaCCAaCCAaCCAaCCAaCCAaCCAaCCAaCCAYBh4WBhwWBhoSBBYQBBYGBgYGBgYGBgYYCB4oEDAsFDQsFDQsFDQsFDQsFDQsFDQqFDQmDjAWCBoGCAYICAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAQEBAQEBAQGBgYGBgYEBAQGBgYGBgYGBgYGBgYIBggGBgYEBAQEBAQEBAQEBAQEBAQGBgYEBAQGBgQGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgYEBAQEBAQCAgICAgIGBgYGBgYEBAQEBAQEBAQKCgocHBwICAgGBgYUFBQSEhIEBAQEBAQGBgYEBAQEBAQGBgYEBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgICAgIEAgQEBAQCAgICAgICAgICAgIEBAQEBAQCAgICAgICAgIEBAQCAgICAgICAgICAgIEBAQOBBwQBh4QBB4QBBwOBBwOBBwOBBwSBh4UBiAWCCAWCCAUCCAUBiAUCCAUBiAUBiAWCCIWCCIYCiQcDCYcDiYcDiYaDCQYCiIWCCIWCCAUCCIUBiAUBiAUBiAaCiQAAAAAAAAAAAAAAAAKCgoODg4QEBAICAgGBgYICAgMDAwMDAwICAgICAgGBgYCAgIUFBQUFBQKCgoKCgoYGBgKCgoICAgKCgoMDAwMDAwKCgoGBgYGBgYICAgMDAwODg4AAAAAAAAQBBQOBBIOBBIOBBIQBBQSBBYSBBYSBBYSBBgSBBgSBBgSBhgSBBgSBBgSBBgSBBYSBBYQBBYQBBQOBBIOBBIQBBQGBgYGBgYICAgeCiQaCCAYBh4YBh4YBh4YBh4YBh4YBh4YBh4aCCIaCCAGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBAYGBAQEBAQEBAQEBAQGBgYICAgGBgYGBgYGBgYGBgYICAgICAgGBgYEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgYEBAQEBAQCAgIEBAQEBAQGBgYEBAQEBAQEBAQICAgcGhwICAgEBAQSEhIUFBQEBAQGBgYICAgICAgGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgICAgIAAAACAgIEBAQEBAQGBgYICAgICAgICAgEBAQCAgIAAAAEBAQEBAQGBgYGBgYEBAQEBAQEBAQGBgYGBgYGBgYEBAQEBAQGBgYGBgYEBAQEBAQEBAQEBAQGBgYOBBoQBB4SBB4SBB4SBh4SBh4WCCIWCCIYCiIYCiQaCiQaCiQaCiQaDCYaDCYYCiQYCiQaCiQaDCQcDCYeDiYcDiYaDCQWCiIWCCAUCCASBh4SBh4SBiAQBB4SBiAAAAACBAIAAAACBAIICAgGBgYMDAwQEBAMDAwGBgYICAgKCgoMDAwICAgICAgICAgQEBAICAgEBAQEBAQQEBAKCgoKCgoMDAwMDAwKCgoICAgICAgICAgMDAwODg4KCgoAAAAAAAAKAA4IAAwGAAoGAAgGAAgGAAgGAAgGAAgGAAgGAAgGAAgGAAgGAAgGAAgGAAgGAAgGAAgGAAgGAAgGAAoIAAoKAA4GBgYGBgYIBgggCig0Fjw4HD44HD44HD44HD44HD44HD44HD4yFjwcCCIGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQGBAYEBAQEBAQEBAQGBgYICAgGBgYEBAQGBAQGBgYICAgICAgGBgYEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgYEBAQEBAQCAgIEBAQEBAQEBAQEBAQGBgYGBgYGBgYaGhoKCgoEBAQSEhIUFBQEBAQICAgICAgICAgGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgICAgICAgIEBAQEBAQEBAQGBgYGCAYICAgKCgoKCgoGBgYGBgYKDAoKDAoMDAwMDAwMDgwMDAwGBgYEBAQAAAASEhISEhISEhISEhISEhISEhISEhISEhISEhISEhISEhISEhISEhISEhISEhISEhISEhISEhISEhIMAhoOBBwOBBwOBBwQBBwQBB4SBh4SBh4UBiAWCCAUBiAUBiAWCCIWCCIYCiIYCiQaCiQcCiYcDCYcDiYeECggECggECggECgeECgaDCQYCiIYCiIUCCASBB4SBh4AAAACAgIAAAACAgIKCgoKCgoEBAQMDAwSEhIODg4ICAgMDAwMDAwKCgoODg4ODg4QEBAQEBAODg4QEBASEhIMDAwKCgoMDAwMDAwICAgGBgYICAgQEBAODg4ICAgGBgYAAAAAAAAGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgIBggGBgYGBgYGBgYICAgICAgICAgGBggGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYgCiY2Gj46Hj46Hj46Hj46Hj46Hj46Hj46Hj42GD4cCCIGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQGBgYEBAQEBAQCAgIEBAQGBgYEBAQEBAQEBAQGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQGBgYGBgYEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQCAgICAgICAgICAgICAgICBAQEBAQEBAQGBgYaGhoICAgGBgYSEhIWFhYEBAQICAgEBAQGBgYEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgIEBAQEBAQEBAQGBgYGBgYICAgICAgKCgoKCgoKCgoKCgoKDAoMDAwMDAwMDAwMDAwMDAwMDAwICAgGBgYMDAwMDAwKDAoKCgoKCgoICggEBgQCAgIAAAAQEBASEhIUFBQQEBAQEBASEhIQEBAUFBQSEhIQEBAQEBASEhIUFBQSEhIQEBASEhIQEBAUFBQUFBQOBBoUBiAUBiAUBiAUBiASBiASBB4SBB4SBh4UBiAUBiAUBiAWBiAWCCIYCiIYCiQaDCYcDCYcDCYcDiYcDigeECggECggEiogEioeECgWCiIOBBwOBBwOBBwSBh4AAAAAAAAAAAAAAAAKDAwKCgoGBgYGBgYICAgQEBAQEBAKCgoKCgoKCgoMDAwKCgoQEBAgICAkJCQkJCQcHBwODg4MDAwKCgoICAgGBgYMDAwQEBAMDAwGBgYEBAQICAgAAAAAAAAGBgYGBgYIBggICAgICAgICAgICAgICAgICAgIBggGBgYGBgYGCAgICAgICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYIBggYCB4gDCYiDioiDioiDioiDioiDioiDioiDioeCiYWBhwGBggGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQGBgYEBAQEBAQCAgIEBAQEBAQEBAQGBgYEBAQGBgYICAgICAgGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQCAgICAgICAgICAgIEBAQEBAQEBAQEBAQGBgYUFBQQEBAUFBQcHBwQEBAEBAQICAgEBAQEBAQEBAQEBAQEBAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAgQEAgYGAggMBA4QBhISCBYSCBYIBAoCBAIEBAQEBAQGBgYICAgKCgoMDAwMDAwMDAwMDAwMDAwMDAwMDAwKDAoMDAwMDAwMDAwMDAoKDAoKCgoKCgoICggICAgICAgEBgQCAgIEBAQEBAQEBAQCBAICAgICAgIAAgAAAAAAAAAICAgKCgoMDAwKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoMDAwKCgwKCgoKCgoKCgoKCgoICAgOBBwUBiAUBiASBiASBiASBiAUBh4UBiAWCCQYCiQYCiQaCiQcDCYeECggECogECoeECoeECoeECocDigcDigcDigYCiQWCiIUCCAUBiAUBiAUBiAUBiAUBiAUBiAAAAACAgIAAAAAAAAIBggODg4KCgoGBgYICAgGBgYKCgoSEhIMDAwICAgKCgoKCgoICAgKCgoODg4QEBAQEBAODg4KCgoICAgICAgODg4SEhIODg4EBAQCAgIEBAQMDAwAAAAAAAAGBgYGBgYIBggICAgICAgICAgICAgICAgICAgICAgIBgYGBgYGCAgICAgICAgICAgICAgICAgIBgYGBgYGBgYGBgYGBgYGBgYIBgggCiggCiggDCgiDCgiDCggDCggDCggDCggDCggCigcCCQGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQGBAQEBAQEBAQEBAQEBAQGBgYGBgYICAgGBgYGBgYICAgICAgGBgYEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQCAgICAgIEBAQEBAQGBgYEBAQEBAQEBAQGBgYICAgGBgYEBAQEBAQEBAQEBAQEBAQCAgIEBAQGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAAQGAggKAgwMBA4KBAwSCBYYDB4eECIkEiggDCYUBhgiDioyGDY2HDo6Hjw0FjwWChoKDAoMDAwMDAoMDAoMDAwMDAwMDAwMDAwMDAwKDAoKCgoKCgoICggICAgICAgGBgYGBgYEBAQEBAQEBAQCAgICAgICAgIAAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEBASEhIUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBIUFBQUFBQUFBQUFBQQEBAOBBwSBB4QBB4QBBwQBB4WCCIYCiQaCiQaDCYaDCYaDCYcDCYeDiYeECggECogEiogEioiEiwkFCwkFC4kFi4kFi4iEiwaDCQWCCIUBiASBiASBiAUBiAUBiAYCCIAAAAAAgIAAAAAAAAAAAAKCgoQEBAKCgoGBgYKCgoICAgUFBQUFBQQEBAMDAwKCgoKCgoKCgoMDAwQEBAODg4KCgoMDAwODg4QEBAQEBAICAgEBAQEBAQEBAQGBgYODg4AAAAAAAAGBgYGBgYGBgYICAgICAgICAgICAgICAgICAgICAgICAgGBggICAgICAgICAgICAgICAgICAgICAYGBgYGBgYGBgYGBgYGBgYGBgYgCig2Gj48Hj48ID48ID48ID48ID48ID46Hj42GD4cCCIGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYICAgICAgICAgIBggICAgGBgYEBAQEBAQEBAQEBAQEBAQEBAQGBgYICAgICAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAICAgIEBAQGBgYGBgYEBAQGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYICAgICAgAAAAAAAAAAAAAAAAAAAACAgIGAggMBA4QCBQSCBYSBhYOBhIWCBokECoqFDAwGDIuFDQeCiYUBhouFDY4Hj48ID4+Ij42GDwUBBoqEDQ+Hj4+Ij4+JD4+HD4gDCgMDAwKCggICggICAgICAgICAgICAYGBgYEBAQEBAQEBAQCAgICAgICAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAODg4SEhISEhISEhISEhISEhISEhISEhISEhISEhISEhISEhISEhISEhISEhISEhIUFBISEhIQEBAQBBwWCCIUCCAUBiASBh4UBiAUBiAWCCAYCCIYCiQaCiQaCiQaCiQcDCYeDigeECgeECggEioiEioiEiwiFCwiFCwiFCwgEiogECgcDigYCiQWCCIUCCASBh4UCCAAAAAAAAAEBAQAAAAAAAAEBAQODg4SEhIKCgoGBgYICAgGBgYKCgoQEBAWFhYSEhIMDAwICAgICAgMDAwMDAwSEhIWFhYUFBQKCgoEBAQEBAQEBAQEBAQEBAQGBgYODg4AAAAAAAAGBgYGBgYIBgYICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYeCiQyGDw2HD42HD44HD44HD44HD44HD42HD4yFjwaCCAGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAQEBAQGBgYEBAQGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQICAgICAgICAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEAgQCAgIGBgYGBgYGBAYEBAQGBgYICAgGBgYIBggICAgGBgYEBAQEBAQEBAQEBAQEBAQICAgICAgIBggICAgAAAAAAAAAAAAAAAAEAgQaCh4sFDQyGjg2HDo4HDomDjASBBgkDiw6HD4+ID4+Ij4+ID4oDjIWBhwsEjY8Hj48Hj48Hj4yFjoWBhwaCiAmEiokEiYeECIaDBwOBhIEBAQCBAICAgICAgICAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAODg4SEhIUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFBQSFBIUFBQSEhISEhIUFBQUFBQUFBQSEhIQEBAQBBwYCiQYCiQaCiQYCiQUCCISBB4SBB4UBh4WCCAYCCIYCiQaCiQcDCYeDiggECogEiokFiwkFi4kFi4kFi4kFi4kFi4iFCwgECoeDiYcDCYYCiIWCCIWCCIWCCIAAAAAAAACAgIAAAACAgIAAAAGBgYODg4QEBAKCgoICAgGBgYEBAQEBAQODg4UFBQUFBQQEBAMDAwQEBAUFBQUFBQODg4GBgYEBAQEBAQEBAQEBAQEBAQGBgYGBgYODg4AAAAAAAAGBgYGBgYICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgGBgYGBgYGBAYGBgYGBgYIBggaCCAcCiQcCiQcCiQcCiQcCiQcCiQcCiQcCiQcCiQWCBwGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQGBgYGBgYEBAQEBAQEBAQGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBAQEBAQEAgIEBAQEBAQCAgICAgIEBAQEBAQGBgYEBAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQGBgQEAgQCAgIEBAQEBAQEBAQEBAQGBgYICAgGBgYICAgGBgYEBAQEBAQEBAQEBAQEBAQEBAQGBgYICAgICAgGCAgAAAAAAAAAAAAAAAACAAIeCiY2Gj4+ID4+ID4+Ij4wEjoWBhweCiQ0GD42Gj4yGjgqFjAeDCQQBhQSCBQWDBoSCBYOBhAKBAwGAgYCAgQEAgQCAAQCAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAQEBAUFBQWFhYSEhISEhIUFBQUFBQUFBQUFBQUFBQSEhISEhISEhISEhISEhISEhIUFBQUFBQQEBAQBBwUBiAUCCAWCCIWCCIUBiASBiASBh4SBB4SBh4UBiAYCiIaCiQaCiQcDiYeECggEioiFCwkFiwmGC4mGDAmGC4mFi4mFi4iFCwcDCYaCiQaCiQYCiQYCiQaCiQAAAAAAAAAAAAAAAAAAAAEBAQGBgYGBgYMDAwQEBAODg4ICAgEBAQEBAQGBgYGBgYKCgoQEBAQEBAQEBAKCgoGBgYGBgYGBgYGBgYEBAQEBAQEBAQGBgYGBgYGBgYODg4AAAAAAAAGBgYGBgYICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgGBgYGBgYEBAYGBgYGBgYGBAgiDCooDjAoEDAoDi4oEC4oEC4oEC4oEC4oDi4oDjAeCiQGCAYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQGBAYGBgYEBAQEBAQEBAQGBgYGBgYGBgYEBgYGBgYGBgYGBgYGBgYEBAQCAgICAgICAgICAgICAgIEBAQEBAQEBAQCAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEAgQCAgIEBAQCAgICAgICAgIGBgYICAgGBgYICAgMDAwODg4ODg4GBgYEBAQEBAQEBAQGBgYICAYGCAgGBgYAAAAAAAAAAAAAAAAAAAASBhYoEDAqFDAkEigeECIWChoOBhAIBAoKBAwIBAgEAgQCAAICAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAODg4SEhIUFBQQEBAQEBASEhIUFBQSEhISEhISEhIQEBAQEBAODg4ODg4QEBAQEBASEhIUFBQQEBASBB4UCCAUCCAUBiAUBiASBiASBh4SBB4SBB4SBh4UBiAYCCIYCiQcDiYgEioiEiwiEiwiEiwiEiwgEiogEioiFCweECgaDCYcDiYWCCIWCCIWCCIUCCAUBiAWCCIAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAQKCgoUFBQKCgoGBgYGBgYGBgYGBgYEBAQEBAQICAgEBAQEBAQGBgYGBgYGBgYGBgYEBAQEBAQEBAQICAgGBgYGBgYODg4AAAAAAAAEBgYGBgYICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBAYgCig4Gj46ID48ID48ID48ID48ID48ID46Hj42GD4cCiIGCAYICAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQGBAYGBgYEBAQEBAQEBAQGBgYGBgYEBAYEBAQGBgYGBgYICAgGBgYEBAQCAgICAgICAgICAgICAgIEBAQEBAQEBAQCAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQCAgICAgIEBAQEBAQEAgQEAgQGBgYGBgYIBggWFhYcHBweHh4iIiIYFhgGBgYEBAQEBAQGBgYGCAgGBgYGBgYAAAAAAAAAAAAAAAAAAAACAAICAAIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDAwODg4ODg4MDAwMDAwODg4ODg4ODg4ODg4ODg4MDAwMDAwMDAwMDAwMDAwMDAwODg4ODg4MDAwQBBwQBBwQBBwQBB4QBB4QBB4QBB4QBBwQBBwSBh4WCCIaDCYcDCYcDigcDiggEiogEioeECgcDiYcDigcDCYcDCYcDiYaDCQWCiIWCCIUBiAUBiAUCCAUCCASBh4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQKCgoQEBAKCgoKCgoGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYEBAQEBAQEBAQICAgGBgYGBgYMDAwAAAAAAAAGBAYGBgYICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBAYcCCQwFjo0Gjw0Gjw0Gjw0Gjw0Gjw0Gjw0GDwuFDgYCB4GCAYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAYEBAQEBAQCAgIEBAQGBgYEBAQEBAQGBgYICAgICAgGBgYEBAICAgICAgICAgICAgIEBAQEBAQEBAQEBAQCAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQCAgICAgIEBAQGBgYEBAQEBAQEBAYGBgYKCgoeHh4ICAgEBAQODg4aGhoGBgYGBgYGBgQICAgGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgIKCgoMDAwEBAQCAgIMDAwMDAwCAgIEBAQMDAwMDAwEBAQEBAQMDAwMDAwEBAQAAAAOAhoQBBwQBBwQBB4QBB4QBB4QBBwUBiAWCCIYCiQYCiQaCiQcDCYcDCYeDiYgECggECogEioiFCogEioeECocDigcDiYaDiQYDCQYCiIWCiISCCASBh4QBBwSBh4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQGBgYSEhISEhIMDAwGBgYGBgYGBgYGBgYEBAQGBgYGBgYGBgYEBAQGBgYGBgYEBAQEBAQGBgYGBgYEBAQGBgYKCgoAAAAAAAAGBgYGBgYIBgYICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKCAoICAgICAgGBgYGBgYGBgYGBgYIBgocCCIYCCAYCCAYCCAYCCAYCCAYCCAYCCAYCCAaCCAYCBwGCAYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAgQEBAQEBAQEBAQCAgQCAgIEBAQGBAYEBAQEBAQGBgYICAgICAgEBAQCAgICAgIEBAQCAgICAgIEBAQEBAQEBAQEBAQCAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBAYEBAQCAgICAgIEBAQGBgYEBAQEAgQEBAYGBgYKCgoeHh4ICAgEBAQQEBAaGhoGBgYGBgYEBAQGBgYGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAACAgIEBAQEBAICBAICBAICBAIEBAQGBgQEBgQEBAICBAICBAICBAIEBAQGBgYEBgQEBAQEBAQEBAQEBAQEBgQCAgIAAAAAAAAAAAAAAAAAAAAAAAAAAgACAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgICAgICAgIAAAIAAAAAAAAAAAAAAAAAAAAEBAQKCgoMDAwEBAQEBAQKCgoMDAwCAgIEBAQKDAoMDAwCAgIEBAQMDAwMDAwEBAQAAAAOAhoSBh4SBh4SBiAQBh4SBB4SBh4UBiAWCCIYCCQYCiQaCiQcDCYcDCYcDiYeDiggECggEigiFCoiFCogEioeECgaDCQWCCISBh4SBiASBh4QBB4QBB4QBBwSBh4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQICAgSEhIWFhYODg4ICAgKCgoICAgEBAQICAgKCgoICAgICAgGBgYGBgYEBAQGBgYICAgGBgYEBAQEBAQMDAwAAAAAAAAGBgYGBgYICAgICAgICAgKCAoICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgKCAgICgoICAgICAgGBgYGBgYGBgYGBgYGBAgiCiouFDgwFjYwFjYwFjYwFjYwFjYwFjYwFjguEjgcCiQGBgQGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEAgQEBAQEBAQCAgQEBAQEBAQEBAQEBAQGBgYICAgIBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQCAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQCAgQEBAQGBgYGBgYEBAQEAgQEBAQGBgYICAgcHBwICAgGBgYQEBAaGhoGBgYGBgYGBgYGBgYGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAKBgwWChocDiAcDiAcDiAaDCAWChoQBhQYDBwcDiAcDiAcDiAaCh4UChgSCBYaDiAeDiIeECIcDiAaDB4SBhYKAg4SBhgYChwYChwYChwOBBACAgIEBAQCAgIEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBgQGBgYGBgYGBgYGBgYGBgYEBAQCAgIAAAAAAAAEBAQKCggMDAwEBAQEBAQKCgoMDAwGBgYGBgYKCgoMDAwCAgQCBAIMDAwMDAwEBAQAAAAMAhoSBh4SBh4SBh4SBh4QBB4QBBwSBB4SBh4UBiAUBiASBh4UBiAWCCAYCiIaCiQcDiYeECggECggEioeECgcDiYcDCYaDCYYCiQUBiASBh4SBiASBh4SBh4UBiAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgIGBgYODg4SEhIQEBAKCgoGBgYGBgYGBgYKCgoKCgoICAgGBgYGBgYGBgYGBgYGBgYGBgYEBAQEBAQMDAwAAAAAAAAGBgYGBgYICAgICAgKCAgKCAoKCgoKCAgICAgICAgICAgICAgICAgICAgICAgICAgKCgoKCggICAgICAgGBgYEBAQGBgYGBgYGBAYgCig4HD48ID48ID48ID48ID48ID48ID48ID42Gj4aCiIEBgQGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQEBAQEBAQEBAQCAgIEBAQEBAQEBAQEBAQEBAQICAgEBAQEBAQEBAQEBAQEBAQGBAQEBAQEBAQEBAQEBAQEBAQCAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEAgQEBAQGBAQGBgYGBgYEBAQEBAQEBAQGBgYICAgcHBwSEhIUFBQeHh4WFhYGBgYGBgYGBgYGBgYGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAASBhYuEjg6HD48Hj4+ID40FjwYCB4YBh4yFj46Hj48Hj48Hj4sEDYYBh4gCiY2Gj46Hj4+ID44Gj4qDjYWBhoWBhowFjo6Hj48ID4+ID4sEDYOBhIICggKCgwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwKDAoMDAoKDAoKCgoKDAoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoMDAwKCgoEBAQAAAAAAAAEBAQICggMDAwEBAQEBAQKCgoMDAwICAgGBgYKCgoMDAwCAgICBAIKDAoMDAwEBAQAAAAMAhgSBBwQBBwQBB4QBB4QBB4QBBwSBh4SBh4UBiAUBiAUBiAWCCAYCiIcDCQeDiYeECggEioiFCwiFCwiEiwiEiogEiogEiogECgcDiYYCiQWCCIUCCASBh4SBh4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgIEBAQGBgYSEhIICAgGBgQGBgYGBgYICAgKCgoICAgGBgYEBAQGBgYICAgGBgYGBgYEBAQEBAQODg4AAAAAAAAGBgYGBgYICAgICAgKCgoKCgoKCgoKCAoICAgICAgICAgICAgICAgICAgICAgKCAgKCgoKCgoKCAgICAgGBgYEBAQICAgICAgIBggaCCAoEDAsFDYuFDYuFDYuFDYuFDYuFDYsFDQoEDAWCBwGCAYICAgAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYEBAQEBAQEBAQEBAQEBAQCAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQEAgIEBAQGBAQGBgYGBgYEBAQEBAQEBAQGBgYGBgYMDAwQEBAQEBAMDAwGBgYICAgGBgYGBgYGBgYGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAASBBguFDg6Hj46ID4+Ij42GDwUBhoYBh40GD46Hj48ID4+ID4qEDQUBBogDCg4HD46Hj4+Ij46Hj4qDjIQBBQUBhowFjo6ID48ID4+Ij4wEjoWCBoMDAwODA4MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAoMDAwKDAwKDAoKDAoKDAoMDAwODg4MDAwGBgYAAAAAAAAEBAQKCgoMDAwGBgYGBgYKCgoMDAwICAYGBgYKCgoMDAwCAgICBAIKCgoMDAwEBAQAAAAOAhoSBB4SBh4SBh4QBh4SBh4SBh4SBiAUCCAWCCIYCiQaCiQcDCYeDigeDiggECogECggEioiFCwiFCwiFCwkFiwiFCwgEiocDigaDCYYCiQUBiASBh4SBBwSBh4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACBAQEBAQGBgYQEBAODg4GBgYGBgYICAYGBgYICAgICAgGBgYGBgYICAgICAgGBgYGBgYCAgIEBAQODg4AAAAAAAAEBAQGBgYICAgKCAoKCgoKCgoKCgoKCgoICAgICAgICAgICAgICAgICAgICAgKCgoKCgoKCgoKCgoICAgGBgYEBAQCAgICAgIGBAgeCCQaCCAYBh4YCCAYCCAYCB4YCCAYBiAYBh4aCCAaCCACBAICAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgIEBAQEBAQEBAQEBAQEBAQEAgIEBAQCAgIEBAQEBAQEBAQGBAYEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBAQGBAQEBAQEBAQCAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgICAgIEBAQEBAQGBgYEBAQEBAQEBAQEBAQEBAYGBgYICAgICAgGBgYGBgYICAgKCgoICAgICAgGBgYGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAOBBIoEDI2Gj44HD46Hj4yFDoaCCAWBhwwFjo2HD44HD44HD4qEDQaCCAeCiQ0GD44HD46Hj40GDwqDjQWBhwUBhosEjY2Gj44HD46HD4mDjAKBAwKCggKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCggKCggICggICAgICAgICAgICAgICAgICAgICAgICAgICAgICAYICAYICAgICAgICAgGBgYEBAQCAgIAAAAAAAAAAAAEBAQKCgoMDAwICAgGCAYICAgMDAwGBgYGBgYICggKDAoCAgICBAIKCgoMDAwEBAQAAAAOBBwSBiASBh4QBh4QBB4QBB4QBB4QBB4SBB4SBh4YCiQcDCYcDCYeDiYeDigeECgeECggEiogEioiEioiFCwiFCwgEiocDiYcECgaDiYYCiQSBh4SBh4SBB4UCCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgIAAAAEBAQICAgQEBAICAgGBgYIBgYGBgYICAgICAgICAgICAgICAgICAgICAgGBgYEBAQGBgYODg4AAAAAAAAEBAQGBgYICAgICAgKCgoKCgoKCgoKCgoICAgICAgICAgICAgICAgICAgICAoKCgoKCgoKCgoKCAoICAgGBgYEBAQAAAAAAAAAAAIgCig0Fjw4HD44HD44HD44HD44HD44HD44Gj4yFjwcCCIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgIEBAQEBAQEBAQGBgYIBggGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYEBgQGBgYGBgYGBgYCAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgICAgIEBAQGBgYIBggGBgYEBAQEBAQEBAQEBAQGBgQGBgYGBgYGBgYGBAYEBAQEBAQEBAQGBgYGBAYGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBAYMBg4QCBIQCBIQChIOCBAMBg4IBgoOCBAQChIQChIQCBIOCBAMBg4KBgwOCBIQChIQChIOCBAOCBAIBAoEAAQIAgoKBA4MBA4MBA4GAggCAgIEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICBAIEBAQEBgQGBgYGBgYGBgQGBgQGBgQGBgQGBgQGBgYGBgYGBgYEBAQAAAAAAAAAAAAAAAAAAAAEBAQKCgoMDAwGBgYGBgYKCgoMDAwICAgGBgYKCggMDAwCAgICBAIKCgoMDAwEBAQAAAAQBBwUBiASBiAUBiAUBiAUBiAUBiAUCCAUBiAWCCIaCiQaCiYcDCYcDiYeECggECogEioiFCwiFCwiFCwgEioaDiYYCiQWCiIUCCASBh4QBB4QBh4SBh4SBiAWCCIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICAgODg4KCgoGBgYGBgYEBAQGBgYICAgICAgICAgICAgICAgICAgGBgYEBAQICAgODg4AAAAAAAAEBAQGBgYICAgICAoKCgoKCgoKCgoKCAoICAgICAgICAgICAgICAgICAgKCAoKCgoKCgoKCgoICggICAgGBgYEBAQAAAAAAAAAAAIgCig2Gj46Hj46Hj46Hj46Hj46Hj46Hj46Hj42Gj4cCCIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgQEBAQEBAQEBAQEBAQICAgGBgYEBAQEBAQEBAQEBAQEBAQGBgYGBgYEBAQGBgYEBAQEBAQGBgYGBgYGBgYGBgYGBgYGBgYCAgIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgICAgIEBAQEBAQGCAgGBgYEBAQEBAQEBAQEBAQEBAQGBgYGBgYEBAQGBgYEBAQEBAQGBgYGBgYGBgQGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAACBAQIBgoKBgwMBg4MBgwKBgwMCA4KBgwKBgwMBgwMBg4MBg4KBgwMCA4KBgwKBgwMCA4MCA4MBg4MCA4MCA4GAggEAAYGAAgGAAgGAAgEAAQAAAAEBAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgIEBAQGBgYICAYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYEBAQCAgIAAAAAAAAAAAAEBAQKCgoMDAwICAgGBgYICggMDAwGBgYGBgYICggKDAoCAgICAgIKCgoMDAwEBAQAAAASBh4WCCIWCCIUCCAUBiAUBiAUBiAUCCAWCCIWCCIYCiIYCiQaDCYcDiggECogEioiFCwkFi4kFi4mFi4kFi4iFCwgEioeECgYCiQWCiIUBiAUBiASBiAUBiAUBiAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgIAAAAAAAAAAAAAAAAGBgYODg4MDAwGBAQGBgYEBAQEBAQGBgYICAgKCgoKCgoICAgGBgYGBgYEBAQGBgYODg4AAAAAAAAEBAQGBgYICAgKCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgICAgICAgKCgoKCgoKCgoKCgoKCgoICAgGBgYEBAQAAAAAAAACAAQYCCAgDCgkDiwkDiwkDiwkDiwkDiwkDiwkDiwgDCgWBhoAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEAgIEAgQEBAQGBAYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYEBAQGBgYEBAQGBgYGBgYGBgYEBAQEBgQGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgICAgIEBAQGBAYEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYGBgYEBAQGBgYEBAQGBgYGBgYGBAYEBAQEBAQEBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAGAggeDCQwFjg0Gjo2HDoyFjgkDCwUBBgiDCoyGDo0Gjo2HDowFjYeCiYUBhgoEjAyGjw0Gjo0GjosEjQgCigSBBYcCiQwFjgyGjo0GjowFjgUBhgEBgQICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgGBgYGBgQCAgIAAAAAAAAEBAQKCgoMDAwICAgGCAYICggMDAwICAYGBgYICggKDAoCAgQEBAIKCgoMDAwEBAQAAAASBh4aCiQWCCISBiAQBB4WCCIYCiQYCiQYCiQYCiQYCiQYCiQaCiQaDCYeDiggECggEiogEiogEioiEioiFCoiFCoiEiogEioeECgcDiYaDCYYCiIWCCIWCCIYCiQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQCAgIAAAIAAAAAAAAEBAQMDAwMDgwGBgYEBAQGBgYGBgYICAgICAgICAgICAgICAgGBgYGBgYEBAQEBAQODg4AAAAAAAAEBAQGBgYICAgKCgoKCgoKCgoKCgoKCgoKCAgICAgICAgICAgICAgICAgKCgoKCgoKCgoKCgoKCAoICAgGBgYEBAQAAAAAAAACAAQgCigiDCogDCggDCggDCggDCggDCggDCggDCgiDCocCCQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgICAgICAgIEBAQGBgYGBgYICAgICAgGBgYEBAQEBAQEBAQEBAQGBgYICAgICAgICAgICAgGBgYGBgYGBgYEBAQGBgYGBgYEBAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgICAgICAgIEBAQGBgYGBgYICAgICAgGBgYEBAQEBAQEBAQEBAQGBgYICAgICAgICAgICAgGBgYGBgYGBgYEBAQGBgYGBgYEBAQAAAAAAAAAAAAAAAAAAAAAAAAGAAgkDCw4Gj46Hj4+Ij48Hj4mDi4SBBYoEDI4HD46Hj4+ID44HDwcCCISBBYwFjo6Hj48ID4+ID4yFjocCCQQBBQkDiw4HD48ID4+Ij48Hj4gCigMDAwODA4MDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwKCgoICAgCAgIAAAAAAAAEBAQKCgoMDAwICAgGBgYICggMDAwGBgYGBgYICggKDAoCAgICBAIKCgoMDAwEBAQAAAAQBBwWCCIUBiASBiASBh4WCCAWCCIWCCIYCCIYCCIYCCIYCCIYCiQaDCYcDCYcDCYcDCYcDCYcDCYcDCYcDCYcDCYeDiYeDigeDigcDCYWCCIUBiAWCCIaCiQaCiQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgICAgICAgIAAAAAAAAKCgoODg4GBgYEBAQGBgYGBgYICAgICAgGBgYGBgYICAgGBgYICAgEBAQEBAQODg4AAAAAAAAEBAQGBgYICAgKCAoKCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgICAgKCgoKCgoKCgoKCgoICAgIBggGBgYEBAQAAAAAAAAAAAIgCig2Gj46Hj48Hj48ID48ID48ID48Hj46Hj40GD4aCCIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgICAgICAgIEBAQEBAQGBgYGBgYICAgKCgoICAgEBAQEBAQEBAQEBAQGBgYGBgYICAgICAgGBgYICAgGBgYEBAQEBAQGBgYGBgYEBAQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgICAgICAgIEBAQEBAQGBgYGBgYICAgKCgoICAgEBAQEBAQEBAQEBAQGBgYGBgYICAgICAgGBgYICAgGBgYEBAQEBAQGBgYGBgYEBAQAAAAAAAAAAAAAAAAAAAAAAAAEAAYiDCo4Gj48Hj4+ID46HD4mDjASBBgoDjA4HD48Hj4+ID44GjweCCYUBhgwFDg6Hj48ID4+ID4yFDogCigSBBYiDCw4HD48ID4+ID46HD4aCCIKCgoMDAwMDAwMDAwKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCggICggICggKCggKCggKCggICggICggICggICggICggICAgICggKCgoKCggGCAYEBAQCAgIAAAAAAAAAAAAEBAQKCgoMDAwEBAQEBAQKCgoMDAwEBAQEBAQKCgoMDAwEBAQCBAIMDAwMDAwEBAQAAAAMAhgUBiASBiASBiASBh4SBh4SBB4SBBwSBB4SBB4QBBwSBBwUBiAWCCIYCCIYCiQaCiQaDCYcDCYeDigeDigeECggECogEioiEioiEiwaDCQSBiAUBiAWCCIcDCYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgQAAAAAAAAGBgYODg4ICAgEBAQICAYGBgYICAgGBgYGBgYICAgICAgGBgYICAgEBAQEBAQODg4AAAAAAAAEBAQGBgYIBggKCAgKCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgICAgKCgoKCgoKCgoKCgoKCAoICAgGBgYEBAQAAAAAAAAAAAIeCiY0GD44HD44HD44HD44HD44HD44HD42HD4yFjwaCCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgICAgICAgIEBAQGBAYEBAQEBAQGBgYGBggEBAQEBAQEBAQEBAQEBAQICAgKCgoKCgoGBgYICAgKCgoGBgYEBAQEBAQGBgYGCAYGBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgICAgICAgIEBAQGBAYEBAQEBAQGBgYGBggEBAQEBAQEBAQEBAQEBAQICAgKCgoKCgoGBgYICAgKCgoGBgYEBAQEBAQGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAACAgQSCBYeDiQgECYiEiYeDiQYCh4OBhIWChogECQgEiYiEiYeDiQWCBoOBhIaDB4gECYiEiYgECYcDCIWCBwMBA4QBBQcDCAeDiIeDiQcDCIKBAwEBgQGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgGCAYEBAQAAAAAAAAAAAAAAAAAAAAEBAQICggMDAwEBAQEBAQKCgoMDAwICAgGBgYKCgoMDAwCAgICBAIMDAwMDAwEBAQAAAAGABQSBB4QBB4QBB4SBB4SBB4QBB4QBBwOBBwOBBwQBBwQBBwSBB4UBiAWCCIWCCIWCCQYCiIYCiQaCiQaCiYaDCYcDCYeDigYCiQUCCASBiAUBiAUBiAUBiAcDCYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgIAAAAAAAAEBAQMDAwKCgoEBAQGBgYGBgYGBgYEBAQGBgYICAgICAgGBgYICAgEBAQGBgYODg4AAAAAAAAEBAQGBgYICAgKCAoKCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgICAgKCgoKCgoKCgoKCgoKCAoICAgGBAYEBAQAAAAAAAACAAQaCCIcCCIaCiIcCiIcCiIcCiIcCiIcCiIaCiIcCCIYBh4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgICAgICAgIEAgQEBAQGBgYGBgYGBgYGBgYEBAYEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYMDAwMDAwICAgGBgYEBAQGBgYGBgYIBgYAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgICAgICAgIEAgQEBAQGBgYGBgYGBgYGBgYEBAYEBAQEBAQEBAQEBAQEBAQGBgYGBgYGBgYGBgYMDAwMDAwICAgGBgYEBAQGBgYGBgYGBgYAAAAAAAAAAAAAAAAAAAAAAAAEBAQEBAQGBAYGBAgEBAYGBAgKBgwIBgoGBAYGBAYGBAgGBAgGBAgMCAwIBgoGBAYGBAgGBAgGBAgIBgoIBAoEAAQAAAAAAAAAAAIAAAIAAAAAAAACAgIAAAAAAAAAAAAAAgACAgIEBAQGBgYICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGCAYGCAYEBAQAAAAAAAAAAAAAAAAAAAAEBAQKCggMDAwEBAQEBAQKCgoMDAwICAgGBgYKCgoMDAwCAgICBAIKCgoMDAwEBAQAAAAIABYOAhoOBBoMAhoOAhoOBBoMAhoMAhoMAhoOAhoQBBwUBiAUBiAWCCIYCiQaCiQaCiQaDCQaDCYcDCYYCiQWCCIUCCAQBB4QBB4SBB4QBB4QBB4QBB4SBB4eDiYAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICAgMDAwEBAQEBAQGBgYGBgYGBgYGBgYICAgICAgGBgYKCgoGBgYICAgMDAwAAAAAAAAEBAQEBAQICAgKCgoKCgoKCgoKCgoKCgoICAoICAgICAgICAgICAgICAgKCgoKCgoKCgoKCgoICAoICAgEBAYEBAQAAAAAAAAEAAQkDC4oDjAmDi4mDi4mDi4mDiwmDi4mDi4mDi4oDjIgCigAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgICAgICAgIEBAQEBAQEBAQEBAQEBAQGBgYICAgICAgGBgYEBAQEBAQEBAQEBAQGBgYICAgICAgICAgMDAwMDAwICAgGBgYEBAQEBAQEBAQIBgYCAgICAgIAAAAAAAAAAAAAAAACAgICAgICAgIEBAQEBAQEBAQEBAQEBAQGBgYICAgICAgGBgYEBAQEBAQEBAQEBAQGBgYICAgICAgICAgMDAwMDAwICAgGBgYEBAQGBgYICAgICAgAAAAAAAAAAAAAAAAAAAAAAAAKBAocDCQoEjAqFDAsFDAmEC4eCiYUBhggDCgqEjAqFDAqFDAkDiwaCCAUBhomECwqFDIsFDAoEi4mDi4eCiQSBBYcCiIoEi4oEi4qFC4gDCYIBAgEBAQEBAQEBgQEBAQGBgYGBgYGCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgGCAgEBAQAAAAAAAAAAAAAAAAAAAAEBAQKCgoMDAwICAgGBgYICggMDAwICAgGBgYICggKDAoCAgICBAIKCgoMDAwEBAQAAAAKAhYQBBwQBBwOBBwOBBwOBBoOBBoQBBwSBB4UBh4WCCAYCCIYCCIYCCIYCiQaCiQYCiQaDCQaDCQcDCYYCiIQBh4MAhoMAhoMAhoOBBoOAhoMAhoOBBoOAhoYCCIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQKCgoGBgYCAgIEBAQGBgYGBgYGBgYICAgICAgGBgYKCgoGBgYICAgMDAwAAAAAAAAEBAQEBAQIBggKCAgKCgoKCgoKCgoKCgoKCgoICAgICAgICAgICAgICggKCgoKCgoKCgoKCgoICAgGBgYEBAQEBAQAAAAAAAACAAQiDCw2Gj46Hj46Hj46Hj46Hj46Hj46Hj44HD42GD4eCiYAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgICAgICAgIEBAQEBAQGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYKCgoMDAwKCgoGBgYICAgKCgoMDAwICAgGBgYGBgYICAgKCgoKCAoCAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQGBgYGBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYKCgoMDAwKCgoGBgYICAgKCgoMDAwICAgEBAQICAgODg4UFBQODg4AAAAAAAAAAAAAAAAAAAAAAAAMBBAsEjY6HD48ID4+Ij44GD4eCiYWBhwuFDg6Hj48ID4+ID4yFjwWBhwYCB42Gj48Hj4+ID48Hj4wEjoaCCAUBBoqEjQ8Hj4+ID4+Ij44GD4WCBwMDAwODA4ODg4MDAwMDAwMDAwMDgwMDgwMDgwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDgwMDgwKCgoGBAYCAAQAAAIAAAAAAAAEBAQKCgoMDAwGBgYGBgYICggMDAwGBgYGBgYKCgoKDAoEAgQEBAQKCgoMDAwEBAQAAAAKAhYSBh4SBh4SBh4SBh4OBBoMAhgOAhoOAhoOBBwQBBwSBh4SBh4UBiAWCCAWCCIWCCIYCCIYCiQaDCYcDCYcDCYeDigaDCQSBhwOBBoOBBwOBBwQBBwQBBwWCCIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQKCgoGBgYCAgIEBAQGBgYEBAQGBgYGBgYGBgYICAgKCgoICAgICAgMDAwAAAAAAAAEBAQEBAQGBgYKCAgKCgoMDAoKCgoKCgoKCgoKCgoICAgICAgICAgICgoKCgoKCgoKCgoKCgoICAgGBgYEBAQEBAQAAAAAAAAGAAgcCCIcCiIeCiQeCiYeDCYeDCYeDCYeDCYeCiQcCiIYCCACAAIAAAAAAAAAAAAAAAAAAAACAgICAgIEBAQEBAQGBgYGBgYICAgICAgICAgIBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQGBgYIBggKCgoICAgICAgMDAwODg4ODg4SEhISEhIQEBAODg4KCAgCAgICAgICAgICAgICAgICAgIEBAQEBAQGBgYGBgYICAgICAgICAgIBgYGBgYEBAQEBAQEBAQEBAQEBAQEBAQGBgYIBggKCgoICAgICAgMDAwODg4MDAwODg4WFhYSEhIMDAwICAgAAAAAAAAAAAAAAAAAAAAAAAAMAg4qEjQ6HD46Hj4+Ij42GD4cCCIWBhwuFDg6Hj46Hj4+ID4yFjoUBBoYCB42Gj46Hj48ID48Hj4uEjgYBh4SBBgqEjQ6Hj48ID4+Ij42GD4YCh4MDAwODA4ODgwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAwMDAoKDAoKDAoKDAoKDAoKDAwMDAwMDAwKCAoGBAgEAAYAAAIAAAAAAAAEBAQKCgoMDAwEBAQEBAQKCgoMDAwEBAQEBAQKCgoMDAwEAgQEBAQMDAwMDAwEBAQAAAAKAhYSBiASBh4QBB4QBB4QBBwQBBwQBBwOBBwOBBwQBBwQBBwSBB4UBh4UBh4SBh4UBh4UBiAWCCIWCCIYCiQaDCYcDCYcDCYaDCYWCCISBh4SBh4SBh4SBh4WBiAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgIICAgICAgCAgIEBAQGBgYGBgYEBAQGBgYGBgYICAgKCgoICAgICAgMDAwAAAAAAAAEBAQEBAQGBgYICAgKCgoMDAwKCgoKCgoKCgoKCgoKCgoICAgICAgKCgoKCgoKCgoMCgoKCgoICAgGBgYEBAQEBAQAAAAAAAAMAg4mDC4kDCwkDCwkDCwkDCwkDCwkDCwkDCwkDCwkDCwiCiwEAAYAAAAAAAAAAAAAAAAEAgQEBAQEBAQGBgYGBgYICAgICAgICAgICAgICAgGBgYGBgYEBAQEBAQEBAQEBAQEBAQGBgYICAgMDAwQEBAODg4ODg4QEBAQEBASEhIQEBAICAgEBAQEBAQGBgYEAgQCAgICAgIEAgQEBAQEBAQGBgYGBgYICAgICAgICAgICAgICAgGBgYGBgYEBAQEBAQEBAQEBAQEBAQGBgYICAgMDAwQEBAODg4ODg4QEBAQEBASEhIUFBQODg4EBAQCAgIGBgYAAAAAAAAAAAAAAAAAAAAAAAAIAgoeDCYsFDQuFjYwFjYoEDAgCiYUBhgiDiosFDQuFjYuFjQmDi4aCCAUBhooEjAuFjYuFjYsFDIoEDAeCiYSBBYeCiQqFDIsFDIuFjQkDioIBAoICAYICggKCggICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAYICAYGCAYGCAYGCAYGCAYICAYICAgICAgEBgQAAAAAAAAAAAAAAAAAAAAEBAQICggMDAwEBAQEBAQKCgoMDAwICAgGBgYKCgoMDAwCAgICBAIMDAwMDAwEBAQAAAAIABQWCCASBiASBh4QBB4QBB4SBB4SBB4SBB4SBh4SBiASBiAUBiAUBiAWCCAYCCIYCiQYCiQYCiQaDCQcDCYcDiYcDCYYCCIWCCAQBB4QBB4QBB4SBh4SBiAUBiAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICAgKCgoEBAQEBAQGBgYICAgICAgGBgYGBgYICAgKCgoICAgICAgMDAwAAAAAAAAEBAQEBAQGBgYICAgKCgoMDAoKCgoKCgoKCgoKCgoKCgoICAgICAgKCgoKCgoKCgoKCgoKCgoICAgGBgYEBAQEBAQAAAAAAAAYBh4wFDo0GDw0GD40GD40GD40GD40GD40GD40GD40FjwqEDQMAg4AAAAEBAQEBAQEBAQEBAQEBAQGBgYGBgYICAgICAgKCgoICAgICAgICAgGBgYEBAQEBAQEBAQEBAQEBAQEBAQICAgMDAwQEBAODg4ICAgGBgYGBgYGBgYEBAQCAgICAgIICAgODg4SEhIEBAQEBAQEBAQEBAQEBAQGBgYGBgYICAgICAgKCgoICAgICAgICAgGBgYEBAQEBAQEBAQEBAQEBAQEBAQICAgMDAwQEBAODg4ICAgGBgYGBgYGBgYEBAQCAgIEBAQICAgODg4SEhIAAAAAAAAAAAAAAAAAAAAAAAAEBAQGBAYGBAgGBAgGBAgIBggKBgwIBggGBAYGBAgGBAgGBAgIBggKBgwGBggGBAgIBggIBAgIBAgKBgoIBAoCAAIAAAAAAAIAAAIAAAIAAAAAAgAEBAQCAgICAgICAgICAgICBAIEBAQEBAQEBAQEBAQEBAQGBgYGBgYICAYGCAYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGCAYICAYGCAYGBgYEBAQCAgIAAAAAAAAAAAAEBAQICggMDAwEBAQEBAQKCgoMDAwICAgGBgYKCgoMDAwCAgICBAIKDAoMDAwEBAQAAAAIABQUCCASBiASBh4QBh4QBB4QBBwQBBwOBBwOBBoOBBwSBh4UBh4UCCAWCCIYCiQaDCYcDCYcDCYcDiYeDigcDCYQBh4QBBwQBB4QBB4QBh4SBh4UBiAWCCAUBiAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgYMDAwGBgYEBAQGBgYGBgYKCgoICAgGBgYMDAwKCgoKCgoICAgMDAwAAAAAAAACAgIEBAQGBAYICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgKCgoKCgoKCgoKCgoKCgoICAgGBAYEBAQCAgIAAAAEAAYaCCAaCCAcCiIeCiQeCiQeCiQeCiQeCiQeCiQcCiQaCCAYCB4YBh4AAAAEBAQEBAQEBAQEBAQEBAQGBgYICAgICAgKCgoKCgoKCAoICAgGBgYEBAQEBAQEBAQEBAQEBAQEBAQICAgMDAwMDAwGCAYEBAQEBAQCAgICAgICAgIEBAQMDAwSEhISEhISEhIQEBAEBAQEBAQEBAQEBAQEBAQGBgYICAgICAgKCgoKCgoKCAoICAgGBgYEBAQEBAQEBAQEBAQEBAQEBAQICAgMDAwMDAwGCAYEBAQEBAQCAgICAgICAgIEBAQMDAwSEhISEhISEhIQEBAAAAAAAAAAAAAAAAAAAAAAAgAKBgoUChgaDCAaDCAaDB4aCh4WChwQBhQWChoaDCAaDCAaDB4YCh4UCBgQBhQYDB4aDCAaDCAaCh4aDCAUBhgMBBASBhYWCBoWCBwWCBoMBA4CAgIEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIGBgYICAgICAgICAgICAgICAgIBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYICAgGBgYCAgIAAAAAAAAEBAQKCgoMDAwICAgGBgYICgoMDAwICAYGBgYKCggMDAwCAgICBAIKCgoMDAwEBAQAAAAKABYWCCIWCCIWCCIWCCIUCCAQBh4OBBoMAhgKAhgMAhoOBBwSBBwSBh4SBh4SBh4UBiAWCCIWCiIWCiIYCiQWCCISBh4QBBwQBBwQBB4QBh4SBh4SBiAUCCAUBiAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQKCgoICAgEBAQGBgYGBgYKCgoKCgoICAgODg4KCgoKDAwICAgMCgoAAAAAAAACAgIEBAQEBAQICAgKCgoKCgoKCgoKCgoKCgoKCgoKCgoICAgICAgKCgoKCgoKCgoKCgoKCAoGBgYEBAQEBAQCAgIAAAAQBBQkDC4kDC4mDC4mDjAmDjAmDjAmDjAmDjAmDjAmDDAmDC4kDC4cCCQAAAAGBgYEBAQEBAQEBAQEBAQGBgYICAgKCgoKDAoKCAoICAgGBgYEBAQEBAQEBAQEBAQEBAQEBAQICAgMDAwKCgoGBgYEBAQCAgIAAAACAgIGBgYMDAwODg4QEBAUFBQQEBAQEBAQEBAGBgYEBAQEBAQEBAQEBAQGBgYICAgKCgoKDAoKCAoICAgGBgYEBAQEBAQEBAQEBAQEBAQEBAQICAgMDAwKCgoGBgYEBAQCAgIAAAACAgIGBgYMDAwODg4QEBAUFBQQEBAQEBAQEBAAAAAAAAAAAAAAAAAAAAAAAAASBhgwFDg6HD46Hj48Hj4wEjgaCCAcCCIyFjw6HD46Hj46HD4qDjQWBhweCiY2Gj46Hj48Hj42GjwqEDQWBhwYBh4uFDg6HD48Hj48Hj4sEDYMBg4ICggKCgwKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKDAoKDAoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoMDAwKCgoEBAQAAAAAAAAEBAQKCgoMDAwICAgGBgYICggMDAwGBgYGBgYICggKDAoEBAQEBAQKCgoMDAwEBAQAAAAKAhYWCCIUCCAUBiASBh4SBh4QBBwOBBoQBBwQBBwSBB4SBh4UBiAWCCIUCCAUBiAWCCIYCCIWCCIWCiIYCCIWCCIWCCISBh4SBiAUCCAWCCIWCCIWCCIWCCISBh4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgIICAgKCgoEBAQGBgYGBgYKCgoMDAwKCgoMDAwKCgoMDAwICAgKCgoAAAAAAAACAgIEBAQEBAQGBgYICAgKCgoKCgoKCgoKCgoKCgoICAoICAgICAgICAoKCgoKCgoKCgoICAgGBgYEBAQEBAQCAgIAAAAgCiowFDowFDowFDoyFjwyFjwyFjwyFjwyFjwyFjwwFDowFDowFDooDjIGAAgEBAQEBAQEBAQEBAQEBAQEBAQGBgYICAgIBggGBgYEBAQEBAQEAgQCAgICAgIEBAQEBAQICAgKCgoGBgYEBAQCAgIAAAACAgIGBgYKCgoKCgoKCgoMDAwMDAwODg4QEBAQEBASEhIEBAQEBAQEBAQEBAQEBAQEBAQGBgYICAgIBggGBgYEBAQEBAQEAgQCAgICAgIEBAQEBAQICAgKCgoGBgYEBAQCAgIAAAACAgIGBgYKCgoKCgoKCgoMDAwMDAwODg4QEBAQEBASEhIAAAAAAAAAAAAAAAAAAAAAAAASBhgyFjw6Hj48ID4+Ij4wFDgUBhocCCQyGDw6Hj48ID4+ID4qEDQQBBYiDCo4HD46ID4+Ij46HD4oDjAQBBYYBh4wFjo8ID48ID4+Ij4yFDwUChgODg4ODg4ODg4ODgwMDgwMDgwMDAwMDgwMDAwMDAwMDgwODg4ODg4ODg4ODg4ODg4ODg4ODg4ODgwODg4MDgwMDgwMDgwMDgwMDgwMDgwMDgwMDgwODg4ODg4MDAwGBgYAAAAAAAAEBAQKCgoMDAwICAgGBgYICAgMDAwGBgYGBgYKCggKDAoGBgYEBAQKCgoMDAwEBAQAAAAKAhYSBh4QBB4QBBwQBB4QBBwQBBwQBBwQBBwQBBwSBB4SBB4SBh4WCCIWCCIYCCQYCiQaCiYaCiYcDCYcDCYaCiQYCiQWCCIUBiAUBiAUBiAUBiAUCCAWCCISBh4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICAgODg4ICAgGBgYGBgYICAgKCgoKCgoKCgoMDAwMCgwICAgKCgoAAAAAAAACAgICAgIEBAQEBAYICAgKCgoKCgoKCgoKCgoKCgoICAoICAgICAgICAgKCgoKCgoKCgoIBggEBAQEBAQCAgICAgIIAgokDC4wFjgyGDoyGDoyGDoyGDoyGDoyGDoyGDoyGDoyGDoyGDowFjgmDjASBBYGBgYEBAQEBAQEBAQEAgQEBAQCAgICAgIEBAQEBAQCAgICAgICAgICAgIEBAQEBAQGBgYIBggEBAQEBAQCAgIAAAAEBAQICAgICAgICAgKCgoKCgoKCgoMDAwQEBASEhISEhISEhIEBAQEBAQEBAQEBAQEAgQEBAQCAgICAgIEBAQEBAQCAgICAgICAgICAgIEBAQEBAQGBgYIBggEBAQEBAQCAgIAAAAEBAQICAgICAgICAgKCgoKCgoKCgoMDAwQEBASEhISEhISEhIAAAAAAAAAAAAAAAAAAAAAAAAQBhQuFDg4Gj46HD46HD4wEjgcCCQcCCIwFDo4HD46HD44HD4qDjQYCB4eCiY2Gj44HD46Hj42GDwsEDYaCCAYBh4sFDY4Gj44HD46HD4oDjAMBg4KDAoMDAoMDAwKCgoKCgoKCgoKCgoKCgoKCggICggICggKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoICggICggICggICggICAgICAgICAgICAgICggICgoICAgEBAQAAAAAAAACBAIKCggMDAwICAgGCAYICAgMDAwGBgYGBgYICggKCgoGBgYEBAQKCgoMDAwEBAQAAAAMAhYSBh4QBBwQBBwOBBoOBBoOAhoOBBwOBBwOBBoOBBoOBBoSBh4UBiAUBiAWCCIYCCQYCiQWCCIYCiQYCiQWCCISBh4UBiASBB4QBBwSBh4QBBwQBB4SBh4SBh4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGBgYQEBAODg4GBgYGBgYICAgKCgoKCgoKCgoMDAwKDAwICAgKCAoAAAAAAAACAgICAgIEBAQEBAQGBgYICAgKCgoKCgoKCgoKCgoICAoICAgICAgICAgKCgoKCgoICAgGBgYEBAQEBAQCAgICAgIaCCAWBhwUBBoWBhwYBh4YBh4YBh4YBh4YBh4YBh4YBh4WBh4WBhwUBBgYBh4cCCQICAgEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQEBAQGBgYEBAQEBAQCAgICAgICAgIEBAQGBgYICAgKCgoKCgoKCgoICAgKCgoMDAwSEhIUFBQSEhIQEBAEBAQEBAQEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQEBAQGBgYEBAQEBAQCAgICAgICAgIEBAQGBgYICAgKCgoKCgoKCgoICAgKCgoMDAwSEhIUFBQSEhIQEBAAAAAAAAAAAAAAAAAAAAAAAAAGBAgQBhQUCBgWChoUCBgUCBgSBhQMBA4SCBYUChgWChoUCBgSCBYQBhIMBA4UCBgWChoWChoUCBgUCBgOBhIIAgoMBBAQBhQSBhYSBhYIAgoCAgIEBAQEBAQGBgYGBgYGBgYGBgYGBgYGBgQGBgQGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgYGBgQEBgQEBgQEBgQEBAQEBAQEBAQEBAQEBAQEBgQEBgQEBAQCAgIAAAAAAAACAgIICggMDAwICAgGBgYICAgKDAoGBgYGBgYICggKCgoGBgYEBAQKCggKDAoEBAQAAAAMAhgQBBwQBBwOBBwQBBwQBBwQBBwSBh4UBiASBh4UBiAWCCIWCCIYCCIYCCIYCiQYCCIYCiQWCCIUCCAUCCAWCCIYCiIWCiIUCCASBh4SBh4SBh4QBBwSBh4UBiAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAQQEBAQEBAODg4MDAwKCgoKCgoKCgoKCgoMDAwMDAwICAgKCAgAAAAAAAACAgICAgICAgIEBAQGBgYICAgICAgKCgoKCgoKCAoICAoICAgICAgICAgKCAoICAgICAgGBgYEBAQCAgICAgIAAAAeCigmDjAoDjIqEDQqEDQqEDQqEDQqEDQqEDQqEDQqEDQqEDQqEDQoDjImDDAeCCQGBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYGBgYGBgYEBAQEBAQEBAQCAgICAgIEBAQGBgYGBgYICAgKCgoKCgoKCgoKCgoKCgoMDAwQEBASEhIQEBASEhIEBAQEAgQCAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQGBgYGBgYGBgYEBAQEBAQEBAQCAgICAgIEBAQGBgYGBgYICAgKCgoKCgoKCgoKCgoKCgoMDAwQEBASEhIQEBASEhIAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgIICAgMDAwGCAYGCAYICggMDAwICAgGCAYKCgoKCgoGBgYEBgQKCggKCgoGBgYAAAAKAhgOBBwQBBwQBBwQBBwQBBwSBB4SBh4UBh4UBiAWCCAYCiQYCiQaCiQaCiQaCiQcDCYaCiQaCiYaCiQaCiYaCiYaCiQYCiQYCiIWCCIYCiIWCCAWCCAWCCIUCCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgIMDAwOEBAODgwMDgwMDAwKCgoKCgoMDAwODg4QEBAKCgoKCAgAAAAAAAAAAAACAgICAgIEBAQEBAQGBgYICAgICAgICAgKCAoICAoICAgICAgICAgICAgICAgGBgYEBAQEBAQCAgICAgIAAAAqDjQuEjguFDowFDowFDowFDowFDowFDowFDowFDowFDowFDowFDouFDouEjgoDjIKCgoEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQGBgYGBgYGBgYGBgYGBgYICAgKCgoKCgoKCgoKCgoKCgoMDAwSEhISEhIQEBAODg4GBgYEBAQCAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIEBAQEBAQGBgYGBgYGBgYGBgYGBgYICAgKCgoKCgoKCgoKCgoKCgoMDAwSEhISEhIQEBAODg4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAEBAIICggMDAwICAgGBgYGBgYKCAoEBAQEBAQICAgKCgoGBgYEBAQKCgoMDAwGBgYAAAAMAhgOAhoOBBwQBBwQAhoQBBwOBBwOBBwQBBwSBh4UBiAYCCIYCiQYCiQaCiQcDCYcDCYcDCYaCiYaDCYaDCYaCiQcDCYaCiQYCCIWCCIWCCIWCCIWCCIWCCIUBiAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAICAgODg4MDAwMDAwMDAwMDAwMDAwMDAwMDAwODg4KCgoICAgAAAAAAAAAAAACAgICAgIEBAQEBAQGBgYGBgYICAgICAgICAgICAgICAgICAgICAgICAgGBgYGBgYEBAQEBAQCAgICAgIAAAAwFDo2Gj42Gj42Gj44Gj44Gj44HD44HD44Gj44HD44Gj42Gj42Gj42Gj40GD4sEjYODg4KCgoEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYICAgICAgICAgGBgYGBgYICAgICAgICAgICAgICAgICAgICAgKCgoODg4QEBAODg4MDAwICAgIBggEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQGBgYICAgICAgICAgGBgYGBgYICAgICAgICAgICAgICAgICAgICAgKCgoODg4QEBAODg4MDAwAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgIGBgYICAgGBgYAAgAAAAACAAIAAAAAAAAAAAAGBgYCAgIAAAAGBgYICAgCAgIAAAAKAhYOAhoOBBoQBBwQBBwQBB4QBB4UBiAWCCIYCCIWCCAUBiAWCCAWCCIWCCIWCCIWCCIYCCIaCiQaCiQYCiQYCCQYCCQYCCIWCCIUCCAUBiAUBh4SBh4SBh4SBB4AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAACAgIEBAQEBAQGBgYGBgYGBgYIBgYICAgICAgGBgYGBggICAgGBggGBgYGBgYEBAQEBAQCAgIAAAAAAAAgCigmDi4mEC4oEDAoEDAoEDAqEDAqEDAoEDAoEDAoEDAoEDAoEC4mDi4kDCweCiYMDAwKCgoGBgYEBAQGBAYGBgYGBgYGBgYGBAYGBAYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgGBgYICAgMDAwMDAwKCgoKCgoGBgYGBgYGBgYEBAQGBAYGBgYGBgYGBgYGBAYGBAYGBgYGBgYGBgYGBgYGBgYGBgYICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgGBgYICAgMDAwMDAwKCgoKCgo"
 
 /***/ }),
-/* 24 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9225,10 +9742,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const disk_1 = __webpack_require__(25);
-const diskmodel_1 = __webpack_require__(29);
-let OBJ = __webpack_require__(1);
-const index_js_1 = __webpack_require__(1);
+const disk_1 = __webpack_require__(12);
+const diskmodel_1 = __webpack_require__(32);
+let OBJ = __webpack_require__(3);
+const index_js_1 = __webpack_require__(3);
 class World {
     constructor(gl, worldData, meshes, mat) {
         meshes.DiskA.addMaterialLibrary(mat);
@@ -9323,19 +9840,19 @@ class World {
     }
     static loadWorldMat() {
         return __awaiter(this, void 0, void 0, function* () {
-            let mat = new index_js_1.MaterialLibrary(__webpack_require__(30));
+            let mat = new index_js_1.MaterialLibrary(__webpack_require__(33));
             yield OBJ.downloadMtlTextures(mat, window.location.href.substr(0, window.location.href.lastIndexOf("/")) + '/assets/models/environment/disks/');
             return mat;
         });
     }
     static loadWorldData() {
         return __awaiter(this, void 0, void 0, function* () {
-            return __webpack_require__(31);
+            return __webpack_require__(34);
         });
     }
-    draw(gl, shader) {
+    draw(gl, view_matrix, projection_matrix) {
         this.disks.forEach(disk => {
-            disk.draw(gl, shader);
+            disk.draw(gl, view_matrix, projection_matrix);
         });
     }
 }
@@ -9343,311 +9860,23 @@ exports.World = World;
 
 
 /***/ }),
-/* 25 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const gl_matrix_1 = __webpack_require__(2);
-const meshlessmodel_1 = __webpack_require__(26);
-const Random = __webpack_require__(27);
-const noisefield_1 = __webpack_require__(28);
-var Terrain;
-(function (Terrain) {
-    Terrain[Terrain["RED_ROCK"] = 0] = "RED_ROCK";
-    Terrain[Terrain["LEAFY"] = 1] = "LEAFY";
-    Terrain[Terrain["ICY"] = 2] = "ICY";
-    Terrain[Terrain["SANDY"] = 3] = "SANDY";
-    Terrain[Terrain["GREY_ROCK"] = 4] = "GREY_ROCK";
-})(Terrain = exports.Terrain || (exports.Terrain = {}));
-class Disk {
-    constructor(diskModel, type, radius, x, y, z) {
-        if (!diskModel.initialized)
-            throw "DiskModel was not initialized";
-        this.diskModel = diskModel;
-        this.position = gl_matrix_1.vec3.fromValues(x, y, z);
-        this.radius = radius;
-        this.type = type;
-    }
-    init(gl) {
-        this.generateHeightMapModels(gl);
-    }
-    generateHeightMapModels(gl) {
-        switch (this.type) {
-            case Terrain.RED_ROCK:
-                this.heightMapSize = 16;
-                this.initRedRockHeightMap();
-                break;
-            case Terrain.LEAFY:
-                this.heightMapSize = 32;
-                this.initLeafyHeightMap();
-                break;
-            case Terrain.ICY:
-                this.heightMapSize = 48;
-                this.initIcyHeightMap();
-                break;
-            case Terrain.SANDY:
-                this.heightMapSize = 64;
-                this.initSandyHeightMap();
-                break;
-            case Terrain.GREY_ROCK:
-                this.heightMapSize = 80;
-                this.initGreyRockHeightMap();
-                break;
-        }
-        this.generateHeightMapModel(gl);
-    }
-    generateHeightMapModel(gl) {
-        let vert_buffer_size = (this.heightMapSize + 1) * (this.heightMapSize + 1);
-        let verts = new Float32Array(vert_buffer_size * 8);
-        let count = 0;
-        for (let x = 0; x < this.heightMapSize + 1; x++) {
-            for (let z = 0; z < this.heightMapSize + 1; z++) {
-                //Position
-                verts[count++] = x - (this.heightMapSize / 2);
-                verts[count++] = this.heightMap[x][z];
-                verts[count++] = z - (this.heightMapSize / 2);
-                //Normals
-                verts[count++] = 0;
-                verts[count++] = 0;
-                verts[count++] = 0;
-                //Texture coords
-                verts[count++] = x / 16.0;
-                verts[count++] = z / 16.0;
-            }
-        }
-        let index_buffer_size = this.heightMapSize * (this.heightMapSize) * 6;
-        let indices = new Uint16Array(index_buffer_size);
-        count = 0;
-        //Create triangles using indices which reference vertices in the triangle strip
-        for (let i = 0; i < vert_buffer_size - (this.heightMapSize + 1); i += (this.heightMapSize + 1)) {
-            for (let j = 0; j < this.heightMapSize; j++) {
-                const v = i + j;
-                //0,1,2
-                indices[count++] = v + (this.heightMapSize + 1);
-                indices[count++] = v;
-                indices[count++] = v + (this.heightMapSize + 1) + 1;
-                //2,1,3
-                indices[count++] = v + (this.heightMapSize + 1) + 1;
-                indices[count++] = v;
-                indices[count++] = v + 1;
-            }
-        }
-        //Calculate the normals. For each faces normal we add it to the normals of the vertices used.
-        //Normals will be normalized in fragment shader
-        for (let i = 0; i < index_buffer_size - 2; i += 3) {
-            const i1 = indices[i] * 8;
-            const i2 = indices[i + 1] * 8;
-            const i3 = indices[i + 2] * 8;
-            //Find normal using cross product
-            // // (v2 - v1) cross (v3 - v1)
-            let norm = new Array(3);
-            const ax = verts[i2] - verts[i1], ay = verts[i2 + 1] - verts[i1 + 1], az = verts[i2 + 2] - verts[i1 + 2];
-            const bx = verts[i3] - verts[i1], by = verts[i3 + 1] - verts[i1 + 1], bz = verts[i3 + 2] - verts[i1 + 2];
-            norm[0] = ay * bz - az * by;
-            norm[1] = az * bx - ax * bz;
-            norm[2] = ax * by - ay * bx;
-            //Add to the existing normals
-            verts[i1 + 3] += norm[0];
-            verts[i1 + 4] += norm[1];
-            verts[i1 + 5] += norm[2];
-            verts[i2 + 3] += norm[0];
-            verts[i2 + 4] += norm[1];
-            verts[i2 + 5] += norm[2];
-            verts[i3 + 3] += norm[0];
-            verts[i3 + 4] += norm[1];
-            verts[i3 + 5] += norm[2];
-        }
-        this.heightMapModel = new meshlessmodel_1.MeshlessModel(verts, indices);
-        this.heightMapModel.init(gl);
-        this.heightMapModel.setTexture(this.diskModel.textures[2]);
-    }
-    initRedRockHeightMap() {
-        this.heightMap = [];
-        let heights = [];
-        heights.push(0, 0);
-        for (let i = 2; i <= this.heightMapSize / 2; i++) {
-            let a = heights[i - 1];
-            heights.push(Math.round((a + Math.random() * (3) - 1) * 1e1) / 1e1);
-        }
-        for (let x = 0; x <= this.heightMapSize; x++) {
-            this.heightMap[x] = [];
-            let max = x > this.heightMapSize / 2 ? this.heightMapSize - x : x;
-            for (let z = 0; z <= this.heightMapSize; z++) {
-                if (z > this.heightMapSize - max)
-                    max--;
-                let a = z;
-                if (a > max)
-                    a = max;
-                this.heightMap[x].push(heights[a]);
-            }
-        }
-    }
-    initSandyHeightMap() {
-        this.heightMap = [];
-        let ns = new noisefield_1.Noisefield(16, 8, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF));
-        let xz_6 = new Array(this.heightMapSize + 1);
-        let pow_divisor = (1.0 - Math.pow(0.5, 6));
-        for (let x = 0; x <= this.heightMapSize; x++) {
-            let ux = x / this.heightMapSize;
-            xz_6[x] = Math.max(Math.pow(ux, 6), Math.pow(1.0 - ux, 6));
-        }
-        for (let x = 0; x <= this.heightMapSize; x++) {
-            this.heightMap[x] = [];
-            for (let z = 0; z <= this.heightMapSize; z++) {
-                let h = ns.perlineNoise(z, x);
-                let f = (1 - Math.max(xz_6[x], xz_6[z])) / pow_divisor;
-                this.heightMap[x].push(h * f);
-            }
-        }
-    }
-    initGreyRockHeightMap() {
-        this.heightMap = [];
-        let ns = [
-            new noisefield_1.Noisefield(32, 1.0, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF)),
-            new noisefield_1.Noisefield(16, 7.0, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF)),
-            new noisefield_1.Noisefield(8, 5.0, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF)),
-            new noisefield_1.Noisefield(4, 3.5, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF)),
-            new noisefield_1.Noisefield(2, 2.5, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF)),
-        ];
-        for (let x = 0; x <= this.heightMapSize; x++) {
-            this.heightMap[x] = [];
-            for (let z = 0; z <= this.heightMapSize; z++) {
-                let h = ns[0].perlineNoise(z, x)
-                    + ns[1].perlineNoise(z, x)
-                    + ns[2].perlineNoise(z, x)
-                    + ns[3].perlineNoise(z, x)
-                    + ns[4].perlineNoise(z, x);
-                let ux = x / this.heightMapSize;
-                let uy = z / this.heightMapSize;
-                let f = (1 - Math.max(Math.max(Math.pow(ux, 6), Math.pow(1.0 - ux, 6)), Math.max(Math.pow(uy, 6), Math.pow(1.0 - uy, 6)))) / (1.0 - Math.pow(0.5, 6));
-                this.heightMap[x].push(h * f);
-            }
-        }
-    }
-    initIcyHeightMap() {
-        let points = [];
-        let h = this.heightMapSize / 2;
-        for (let i = 0; i < 200; i++) {
-            let d1 = Math.random() * h;
-            let d2 = Math.random() * h;
-            let d3 = Math.random() * h;
-            let d4 = Math.random() * h;
-            let d = Math.max(d1, d2, d3, d4);
-            let a = Math.random() * Math.PI * 2;
-            let x = (h + Math.cos(a) * d);
-            let z = (h + Math.sin(a) * d);
-            let m = (h - d) * 0.7;
-            let y = Math.random() * (m + m) - m;
-            points.push([x, y, z]);
-        }
-        this.heightMap = new Array(this.heightMapSize + 1);
-        for (let x = 0; x <= this.heightMapSize; x++) {
-            this.heightMap[x] = new Array(this.heightMapSize + 1);
-            for (let z = 0; z <= this.heightMapSize; z++) {
-                let min = 0, max = 0;
-                for (let i = 0; i < points.length; i++) {
-                    let x2 = (points[i][0] - x) * (points[i][0] - x);
-                    let z2 = (points[i][2] - z) * (points[i][2] - z);
-                    let distance = Math.sqrt(x2 + z2);
-                    max = Math.max(max, points[i][1] - distance);
-                    min = Math.min(min, points[i][1] + distance);
-                }
-                this.heightMap[x][z] = max + min;
-            }
-        }
-    }
-    initLeafyHeightMap() {
-        //Math.random() * (max - min) + min;
-        let LL = Math.random() * (2) - 1;
-        let LC = Math.random() * (2) - 1;
-        let LR = Math.random() * (2) - 1;
-        let RI = Math.random() * (2) - 1;
-        let RM = Math.random() * (2) - 1;
-        let RO = Math.random() * (2) - 1;
-        let a1 = Random.randi(7);
-        let a2 = Random.randi(7);
-        let ARM_COUNT = a1 < a2 ? a1 : a2;
-        let ARM_RADIANS = Math.random() * (Math.PI * 2);
-        let AI = Math.random();
-        let AM = Math.random();
-        let AO = Math.random();
-        if (Math.random() > 0.5) {
-            AI = -AI;
-            AM = -AM;
-            AO = -AO;
-        }
-        this.heightMap = new Array(this.heightMapSize + 1);
-        for (let x = 0; x <= this.heightMapSize; x++) {
-            this.heightMap[x] = new Array(this.heightMapSize + 1);
-            for (let z = 0; z <= this.heightMapSize; z++) {
-                let ux = x / this.heightMapSize;
-                let uy = z / this.heightMapSize;
-                let x2 = ux * 2 - 1;
-                let y2 = uy * 2 - 1;
-                let dist = Math.min(Math.sqrt(x2 * x2 + y2 * y2), 1);
-                let radians = Math.atan2(y2, x2);
-                let ll = Math.pow(ux, 4) * (1 - ux) * 12;
-                let lc = (Math.cos(Math.PI * x2) + 1) * 0.5;
-                let lr = Math.pow((1 - ux), 4) * ux * 12;
-                let lsum = ll * LL + lc * LC + lr * LR;
-                let ri = Math.pow(Math.max(1 - dist, 0), 2);
-                let rm = Math.sin(Math.PI * Math.min(Math.pow(dist, 0.8) * (4 / 3), 1));
-                let ro = Math.max(Math.sin(Math.PI * Math.pow(dist, 1.6)), 0);
-                let rsum = ri * RI + rm * RM + ro * RO;
-                let ai = (Math.sqrt(dist) - dist) * 4;
-                let am = Math.pow(dist, 2) * Math.pow((1 - dist), 2) * 16;
-                let ao = (Math.sqrt(1 - dist) - (1 - dist)) * 4;
-                let asum = ai * AI + am * AM + ao * AO;
-                let non_arm_height = lsum * rsum;
-                let arm_radians = radians * ARM_COUNT + ARM_RADIANS;
-                let arm_magnitude = (Math.sin(arm_radians) + 1.0) * 0.5;
-                let arm_height = arm_magnitude * asum;
-                this.heightMap[x][z] = non_arm_height * 5 + arm_height * 3;
-            }
-        }
-    }
-    draw(gl, shader) {
-        this.drawDiskModel(gl, shader);
-        this.drawHeightMapModel(gl, shader);
-    }
-    drawDiskModel(gl, shader) {
-        let model = gl_matrix_1.mat4.create();
-        //Center the squares in the disk
-        let pos = gl_matrix_1.vec3.fromValues(this.position[0], this.position[1], this.position[2]);
-        gl_matrix_1.mat4.translate(model, model, pos);
-        gl_matrix_1.mat4.scale(model, model, gl_matrix_1.vec3.fromValues(this.radius, 1, this.radius));
-        shader.setMat4("model", model);
-        this.diskModel.draw(gl, shader);
-    }
-    drawHeightMapModel(gl, shader) {
-        let model = gl_matrix_1.mat4.create();
-        //Center the squares in the disk
-        let pos = gl_matrix_1.vec3.fromValues(this.position[0], this.position[1], this.position[2]);
-        let corner = this.radius * Math.SQRT2 / 2;
-        pos[1] += 0.00001;
-        gl_matrix_1.mat4.translate(model, model, pos);
-        gl_matrix_1.mat4.scale(model, model, gl_matrix_1.vec3.fromValues(corner * 2 / this.heightMapSize, 1, corner * 2 / this.heightMapSize));
-        shader.setMat4("model", model);
-        this.heightMapModel.draw(gl);
-    }
-}
-exports.Disk = Disk;
-
-
-/***/ }),
-/* 26 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
+const disk_1 = __webpack_require__(12);
+const basicmodel_1 = __webpack_require__(2);
+const gl_matrix_1 = __webpack_require__(0);
 class MeshlessModel {
-    constructor(data, indices) {
+    constructor(data, indices, mat) {
         this.data = data;
         this.indices = indices;
         this.stride = 8;
+        this.name = "height_map_model_" + disk_1.Disk.height_map_model_gen_count;
+        this.material = mat;
+        this.rotation_offset = gl_matrix_1.vec3.fromValues(0, 0, 0);
     }
     init(gl) {
         this.VAO = gl.createVertexArray();
@@ -9659,47 +9888,70 @@ class MeshlessModel {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.index_buffer);
         gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, this.indices, gl.STATIC_DRAW);
         gl.enableVertexAttribArray(0);
-        gl.vertexAttribPointer(0, 3, gl.FLOAT, true, this.stride * 4, 0);
+        gl.vertexAttribPointer(0, 3, gl.FLOAT, false, this.stride * 4, 0);
         gl.enableVertexAttribArray(1);
-        gl.vertexAttribPointer(1, 3, gl.FLOAT, true, this.stride * 4, 12);
+        gl.vertexAttribPointer(1, 2, gl.FLOAT, true, this.stride * 4, 12);
         gl.enableVertexAttribArray(2);
-        gl.vertexAttribPointer(2, 2, gl.FLOAT, true, this.stride * 4, 24);
+        gl.vertexAttribPointer(2, 3, gl.FLOAT, true, this.stride * 4, 20);
         gl.bindBuffer(gl.ARRAY_BUFFER, null);
         gl.bindVertexArray(null);
-        let grey = gl.createTexture();
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, grey);
-        const pixel = new Uint8Array([220, 220, 220, 255]); // opaque blue
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, 1, 1, 0, gl.RGB, gl.UNSIGNED_BYTE, pixel);
-        this.texture = grey;
+        this.texture = this.material.mapDiffuse.texture_id;
         this.initialized = true;
     }
-    generateArrayBuffer(gl, data, type, itemsize) {
-        let buffer = gl.createBuffer();
-        gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-        gl.bufferData(gl.ARRAY_BUFFER, data, type);
-        buffer.itemSize = itemsize;
-        buffer.numItems = data.length / itemsize;
-        return buffer;
-    }
-    setTexture(texture) {
-        this.texture = texture;
-    }
-    draw(gl) {
+    activateBuffers(gl) {
         gl.bindVertexArray(this.VAO);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.buffer);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.index_buffer);
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, this.texture);
+    }
+    activateMaterial(gl) {
+        // gl.activeTexture(gl.TEXTURE0);
+        // gl.bindTexture(gl.TEXTURE_2D, this.texture);
+        if (this.material.isTextureActive[0] && this.material.mapTransparency.texture_id) {
+            gl.activeTexture(gl.TEXTURE0); // transparency
+            gl.bindTexture(gl.TEXTURE_2D, this.material.mapTransparency.texture_id);
+        }
+        if (this.material.isTextureActive[1] && this.material.mapEmissive.texture_id) {
+            gl.activeTexture(gl.TEXTURE1); // emission
+            gl.bindTexture(gl.TEXTURE_2D, this.material.mapEmissive.texture_id);
+        }
+        if (this.material.isTextureActive[2] && this.material.mapAmbient.texture_id) {
+            gl.activeTexture(gl.TEXTURE2); // ambient
+            gl.bindTexture(gl.TEXTURE_2D, this.material.mapAmbient.texture_id);
+        }
+        if (this.material.isTextureActive[3] && this.material.mapDiffuse.texture_id) {
+            gl.activeTexture(gl.TEXTURE3); // diffuse
+            gl.bindTexture(gl.TEXTURE_2D, this.material.mapDiffuse.texture_id);
+        }
+        if (this.material.isTextureActive[4] && this.material.mapSpecular.texture_id) {
+            gl.activeTexture(gl.TEXTURE4); // specular
+            gl.bindTexture(gl.TEXTURE_2D, this.material.mapSpecular.texture_id);
+        }
+        if (this.material.isTextureActive[5] && this.material.mapSpecularExponent.texture_id) {
+            gl.activeTexture(gl.TEXTURE5); // shininess
+            gl.bindTexture(gl.TEXTURE_2D, this.material.mapSpecularExponent.texture_id);
+        }
+        basicmodel_1.BasicModel.shader.setFloat(basicmodel_1.BasicModel.shader.uniforms.material_transparency, this.material.transparency);
+        basicmodel_1.BasicModel.shader.setVec3(basicmodel_1.BasicModel.shader.uniforms.material_ambient_colour, this.material.ambient);
+        basicmodel_1.BasicModel.shader.setVec3(basicmodel_1.BasicModel.shader.uniforms.material_diffuse_colour, this.material.diffuse);
+        basicmodel_1.BasicModel.shader.setVec3(basicmodel_1.BasicModel.shader.uniforms.material_specular_colour, this.material.specular);
+        basicmodel_1.BasicModel.shader.setVec3(basicmodel_1.BasicModel.shader.uniforms.material_emissive_colour, this.material.emissive);
+        basicmodel_1.BasicModel.shader.setFloat(basicmodel_1.BasicModel.shader.uniforms.material_shininess, this.material.specularExponent);
+        basicmodel_1.BasicModel.shader.setIntV(basicmodel_1.BasicModel.shader.uniforms.material_is_texture_active, this.material.isTextureActive);
+    }
+    draw(gl) {
+        this.activateBuffers(gl);
+        this.activateMaterial(gl);
+        this.drawActivatedMaterial(gl);
+    }
+    drawActivatedMaterial(gl) {
         gl.drawElements(gl.TRIANGLES, this.indices.length, gl.UNSIGNED_SHORT, 0);
-        gl.bindVertexArray(null);
     }
 }
 exports.MeshlessModel = MeshlessModel;
 
 
 /***/ }),
-/* 27 */
+/* 30 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9713,7 +9965,7 @@ exports.randi = randi;
 
 
 /***/ }),
-/* 28 */
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9789,13 +10041,13 @@ exports.Noisefield = Noisefield;
 
 
 /***/ }),
-/* 29 */
+/* 32 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const basicmodel_1 = __webpack_require__(3);
+const basicmodel_1 = __webpack_require__(2);
 class DiskModel extends basicmodel_1.BasicModel {
     constructor(mesh) {
         super(mesh);
@@ -9803,37 +10055,32 @@ class DiskModel extends basicmodel_1.BasicModel {
     init(gl) {
         super.init(gl);
         //Initialize the textures: side tex, side black, top tex
-        if (!this.initTexture(gl, 0)) {
-            console.warn("Disk model texture 0 wasn't downloaded");
-        }
+        this.initAllTextures(gl);
         let blackTexture = gl.createTexture();
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, blackTexture);
         const pixel = new Uint8Array([0, 0, 0, 255]); // opaque black
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, 1, 1, 0, gl.RGB, gl.UNSIGNED_BYTE, pixel);
         this.setTexture(blackTexture, 1);
-        if (!this.initTexture(gl, 2)) {
-            console.warn("Disk model texture 2 wasn't downloaded");
-        }
     }
 }
 exports.DiskModel = DiskModel;
 
 
 /***/ }),
-/* 30 */
+/* 33 */
 /***/ (function(module, exports) {
 
 module.exports = "#\r\n#  Disks.mtl\r\n#\r\n\r\nnewmtl diskA\r\nillum 1\r\nKd 0.80 0.80 0.80\r\nKa 0.20 0.20 0.20\r\nmap_Kd DiskA.jpg\r\nmap_Ka DiskA.jpg\r\n\r\nnewmtl diskA_side\r\nillum 1\r\nKd 0.80 0.80 0.80\r\nKa 0.20 0.20 0.20\r\nmap_Kd DiskA_side.jpg\r\nmap_Ka DiskA_side.jpg\r\n\r\nnewmtl diskB\r\nillum 1\r\nKd 0.80 0.80 0.80\r\nKa 0.20 0.20 0.20\r\nmap_Kd DiskB.jpg\r\nmap_Ka DiskB.jpg\r\n\r\nnewmtl diskB_side\r\nillum 1\r\nKd 0.80 0.80 0.80\r\nKa 0.20 0.20 0.20\r\nmap_Kd DiskB_side.jpg\r\nmap_Ka DiskB_side.jpg\r\n\r\nnewmtl diskC\r\nillum 1\r\nKd 0.80 0.80 0.80\r\nKa 0.20 0.20 0.20\r\nmap_Kd DiskC.jpg\r\nmap_Ka DiskC.jpg\r\n\r\n\r\nnewmtl diskC_side\r\nillum 1\r\nKd 0.80 0.80 0.80\r\nKa 0.20 0.20 0.20\r\nmap_Kd DiskC_side.jpg\r\nmap_Ka DiskC_side.jpg\r\n\r\nnewmtl diskD\r\nillum 1\r\nKd 0.80 0.80 0.80\r\nKa 0.20 0.20 0.20\r\nKs 0.0 0.0 0.0\r\nmap_Kd DiskD.jpg\r\nmap_Ka DiskD.jpg\r\n\r\nnewmtl diskD_side\r\nillum 1\r\nKd 0.80 0.80 0.80\r\nKa 0.20 0.20 0.20\r\nmap_Kd DiskD_side.jpg\r\nmap_Ka DiskD_side.jpg\r\n\r\nnewmtl diskE\r\nillum 1\r\nKd 0.80 0.80 0.80\r\nKa 0.20 0.20 0.20\r\nmap_Kd DiskE.jpg\r\nmap_Ka DiskE.jpg\r\n\r\nnewmtl diskE_side\r\nillum 1\r\nKd 0.80 0.80 0.80\r\nKa 0.20 0.20 0.20\r\nmap_Kd DiskE_side.jpg\r\nmap_Ka DiskE_side.jpg\r\n\r\nnewmtl flat_black\r\nillum 0\r\nKd 0.00 0.00 0.00\r\nKa 0.00 0.00 0.00\r\n\r\nnewmtl rainbow\r\nillum 1\r\nKd 0.80 0.80 0.80\r\nKa 0.20 0.20 0.20\r\nmap_Kd Rainbow.jpg\r\nmap_Ka Rainbow.jpg\r\n"
 
 /***/ }),
-/* 31 */
+/* 34 */
 /***/ (function(module, exports) {
 
 module.exports = "DISK version 1\r\n159.835\r\n61\r\n5.61676\t34.6006\t6.55774\t\r\n4.5521\t49.1698\t8.0504\t\r\n6.29182\t17.456\t10.6\t\r\n19.2771\t30.399\t7.7341\t\r\n-5.63964\t-6.61964\t16.2699\t\r\n-34.8144\t-13.928\t13.8063\t\r\n17.7224\t44.1054\t6.06006\t\r\n16.9081\t56.4082\t6.2697\t\r\n-51.3318\t-2.99788\t6\t\r\n-61.6816\t3.18528\t6.0561\t\r\n2.67116\t-44.403\t22.4166\t\r\n-61.7976\t-8.87178\t6.00154\t\r\n20.3596\t-15.7251\t11.2777\t\r\n53.2492\t45.6392\t29.4998\t\r\n28.4818\t20.19\t6.01188\t\r\n-56.16\t-23.3322\t9.51902\t\r\n29.7014\t5.71352\t8.51594\t\r\n-4.05204\t60.2884\t6.00862\t\r\n-73.0756\t12.5486\t8.6916\t\r\n-13.4131\t76.324\t12.5593\t\r\n-73.0176\t-2.86702\t6.72414\t\r\n-72.7376\t-17.5524\t7.96394\t\r\n-69.9778\t-32.1062\t6.84908\t\r\n-21.5382\t-69.3478\t12.3445\t\r\n-43.1694\t-31.9836\t6.08872\t\r\n10.4786\t-94.7314\t28.5138\t\r\n68.47\t106.494\t33.2292\t\r\n-55.834\t-44.7244\t11.8756\t\r\n-90.5932\t35.5246\t20.2006\t\r\n-42.9236\t-77.4838\t10.5364\t\r\n58.784\t-6.65676\t23.0884\t\r\n30.7258\t-49.0178\t6.01498\t\r\n-23.5632\t-87.8066\t6.22514\t\r\n-50.58\t-62.8268\t6\t\r\n35.7504\t-30.2686\t9.89758\t\r\n-48.2148\t94.9572\t26.9168\t\r\n29.0574\t108.357\t6.22754\t\r\n-82.3006\t-74.0996\t27.664\t\r\n31.4576\t120.811\t6.45576\t\r\n106.947\t61.002\t26.3522\t\r\n-71.8658\t55.0002\t6.81826\t\r\n-14.8019\t95.3308\t6.4983\t\r\n-87.6702\t-35.6198\t11.1887\t\r\n39.751\t-56.9514\t6.00168\t\r\n-1.16644\t108.714\t12.6072\t\r\n42.0084\t-44.884\t6.0011\t\r\n-115.571\t-43.2198\t17.7283\t\r\n-10.0822\t-128.608\t11.1144\t\r\n-72.6896\t69.6884\t7.89294\t\r\n39.1888\t-68.9426\t6.0027\t\r\n42.1076\t-80.6828\t6.09486\t\r\n-59.1878\t-102.758\t7.0319\t\r\n-99.9152\t88.4796\t25.1878\t\r\n-117.585\t54.717\t12.919\t\r\n50.7834\t-36.2758\t6.29124\t\r\n53.196\t-63.5894\t8.99256\t\r\n-59.0672\t-116.049\t6.25942\t\r\n-113.225\t21.0036\t6.6893\t\r\n-72.514\t-107.455\t7.09802\t\r\n81.1576\t23.6564\t6.0266\t\r\n69.0202\t-52.9854\t10.0561\t\r\n"
 
 /***/ }),
-/* 32 */
+/* 35 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9847,8 +10094,8 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-let OBJ = __webpack_require__(1);
-const skyboxmodel_1 = __webpack_require__(33);
+let OBJ = __webpack_require__(3);
+const skyboxmodel_1 = __webpack_require__(36);
 class Skybox {
     constructor(gl, mesh) {
         this.model = new skyboxmodel_1.SkyboxModel(mesh);
@@ -9873,13 +10120,13 @@ exports.Skybox = Skybox;
 
 
 /***/ }),
-/* 33 */
+/* 36 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const basicmodel_1 = __webpack_require__(3);
+const basicmodel_1 = __webpack_require__(2);
 class SkyboxModel extends basicmodel_1.BasicModel {
     constructor(mesh) {
         super(mesh);
@@ -9897,10 +10144,10 @@ class SkyboxModel extends basicmodel_1.BasicModel {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.mesh.indexBuffer);
         this.textures.forEach((texture, index) => {
             let is = this.mesh.vertexBuffer.itemSize;
-            let material = this.mesh.materials[index];
+            let submesh = this.mesh.submesh[index];
             let byteSize = 2;
             gl.bindTexture(gl.TEXTURE_2D, texture);
-            gl.drawElements(gl.TRIANGLES, this.mesh.indexBuffer.numItems, gl.UNSIGNED_SHORT, material.offset * is * byteSize);
+            gl.drawElements(gl.TRIANGLES, this.mesh.indexBuffer.numItems, gl.UNSIGNED_SHORT, submesh.offset * is * byteSize);
         });
         gl.bindVertexArray(null);
     }
@@ -9909,7 +10156,1610 @@ exports.SkyboxModel = SkyboxModel;
 
 
 /***/ }),
-/* 34 */
+/* 37 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const basicmodel_1 = __webpack_require__(2);
+const entity_1 = __webpack_require__(5);
+const gl_matrix_1 = __webpack_require__(0);
+class Renderer {
+    constructor() {
+        this.models = new Map();
+        this.materials = new Map();
+        this.entities = new Map();
+        this.meshless_models = new Map();
+    }
+    init(shader) {
+        this.basicModelShader = shader;
+    }
+    addBasicModel(model) {
+        if (this.models.get(model.mesh.name) === undefined) {
+            this.models.set(model.mesh.name, model);
+        }
+        for (var key in model.mesh.materialNames) {
+            if (this.materials.get(model.mesh.materialNames[key]) === undefined) {
+                this.materials.set(model.mesh.materialNames[key], model.mesh.materialsByIndex[key]);
+            }
+        }
+    }
+    addMeshlessModel(model) {
+        if (this.meshless_models.get(model.name) === undefined) {
+            this.meshless_models.set(model.name, model);
+        }
+        if (this.materials.get(model.material.name) === undefined) {
+            this.materials.set(model.material.name, model.material);
+        }
+    }
+    addEntityToRenderList(entity) {
+        if (this.entities.get(entity.id) === undefined) {
+            this.entities.set(entity.id, entity);
+        }
+        if (entity.model_type == entity_1.Model_Type.BASIC) {
+            if (this.models.get(entity.mesh_name) === undefined) {
+                console.log("Basic Model Missing: " + entity.mesh_name);
+            }
+        }
+        else if (entity.model_type == entity_1.Model_Type.MESHLESS) {
+            if (this.meshless_models.get(entity.mesh_name) === undefined) {
+                console.log("Meshless Model Missing: " + entity.mesh_name);
+            }
+        }
+    }
+    prepareBasicModelShader(gl) {
+        this.basicModelShader.use();
+        gl.enable(gl.DEPTH_TEST);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, basicmodel_1.BasicModel.emptyTexture);
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, basicmodel_1.BasicModel.emptyTexture);
+        gl.activeTexture(gl.TEXTURE2);
+        gl.bindTexture(gl.TEXTURE_2D, basicmodel_1.BasicModel.emptyTexture);
+        gl.activeTexture(gl.TEXTURE3);
+        gl.bindTexture(gl.TEXTURE_2D, basicmodel_1.BasicModel.emptyTexture);
+        gl.activeTexture(gl.TEXTURE4);
+        gl.bindTexture(gl.TEXTURE_2D, basicmodel_1.BasicModel.emptyTexture);
+        gl.activeTexture(gl.TEXTURE5);
+        gl.bindTexture(gl.TEXTURE_2D, basicmodel_1.BasicModel.emptyTexture);
+        this.basicModelShader.setBool(this.basicModelShader.uniforms.tween_enabled, false);
+        this.basicModelShader.setInt(this.basicModelShader.uniforms.material_transparency_texture, 0);
+        this.basicModelShader.setInt(this.basicModelShader.uniforms.material_emission_texture, 1);
+        this.basicModelShader.setInt(this.basicModelShader.uniforms.material_ambient_texture, 2);
+        this.basicModelShader.setInt(this.basicModelShader.uniforms.material_diffuse_texture, 3);
+        this.basicModelShader.setInt(this.basicModelShader.uniforms.material_specular_texture, 4);
+        this.basicModelShader.setInt(this.basicModelShader.uniforms.material_shininess_texture, 5);
+        this.basicModelShader.setInt(this.basicModelShader.uniforms.material_transparency_channel, 0);
+        this.basicModelShader.setInt(this.basicModelShader.uniforms.material_shininess_channel, 0);
+    }
+    render(gl, view_matrix, projection_matrix) {
+        //sort entities
+        this.prepareBasicModelShader(gl);
+        this.renderMeshlessModels(gl, view_matrix, projection_matrix);
+        this.renderBasicModels(gl, view_matrix, projection_matrix);
+    }
+    renderMeshlessModels(gl, view_matrix, projection_matrix) {
+        let mat_list = [];
+        for (const [key, model] of this.meshless_models.entries()) {
+            if (mat_list.indexOf(model.material.name) < 0) {
+                mat_list.push(model.material.name);
+            }
+        }
+        for (let j = 0; j < mat_list.length; j++) {
+            //activate mat first
+            let activated = false;
+            //Loop over all models
+            for (const [key, model] of this.meshless_models.entries()) {
+                if (model.material.name !== mat_list[j])
+                    continue;
+                //Find all the things we want to draw with this model
+                let entities_to_draw = [];
+                for (const [key, entity] of this.entities.entries()) {
+                    if (entity.model_type == entity_1.Model_Type.MESHLESS && model.name == entity.mesh_name) {
+                        entities_to_draw.push(entity);
+                    }
+                }
+                //If things to draw
+                if (entities_to_draw.length > 0) {
+                    //Activate this model
+                    model.activateBuffers(gl);
+                    //Activate the material
+                    if (!activated) {
+                        model.activateMaterial(gl);
+                        activated = true;
+                    }
+                    for (let i = 0; i < entities_to_draw.length; i++) {
+                        let model_matrix = gl_matrix_1.mat4.create();
+                        //Move player model to its position
+                        gl_matrix_1.mat4.translate(model_matrix, model_matrix, entities_to_draw[i].position);
+                        //Rotate model to face away from camera
+                        gl_matrix_1.mat4.rotateY(model_matrix, model_matrix, Math.atan2(entities_to_draw[i].forward[0] + model.rotation_offset[0], entities_to_draw[i].forward[2]) + model.rotation_offset[2]);
+                        //Scale
+                        gl_matrix_1.mat4.scale(model_matrix, model_matrix, entities_to_draw[i].scalar);
+                        //Set matrices in shader
+                        basicmodel_1.BasicModel.setMVPMatrices(model_matrix, view_matrix, projection_matrix);
+                        model.drawActivatedMaterial(gl);
+                    }
+                }
+            }
+        }
+    }
+    renderBasicModels(gl, view_matrix, projection_matrix) {
+        let mat_list = [];
+        for (const [key, model] of this.models.entries()) {
+            for (const i in model.mesh.materialNames) {
+                if (mat_list.indexOf(model.mesh.materialsByIndex[i].name) < 0) {
+                    mat_list.push(model.mesh.materialsByIndex[i].name);
+                }
+            }
+        }
+        for (let j = 0; j < mat_list.length; j++) {
+            for (const [key, model] of this.models.entries()) {
+                let skip = true;
+                let mat_id = 0;
+                for (const i in model.mesh.materialNames) {
+                    if (model.mesh.materialsByIndex[i] && model.mesh.materialsByIndex[i].name == mat_list[j]) {
+                        model.activateMaterial(gl, Number(i));
+                        mat_id = Number(i);
+                        skip = false;
+                        break;
+                    }
+                }
+                if (skip)
+                    continue;
+                let entities_to_draw = [];
+                for (const [key, entity] of this.entities.entries()) {
+                    if (entity.model_type == entity_1.Model_Type.BASIC && model.mesh.name == entity.mesh_name) {
+                        entities_to_draw.push(entity);
+                    }
+                }
+                if (entities_to_draw.length > 0) {
+                    model.activateBuffers(gl);
+                    for (let i = 0; i < entities_to_draw.length; i++) {
+                        let model_matrix = gl_matrix_1.mat4.create();
+                        //Move player model to its position
+                        gl_matrix_1.mat4.translate(model_matrix, model_matrix, entities_to_draw[i].position);
+                        //Rotate model to face away from camera
+                        gl_matrix_1.mat4.rotateY(model_matrix, model_matrix, Math.atan2(entities_to_draw[i].forward[0] + model.rotation_offset[0], entities_to_draw[i].forward[2]) + model.rotation_offset[2]);
+                        //Scale
+                        gl_matrix_1.mat4.scale(model_matrix, model_matrix, entities_to_draw[i].scalar);
+                        //Set matrices in shader
+                        basicmodel_1.BasicModel.setMVPMatrices(model_matrix, view_matrix, projection_matrix);
+                        //Draw triangle list
+                        model.drawActivatedMaterial(gl, mat_id);
+                    }
+                }
+            }
+        }
+    }
+}
+exports.Renderer = Renderer;
+
+
+/***/ }),
+/* 38 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const shader_1 = __webpack_require__(9);
+class Uniforms {
+}
+;
+class BasicModelShader extends shader_1.Shader {
+    constructor(gl, vertexSourceCode, fragmentSourceCode) {
+        super(gl, vertexSourceCode, fragmentSourceCode);
+        this.uniforms = new Uniforms();
+        this.uniforms.model_matrix = this.getUniformLocation("model_matrix");
+        this.uniforms.view_matrix = this.getUniformLocation("view_matrix");
+        this.uniforms.model_view_projection_matrix = this.getUniformLocation("model_view_projection_matrix");
+        this.uniforms.camera_pos = this.getUniformLocation("camera_pos");
+        this.uniforms.tween_enabled = this.getUniformLocation("tween_enabled");
+        this.uniforms.material_transparency_texture = this.getUniformLocation("material.transparency_texture");
+        this.uniforms.material_emission_texture = this.getUniformLocation("material.emission_texture");
+        this.uniforms.material_ambient_texture = this.getUniformLocation("material.ambient_texture");
+        this.uniforms.material_diffuse_texture = this.getUniformLocation("material.diffuse_texture");
+        this.uniforms.material_specular_texture = this.getUniformLocation("material.specular_texture");
+        this.uniforms.material_shininess_texture = this.getUniformLocation("material.shininess_texture");
+        this.uniforms.material_transparency_channel = this.getUniformLocation("material.transparency_channel");
+        this.uniforms.material_shininess_channel = this.getUniformLocation("material.shininess_channel");
+        this.uniforms.material_transparency = this.getUniformLocation("material.transparency");
+        this.uniforms.material_ambient_colour = this.getUniformLocation("material.ambient_colour");
+        this.uniforms.material_diffuse_colour = this.getUniformLocation("material.diffuse_colour");
+        this.uniforms.material_specular_colour = this.getUniformLocation("material.specular_colour");
+        this.uniforms.material_emissive_colour = this.getUniformLocation("material.emissive_colour");
+        this.uniforms.material_shininess = this.getUniformLocation("material.shininess");
+        this.uniforms.material_is_texture_active = this.getUniformLocation("material.is_texture_active");
+    }
+    use() {
+        this.gl.useProgram(this.ID);
+    }
+    setBoolByName(name, value) {
+        this.gl.uniform1i(this.getUniformLocation(name), value ? 1 : 0);
+    }
+    setBool(id, value) {
+        this.gl.uniform1i(id, value ? 1 : 0);
+    }
+    setInt(id, value) {
+        this.gl.uniform1i(id, value);
+    }
+    setIntByName(name, value) {
+        this.gl.uniform1i(this.getUniformLocation(name), value);
+    }
+    setIntV(id, value) {
+        this.gl.uniform1iv(id, value);
+    }
+    setIntVByName(name, value) {
+        this.gl.uniform1iv(this.getUniformLocation(name), value);
+    }
+    setFloat(id, value) {
+        this.gl.uniform1f(id, value);
+    }
+    setFloatByName(name, value) {
+        this.gl.uniform1f(this.getUniformLocation(name), value);
+    }
+    getUniformLocation(name) {
+        var a = this.gl.getUniformLocation(this.ID, name);
+        return a;
+    }
+    setMat4(id, matrix) {
+        this.gl.uniformMatrix4fv(id, false, matrix);
+    }
+    setMat4ByName(name, matrix) {
+        this.gl.uniformMatrix4fv(this.getUniformLocation(name), false, matrix);
+    }
+    setVec3(id, vec) {
+        this.gl.uniform3fv(id, vec);
+    }
+    setVec3ByName(name, vec) {
+        this.gl.uniform3fv(this.getUniformLocation(name), vec);
+    }
+    setVec4(id, vec) {
+        this.gl.uniform4fv(id, vec);
+    }
+    setVec4ByName(name, vec) {
+        this.gl.uniform4fv(this.getUniformLocation(name), vec);
+    }
+}
+exports.BasicModelShader = BasicModelShader;
+function getShader(gl, sourceCode, type) {
+    let shader;
+    shader = gl.createShader(type);
+    gl.shaderSource(shader, sourceCode);
+    gl.compileShader(shader);
+    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+        alert(gl.getShaderInfoLog(shader));
+        return null;
+    }
+    return shader;
+}
+
+
+/***/ }),
+/* 39 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(global) {
+
+// compare and isBuffer taken from https://github.com/feross/buffer/blob/680e9e5e488f22aac27599a57dc844a6315928dd/index.js
+// original notice:
+
+/*!
+ * The buffer module from node.js, for the browser.
+ *
+ * @author   Feross Aboukhadijeh <feross@feross.org> <http://feross.org>
+ * @license  MIT
+ */
+function compare(a, b) {
+  if (a === b) {
+    return 0;
+  }
+
+  var x = a.length;
+  var y = b.length;
+
+  for (var i = 0, len = Math.min(x, y); i < len; ++i) {
+    if (a[i] !== b[i]) {
+      x = a[i];
+      y = b[i];
+      break;
+    }
+  }
+
+  if (x < y) {
+    return -1;
+  }
+  if (y < x) {
+    return 1;
+  }
+  return 0;
+}
+function isBuffer(b) {
+  if (global.Buffer && typeof global.Buffer.isBuffer === 'function') {
+    return global.Buffer.isBuffer(b);
+  }
+  return !!(b != null && b._isBuffer);
+}
+
+// based on node assert, original notice:
+
+// http://wiki.commonjs.org/wiki/Unit_Testing/1.0
+//
+// THIS IS NOT TESTED NOR LIKELY TO WORK OUTSIDE V8!
+//
+// Originally from narwhal.js (http://narwhaljs.org)
+// Copyright (c) 2009 Thomas Robinson <280north.com>
+//
+// Permission is hereby granted, free of charge, to any person obtaining a copy
+// of this software and associated documentation files (the 'Software'), to
+// deal in the Software without restriction, including without limitation the
+// rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
+// sell copies of the Software, and to permit persons to whom the Software is
+// furnished to do so, subject to the following conditions:
+//
+// The above copyright notice and this permission notice shall be included in
+// all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED 'AS IS', WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+// AUTHORS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN
+// ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+// WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+var util = __webpack_require__(40);
+var hasOwn = Object.prototype.hasOwnProperty;
+var pSlice = Array.prototype.slice;
+var functionsHaveNames = (function () {
+  return function foo() {}.name === 'foo';
+}());
+function pToString (obj) {
+  return Object.prototype.toString.call(obj);
+}
+function isView(arrbuf) {
+  if (isBuffer(arrbuf)) {
+    return false;
+  }
+  if (typeof global.ArrayBuffer !== 'function') {
+    return false;
+  }
+  if (typeof ArrayBuffer.isView === 'function') {
+    return ArrayBuffer.isView(arrbuf);
+  }
+  if (!arrbuf) {
+    return false;
+  }
+  if (arrbuf instanceof DataView) {
+    return true;
+  }
+  if (arrbuf.buffer && arrbuf.buffer instanceof ArrayBuffer) {
+    return true;
+  }
+  return false;
+}
+// 1. The assert module provides functions that throw
+// AssertionError's when particular conditions are not met. The
+// assert module must conform to the following interface.
+
+var assert = module.exports = ok;
+
+// 2. The AssertionError is defined in assert.
+// new assert.AssertionError({ message: message,
+//                             actual: actual,
+//                             expected: expected })
+
+var regex = /\s*function\s+([^\(\s]*)\s*/;
+// based on https://github.com/ljharb/function.prototype.name/blob/adeeeec8bfcc6068b187d7d9fb3d5bb1d3a30899/implementation.js
+function getName(func) {
+  if (!util.isFunction(func)) {
+    return;
+  }
+  if (functionsHaveNames) {
+    return func.name;
+  }
+  var str = func.toString();
+  var match = str.match(regex);
+  return match && match[1];
+}
+assert.AssertionError = function AssertionError(options) {
+  this.name = 'AssertionError';
+  this.actual = options.actual;
+  this.expected = options.expected;
+  this.operator = options.operator;
+  if (options.message) {
+    this.message = options.message;
+    this.generatedMessage = false;
+  } else {
+    this.message = getMessage(this);
+    this.generatedMessage = true;
+  }
+  var stackStartFunction = options.stackStartFunction || fail;
+  if (Error.captureStackTrace) {
+    Error.captureStackTrace(this, stackStartFunction);
+  } else {
+    // non v8 browsers so we can have a stacktrace
+    var err = new Error();
+    if (err.stack) {
+      var out = err.stack;
+
+      // try to strip useless frames
+      var fn_name = getName(stackStartFunction);
+      var idx = out.indexOf('\n' + fn_name);
+      if (idx >= 0) {
+        // once we have located the function frame
+        // we need to strip out everything before it (and its line)
+        var next_line = out.indexOf('\n', idx + 1);
+        out = out.substring(next_line + 1);
+      }
+
+      this.stack = out;
+    }
+  }
+};
+
+// assert.AssertionError instanceof Error
+util.inherits(assert.AssertionError, Error);
+
+function truncate(s, n) {
+  if (typeof s === 'string') {
+    return s.length < n ? s : s.slice(0, n);
+  } else {
+    return s;
+  }
+}
+function inspect(something) {
+  if (functionsHaveNames || !util.isFunction(something)) {
+    return util.inspect(something);
+  }
+  var rawname = getName(something);
+  var name = rawname ? ': ' + rawname : '';
+  return '[Function' +  name + ']';
+}
+function getMessage(self) {
+  return truncate(inspect(self.actual), 128) + ' ' +
+         self.operator + ' ' +
+         truncate(inspect(self.expected), 128);
+}
+
+// At present only the three keys mentioned above are used and
+// understood by the spec. Implementations or sub modules can pass
+// other keys to the AssertionError's constructor - they will be
+// ignored.
+
+// 3. All of the following functions must throw an AssertionError
+// when a corresponding condition is not met, with a message that
+// may be undefined if not provided.  All assertion methods provide
+// both the actual and expected values to the assertion error for
+// display purposes.
+
+function fail(actual, expected, message, operator, stackStartFunction) {
+  throw new assert.AssertionError({
+    message: message,
+    actual: actual,
+    expected: expected,
+    operator: operator,
+    stackStartFunction: stackStartFunction
+  });
+}
+
+// EXTENSION! allows for well behaved errors defined elsewhere.
+assert.fail = fail;
+
+// 4. Pure assertion tests whether a value is truthy, as determined
+// by !!guard.
+// assert.ok(guard, message_opt);
+// This statement is equivalent to assert.equal(true, !!guard,
+// message_opt);. To test strictly for the value true, use
+// assert.strictEqual(true, guard, message_opt);.
+
+function ok(value, message) {
+  if (!value) fail(value, true, message, '==', assert.ok);
+}
+assert.ok = ok;
+
+// 5. The equality assertion tests shallow, coercive equality with
+// ==.
+// assert.equal(actual, expected, message_opt);
+
+assert.equal = function equal(actual, expected, message) {
+  if (actual != expected) fail(actual, expected, message, '==', assert.equal);
+};
+
+// 6. The non-equality assertion tests for whether two objects are not equal
+// with != assert.notEqual(actual, expected, message_opt);
+
+assert.notEqual = function notEqual(actual, expected, message) {
+  if (actual == expected) {
+    fail(actual, expected, message, '!=', assert.notEqual);
+  }
+};
+
+// 7. The equivalence assertion tests a deep equality relation.
+// assert.deepEqual(actual, expected, message_opt);
+
+assert.deepEqual = function deepEqual(actual, expected, message) {
+  if (!_deepEqual(actual, expected, false)) {
+    fail(actual, expected, message, 'deepEqual', assert.deepEqual);
+  }
+};
+
+assert.deepStrictEqual = function deepStrictEqual(actual, expected, message) {
+  if (!_deepEqual(actual, expected, true)) {
+    fail(actual, expected, message, 'deepStrictEqual', assert.deepStrictEqual);
+  }
+};
+
+function _deepEqual(actual, expected, strict, memos) {
+  // 7.1. All identical values are equivalent, as determined by ===.
+  if (actual === expected) {
+    return true;
+  } else if (isBuffer(actual) && isBuffer(expected)) {
+    return compare(actual, expected) === 0;
+
+  // 7.2. If the expected value is a Date object, the actual value is
+  // equivalent if it is also a Date object that refers to the same time.
+  } else if (util.isDate(actual) && util.isDate(expected)) {
+    return actual.getTime() === expected.getTime();
+
+  // 7.3 If the expected value is a RegExp object, the actual value is
+  // equivalent if it is also a RegExp object with the same source and
+  // properties (`global`, `multiline`, `lastIndex`, `ignoreCase`).
+  } else if (util.isRegExp(actual) && util.isRegExp(expected)) {
+    return actual.source === expected.source &&
+           actual.global === expected.global &&
+           actual.multiline === expected.multiline &&
+           actual.lastIndex === expected.lastIndex &&
+           actual.ignoreCase === expected.ignoreCase;
+
+  // 7.4. Other pairs that do not both pass typeof value == 'object',
+  // equivalence is determined by ==.
+  } else if ((actual === null || typeof actual !== 'object') &&
+             (expected === null || typeof expected !== 'object')) {
+    return strict ? actual === expected : actual == expected;
+
+  // If both values are instances of typed arrays, wrap their underlying
+  // ArrayBuffers in a Buffer each to increase performance
+  // This optimization requires the arrays to have the same type as checked by
+  // Object.prototype.toString (aka pToString). Never perform binary
+  // comparisons for Float*Arrays, though, since e.g. +0 === -0 but their
+  // bit patterns are not identical.
+  } else if (isView(actual) && isView(expected) &&
+             pToString(actual) === pToString(expected) &&
+             !(actual instanceof Float32Array ||
+               actual instanceof Float64Array)) {
+    return compare(new Uint8Array(actual.buffer),
+                   new Uint8Array(expected.buffer)) === 0;
+
+  // 7.5 For all other Object pairs, including Array objects, equivalence is
+  // determined by having the same number of owned properties (as verified
+  // with Object.prototype.hasOwnProperty.call), the same set of keys
+  // (although not necessarily the same order), equivalent values for every
+  // corresponding key, and an identical 'prototype' property. Note: this
+  // accounts for both named and indexed properties on Arrays.
+  } else if (isBuffer(actual) !== isBuffer(expected)) {
+    return false;
+  } else {
+    memos = memos || {actual: [], expected: []};
+
+    var actualIndex = memos.actual.indexOf(actual);
+    if (actualIndex !== -1) {
+      if (actualIndex === memos.expected.indexOf(expected)) {
+        return true;
+      }
+    }
+
+    memos.actual.push(actual);
+    memos.expected.push(expected);
+
+    return objEquiv(actual, expected, strict, memos);
+  }
+}
+
+function isArguments(object) {
+  return Object.prototype.toString.call(object) == '[object Arguments]';
+}
+
+function objEquiv(a, b, strict, actualVisitedObjects) {
+  if (a === null || a === undefined || b === null || b === undefined)
+    return false;
+  // if one is a primitive, the other must be same
+  if (util.isPrimitive(a) || util.isPrimitive(b))
+    return a === b;
+  if (strict && Object.getPrototypeOf(a) !== Object.getPrototypeOf(b))
+    return false;
+  var aIsArgs = isArguments(a);
+  var bIsArgs = isArguments(b);
+  if ((aIsArgs && !bIsArgs) || (!aIsArgs && bIsArgs))
+    return false;
+  if (aIsArgs) {
+    a = pSlice.call(a);
+    b = pSlice.call(b);
+    return _deepEqual(a, b, strict);
+  }
+  var ka = objectKeys(a);
+  var kb = objectKeys(b);
+  var key, i;
+  // having the same number of owned properties (keys incorporates
+  // hasOwnProperty)
+  if (ka.length !== kb.length)
+    return false;
+  //the same set of keys (although not necessarily the same order),
+  ka.sort();
+  kb.sort();
+  //~~~cheap key test
+  for (i = ka.length - 1; i >= 0; i--) {
+    if (ka[i] !== kb[i])
+      return false;
+  }
+  //equivalent values for every corresponding key, and
+  //~~~possibly expensive deep test
+  for (i = ka.length - 1; i >= 0; i--) {
+    key = ka[i];
+    if (!_deepEqual(a[key], b[key], strict, actualVisitedObjects))
+      return false;
+  }
+  return true;
+}
+
+// 8. The non-equivalence assertion tests for any deep inequality.
+// assert.notDeepEqual(actual, expected, message_opt);
+
+assert.notDeepEqual = function notDeepEqual(actual, expected, message) {
+  if (_deepEqual(actual, expected, false)) {
+    fail(actual, expected, message, 'notDeepEqual', assert.notDeepEqual);
+  }
+};
+
+assert.notDeepStrictEqual = notDeepStrictEqual;
+function notDeepStrictEqual(actual, expected, message) {
+  if (_deepEqual(actual, expected, true)) {
+    fail(actual, expected, message, 'notDeepStrictEqual', notDeepStrictEqual);
+  }
+}
+
+
+// 9. The strict equality assertion tests strict equality, as determined by ===.
+// assert.strictEqual(actual, expected, message_opt);
+
+assert.strictEqual = function strictEqual(actual, expected, message) {
+  if (actual !== expected) {
+    fail(actual, expected, message, '===', assert.strictEqual);
+  }
+};
+
+// 10. The strict non-equality assertion tests for strict inequality, as
+// determined by !==.  assert.notStrictEqual(actual, expected, message_opt);
+
+assert.notStrictEqual = function notStrictEqual(actual, expected, message) {
+  if (actual === expected) {
+    fail(actual, expected, message, '!==', assert.notStrictEqual);
+  }
+};
+
+function expectedException(actual, expected) {
+  if (!actual || !expected) {
+    return false;
+  }
+
+  if (Object.prototype.toString.call(expected) == '[object RegExp]') {
+    return expected.test(actual);
+  }
+
+  try {
+    if (actual instanceof expected) {
+      return true;
+    }
+  } catch (e) {
+    // Ignore.  The instanceof check doesn't work for arrow functions.
+  }
+
+  if (Error.isPrototypeOf(expected)) {
+    return false;
+  }
+
+  return expected.call({}, actual) === true;
+}
+
+function _tryBlock(block) {
+  var error;
+  try {
+    block();
+  } catch (e) {
+    error = e;
+  }
+  return error;
+}
+
+function _throws(shouldThrow, block, expected, message) {
+  var actual;
+
+  if (typeof block !== 'function') {
+    throw new TypeError('"block" argument must be a function');
+  }
+
+  if (typeof expected === 'string') {
+    message = expected;
+    expected = null;
+  }
+
+  actual = _tryBlock(block);
+
+  message = (expected && expected.name ? ' (' + expected.name + ').' : '.') +
+            (message ? ' ' + message : '.');
+
+  if (shouldThrow && !actual) {
+    fail(actual, expected, 'Missing expected exception' + message);
+  }
+
+  var userProvidedMessage = typeof message === 'string';
+  var isUnwantedException = !shouldThrow && util.isError(actual);
+  var isUnexpectedException = !shouldThrow && actual && !expected;
+
+  if ((isUnwantedException &&
+      userProvidedMessage &&
+      expectedException(actual, expected)) ||
+      isUnexpectedException) {
+    fail(actual, expected, 'Got unwanted exception' + message);
+  }
+
+  if ((shouldThrow && actual && expected &&
+      !expectedException(actual, expected)) || (!shouldThrow && actual)) {
+    throw actual;
+  }
+}
+
+// 11. Expected to throw an error:
+// assert.throws(block, Error_opt, message_opt);
+
+assert.throws = function(block, /*optional*/error, /*optional*/message) {
+  _throws(true, block, error, message);
+};
+
+// EXTENSION! This is annoying to write outside this module.
+assert.doesNotThrow = function(block, /*optional*/error, /*optional*/message) {
+  _throws(false, block, error, message);
+};
+
+assert.ifError = function(err) { if (err) throw err; };
+
+var objectKeys = Object.keys || function (obj) {
+  var keys = [];
+  for (var key in obj) {
+    if (hasOwn.call(obj, key)) keys.push(key);
+  }
+  return keys;
+};
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(13)))
+
+/***/ }),
+/* 40 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global, process) {// Copyright Joyent, Inc. and other Node contributors.
+//
+// Permission is hereby granted, free of charge, to any person obtaining a
+// copy of this software and associated documentation files (the
+// "Software"), to deal in the Software without restriction, including
+// without limitation the rights to use, copy, modify, merge, publish,
+// distribute, sublicense, and/or sell copies of the Software, and to permit
+// persons to whom the Software is furnished to do so, subject to the
+// following conditions:
+//
+// The above copyright notice and this permission notice shall be included
+// in all copies or substantial portions of the Software.
+//
+// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS
+// OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+// MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN
+// NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM,
+// DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR
+// OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
+// USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+var formatRegExp = /%[sdj%]/g;
+exports.format = function(f) {
+  if (!isString(f)) {
+    var objects = [];
+    for (var i = 0; i < arguments.length; i++) {
+      objects.push(inspect(arguments[i]));
+    }
+    return objects.join(' ');
+  }
+
+  var i = 1;
+  var args = arguments;
+  var len = args.length;
+  var str = String(f).replace(formatRegExp, function(x) {
+    if (x === '%%') return '%';
+    if (i >= len) return x;
+    switch (x) {
+      case '%s': return String(args[i++]);
+      case '%d': return Number(args[i++]);
+      case '%j':
+        try {
+          return JSON.stringify(args[i++]);
+        } catch (_) {
+          return '[Circular]';
+        }
+      default:
+        return x;
+    }
+  });
+  for (var x = args[i]; i < len; x = args[++i]) {
+    if (isNull(x) || !isObject(x)) {
+      str += ' ' + x;
+    } else {
+      str += ' ' + inspect(x);
+    }
+  }
+  return str;
+};
+
+
+// Mark that a method should not be used.
+// Returns a modified function which warns once by default.
+// If --no-deprecation is set, then it is a no-op.
+exports.deprecate = function(fn, msg) {
+  // Allow for deprecating things in the process of starting up.
+  if (isUndefined(global.process)) {
+    return function() {
+      return exports.deprecate(fn, msg).apply(this, arguments);
+    };
+  }
+
+  if (process.noDeprecation === true) {
+    return fn;
+  }
+
+  var warned = false;
+  function deprecated() {
+    if (!warned) {
+      if (process.throwDeprecation) {
+        throw new Error(msg);
+      } else if (process.traceDeprecation) {
+        console.trace(msg);
+      } else {
+        console.error(msg);
+      }
+      warned = true;
+    }
+    return fn.apply(this, arguments);
+  }
+
+  return deprecated;
+};
+
+
+var debugs = {};
+var debugEnviron;
+exports.debuglog = function(set) {
+  if (isUndefined(debugEnviron))
+    debugEnviron = process.env.NODE_DEBUG || '';
+  set = set.toUpperCase();
+  if (!debugs[set]) {
+    if (new RegExp('\\b' + set + '\\b', 'i').test(debugEnviron)) {
+      var pid = process.pid;
+      debugs[set] = function() {
+        var msg = exports.format.apply(exports, arguments);
+        console.error('%s %d: %s', set, pid, msg);
+      };
+    } else {
+      debugs[set] = function() {};
+    }
+  }
+  return debugs[set];
+};
+
+
+/**
+ * Echos the value of a value. Trys to print the value out
+ * in the best way possible given the different types.
+ *
+ * @param {Object} obj The object to print out.
+ * @param {Object} opts Optional options object that alters the output.
+ */
+/* legacy: obj, showHidden, depth, colors*/
+function inspect(obj, opts) {
+  // default options
+  var ctx = {
+    seen: [],
+    stylize: stylizeNoColor
+  };
+  // legacy...
+  if (arguments.length >= 3) ctx.depth = arguments[2];
+  if (arguments.length >= 4) ctx.colors = arguments[3];
+  if (isBoolean(opts)) {
+    // legacy...
+    ctx.showHidden = opts;
+  } else if (opts) {
+    // got an "options" object
+    exports._extend(ctx, opts);
+  }
+  // set default options
+  if (isUndefined(ctx.showHidden)) ctx.showHidden = false;
+  if (isUndefined(ctx.depth)) ctx.depth = 2;
+  if (isUndefined(ctx.colors)) ctx.colors = false;
+  if (isUndefined(ctx.customInspect)) ctx.customInspect = true;
+  if (ctx.colors) ctx.stylize = stylizeWithColor;
+  return formatValue(ctx, obj, ctx.depth);
+}
+exports.inspect = inspect;
+
+
+// http://en.wikipedia.org/wiki/ANSI_escape_code#graphics
+inspect.colors = {
+  'bold' : [1, 22],
+  'italic' : [3, 23],
+  'underline' : [4, 24],
+  'inverse' : [7, 27],
+  'white' : [37, 39],
+  'grey' : [90, 39],
+  'black' : [30, 39],
+  'blue' : [34, 39],
+  'cyan' : [36, 39],
+  'green' : [32, 39],
+  'magenta' : [35, 39],
+  'red' : [31, 39],
+  'yellow' : [33, 39]
+};
+
+// Don't use 'blue' not visible on cmd.exe
+inspect.styles = {
+  'special': 'cyan',
+  'number': 'yellow',
+  'boolean': 'yellow',
+  'undefined': 'grey',
+  'null': 'bold',
+  'string': 'green',
+  'date': 'magenta',
+  // "name": intentionally not styling
+  'regexp': 'red'
+};
+
+
+function stylizeWithColor(str, styleType) {
+  var style = inspect.styles[styleType];
+
+  if (style) {
+    return '\u001b[' + inspect.colors[style][0] + 'm' + str +
+           '\u001b[' + inspect.colors[style][1] + 'm';
+  } else {
+    return str;
+  }
+}
+
+
+function stylizeNoColor(str, styleType) {
+  return str;
+}
+
+
+function arrayToHash(array) {
+  var hash = {};
+
+  array.forEach(function(val, idx) {
+    hash[val] = true;
+  });
+
+  return hash;
+}
+
+
+function formatValue(ctx, value, recurseTimes) {
+  // Provide a hook for user-specified inspect functions.
+  // Check that value is an object with an inspect function on it
+  if (ctx.customInspect &&
+      value &&
+      isFunction(value.inspect) &&
+      // Filter out the util module, it's inspect function is special
+      value.inspect !== exports.inspect &&
+      // Also filter out any prototype objects using the circular check.
+      !(value.constructor && value.constructor.prototype === value)) {
+    var ret = value.inspect(recurseTimes, ctx);
+    if (!isString(ret)) {
+      ret = formatValue(ctx, ret, recurseTimes);
+    }
+    return ret;
+  }
+
+  // Primitive types cannot have properties
+  var primitive = formatPrimitive(ctx, value);
+  if (primitive) {
+    return primitive;
+  }
+
+  // Look up the keys of the object.
+  var keys = Object.keys(value);
+  var visibleKeys = arrayToHash(keys);
+
+  if (ctx.showHidden) {
+    keys = Object.getOwnPropertyNames(value);
+  }
+
+  // IE doesn't make error fields non-enumerable
+  // http://msdn.microsoft.com/en-us/library/ie/dww52sbt(v=vs.94).aspx
+  if (isError(value)
+      && (keys.indexOf('message') >= 0 || keys.indexOf('description') >= 0)) {
+    return formatError(value);
+  }
+
+  // Some type of object without properties can be shortcutted.
+  if (keys.length === 0) {
+    if (isFunction(value)) {
+      var name = value.name ? ': ' + value.name : '';
+      return ctx.stylize('[Function' + name + ']', 'special');
+    }
+    if (isRegExp(value)) {
+      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
+    }
+    if (isDate(value)) {
+      return ctx.stylize(Date.prototype.toString.call(value), 'date');
+    }
+    if (isError(value)) {
+      return formatError(value);
+    }
+  }
+
+  var base = '', array = false, braces = ['{', '}'];
+
+  // Make Array say that they are Array
+  if (isArray(value)) {
+    array = true;
+    braces = ['[', ']'];
+  }
+
+  // Make functions say that they are functions
+  if (isFunction(value)) {
+    var n = value.name ? ': ' + value.name : '';
+    base = ' [Function' + n + ']';
+  }
+
+  // Make RegExps say that they are RegExps
+  if (isRegExp(value)) {
+    base = ' ' + RegExp.prototype.toString.call(value);
+  }
+
+  // Make dates with properties first say the date
+  if (isDate(value)) {
+    base = ' ' + Date.prototype.toUTCString.call(value);
+  }
+
+  // Make error with message first say the error
+  if (isError(value)) {
+    base = ' ' + formatError(value);
+  }
+
+  if (keys.length === 0 && (!array || value.length == 0)) {
+    return braces[0] + base + braces[1];
+  }
+
+  if (recurseTimes < 0) {
+    if (isRegExp(value)) {
+      return ctx.stylize(RegExp.prototype.toString.call(value), 'regexp');
+    } else {
+      return ctx.stylize('[Object]', 'special');
+    }
+  }
+
+  ctx.seen.push(value);
+
+  var output;
+  if (array) {
+    output = formatArray(ctx, value, recurseTimes, visibleKeys, keys);
+  } else {
+    output = keys.map(function(key) {
+      return formatProperty(ctx, value, recurseTimes, visibleKeys, key, array);
+    });
+  }
+
+  ctx.seen.pop();
+
+  return reduceToSingleString(output, base, braces);
+}
+
+
+function formatPrimitive(ctx, value) {
+  if (isUndefined(value))
+    return ctx.stylize('undefined', 'undefined');
+  if (isString(value)) {
+    var simple = '\'' + JSON.stringify(value).replace(/^"|"$/g, '')
+                                             .replace(/'/g, "\\'")
+                                             .replace(/\\"/g, '"') + '\'';
+    return ctx.stylize(simple, 'string');
+  }
+  if (isNumber(value))
+    return ctx.stylize('' + value, 'number');
+  if (isBoolean(value))
+    return ctx.stylize('' + value, 'boolean');
+  // For some reason typeof null is "object", so special case here.
+  if (isNull(value))
+    return ctx.stylize('null', 'null');
+}
+
+
+function formatError(value) {
+  return '[' + Error.prototype.toString.call(value) + ']';
+}
+
+
+function formatArray(ctx, value, recurseTimes, visibleKeys, keys) {
+  var output = [];
+  for (var i = 0, l = value.length; i < l; ++i) {
+    if (hasOwnProperty(value, String(i))) {
+      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
+          String(i), true));
+    } else {
+      output.push('');
+    }
+  }
+  keys.forEach(function(key) {
+    if (!key.match(/^\d+$/)) {
+      output.push(formatProperty(ctx, value, recurseTimes, visibleKeys,
+          key, true));
+    }
+  });
+  return output;
+}
+
+
+function formatProperty(ctx, value, recurseTimes, visibleKeys, key, array) {
+  var name, str, desc;
+  desc = Object.getOwnPropertyDescriptor(value, key) || { value: value[key] };
+  if (desc.get) {
+    if (desc.set) {
+      str = ctx.stylize('[Getter/Setter]', 'special');
+    } else {
+      str = ctx.stylize('[Getter]', 'special');
+    }
+  } else {
+    if (desc.set) {
+      str = ctx.stylize('[Setter]', 'special');
+    }
+  }
+  if (!hasOwnProperty(visibleKeys, key)) {
+    name = '[' + key + ']';
+  }
+  if (!str) {
+    if (ctx.seen.indexOf(desc.value) < 0) {
+      if (isNull(recurseTimes)) {
+        str = formatValue(ctx, desc.value, null);
+      } else {
+        str = formatValue(ctx, desc.value, recurseTimes - 1);
+      }
+      if (str.indexOf('\n') > -1) {
+        if (array) {
+          str = str.split('\n').map(function(line) {
+            return '  ' + line;
+          }).join('\n').substr(2);
+        } else {
+          str = '\n' + str.split('\n').map(function(line) {
+            return '   ' + line;
+          }).join('\n');
+        }
+      }
+    } else {
+      str = ctx.stylize('[Circular]', 'special');
+    }
+  }
+  if (isUndefined(name)) {
+    if (array && key.match(/^\d+$/)) {
+      return str;
+    }
+    name = JSON.stringify('' + key);
+    if (name.match(/^"([a-zA-Z_][a-zA-Z_0-9]*)"$/)) {
+      name = name.substr(1, name.length - 2);
+      name = ctx.stylize(name, 'name');
+    } else {
+      name = name.replace(/'/g, "\\'")
+                 .replace(/\\"/g, '"')
+                 .replace(/(^"|"$)/g, "'");
+      name = ctx.stylize(name, 'string');
+    }
+  }
+
+  return name + ': ' + str;
+}
+
+
+function reduceToSingleString(output, base, braces) {
+  var numLinesEst = 0;
+  var length = output.reduce(function(prev, cur) {
+    numLinesEst++;
+    if (cur.indexOf('\n') >= 0) numLinesEst++;
+    return prev + cur.replace(/\u001b\[\d\d?m/g, '').length + 1;
+  }, 0);
+
+  if (length > 60) {
+    return braces[0] +
+           (base === '' ? '' : base + '\n ') +
+           ' ' +
+           output.join(',\n  ') +
+           ' ' +
+           braces[1];
+  }
+
+  return braces[0] + base + ' ' + output.join(', ') + ' ' + braces[1];
+}
+
+
+// NOTE: These type checking functions intentionally don't use `instanceof`
+// because it is fragile and can be easily faked with `Object.create()`.
+function isArray(ar) {
+  return Array.isArray(ar);
+}
+exports.isArray = isArray;
+
+function isBoolean(arg) {
+  return typeof arg === 'boolean';
+}
+exports.isBoolean = isBoolean;
+
+function isNull(arg) {
+  return arg === null;
+}
+exports.isNull = isNull;
+
+function isNullOrUndefined(arg) {
+  return arg == null;
+}
+exports.isNullOrUndefined = isNullOrUndefined;
+
+function isNumber(arg) {
+  return typeof arg === 'number';
+}
+exports.isNumber = isNumber;
+
+function isString(arg) {
+  return typeof arg === 'string';
+}
+exports.isString = isString;
+
+function isSymbol(arg) {
+  return typeof arg === 'symbol';
+}
+exports.isSymbol = isSymbol;
+
+function isUndefined(arg) {
+  return arg === void 0;
+}
+exports.isUndefined = isUndefined;
+
+function isRegExp(re) {
+  return isObject(re) && objectToString(re) === '[object RegExp]';
+}
+exports.isRegExp = isRegExp;
+
+function isObject(arg) {
+  return typeof arg === 'object' && arg !== null;
+}
+exports.isObject = isObject;
+
+function isDate(d) {
+  return isObject(d) && objectToString(d) === '[object Date]';
+}
+exports.isDate = isDate;
+
+function isError(e) {
+  return isObject(e) &&
+      (objectToString(e) === '[object Error]' || e instanceof Error);
+}
+exports.isError = isError;
+
+function isFunction(arg) {
+  return typeof arg === 'function';
+}
+exports.isFunction = isFunction;
+
+function isPrimitive(arg) {
+  return arg === null ||
+         typeof arg === 'boolean' ||
+         typeof arg === 'number' ||
+         typeof arg === 'string' ||
+         typeof arg === 'symbol' ||  // ES6 symbol
+         typeof arg === 'undefined';
+}
+exports.isPrimitive = isPrimitive;
+
+exports.isBuffer = __webpack_require__(42);
+
+function objectToString(o) {
+  return Object.prototype.toString.call(o);
+}
+
+
+function pad(n) {
+  return n < 10 ? '0' + n.toString(10) : n.toString(10);
+}
+
+
+var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
+              'Oct', 'Nov', 'Dec'];
+
+// 26 Feb 16:19:34
+function timestamp() {
+  var d = new Date();
+  var time = [pad(d.getHours()),
+              pad(d.getMinutes()),
+              pad(d.getSeconds())].join(':');
+  return [d.getDate(), months[d.getMonth()], time].join(' ');
+}
+
+
+// log is just a thin wrapper to console.log that prepends a timestamp
+exports.log = function() {
+  console.log('%s - %s', timestamp(), exports.format.apply(exports, arguments));
+};
+
+
+/**
+ * Inherit the prototype methods from one constructor into another.
+ *
+ * The Function.prototype.inherits from lang.js rewritten as a standalone
+ * function (not on Function.prototype). NOTE: If this file is to be loaded
+ * during bootstrapping this function needs to be rewritten using some native
+ * functions as prototype setup using normal JavaScript does not work as
+ * expected during bootstrapping (see mirror.js in r114903).
+ *
+ * @param {function} ctor Constructor function which needs to inherit the
+ *     prototype.
+ * @param {function} superCtor Constructor function to inherit prototype from.
+ */
+exports.inherits = __webpack_require__(43);
+
+exports._extend = function(origin, add) {
+  // Don't do anything if add isn't an object
+  if (!add || !isObject(add)) return origin;
+
+  var keys = Object.keys(add);
+  var i = keys.length;
+  while (i--) {
+    origin[keys[i]] = add[keys[i]];
+  }
+  return origin;
+};
+
+function hasOwnProperty(obj, prop) {
+  return Object.prototype.hasOwnProperty.call(obj, prop);
+}
+
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(13), __webpack_require__(41)))
+
+/***/ }),
+/* 41 */
+/***/ (function(module, exports) {
+
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+
+
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+
+/***/ }),
+/* 42 */
+/***/ (function(module, exports) {
+
+module.exports = function isBuffer(arg) {
+  return arg && typeof arg === 'object'
+    && typeof arg.copy === 'function'
+    && typeof arg.fill === 'function'
+    && typeof arg.readUInt8 === 'function';
+}
+
+/***/ }),
+/* 43 */
+/***/ (function(module, exports) {
+
+if (typeof Object.create === 'function') {
+  // implementation from standard node.js 'util' module
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    ctor.prototype = Object.create(superCtor.prototype, {
+      constructor: {
+        value: ctor,
+        enumerable: false,
+        writable: true,
+        configurable: true
+      }
+    });
+  };
+} else {
+  // old school shim for old browsers
+  module.exports = function inherits(ctor, superCtor) {
+    ctor.super_ = superCtor
+    var TempCtor = function () {}
+    TempCtor.prototype = superCtor.prototype
+    ctor.prototype = new TempCtor()
+    ctor.prototype.constructor = ctor
+  }
+}
+
+
+/***/ }),
+/* 44 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;/*
@@ -10674,28 +12524,28 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;/*
 })(this);
 
 /***/ }),
-/* 35 */
+/* 45 */
 /***/ (function(module, exports) {
 
-module.exports = "#version 300 es\r\nlayout (location = 0) in vec3 aPos;\r\nlayout (location = 2) in vec2 aTexCoord;\r\n\r\nout vec2 TexCoord;\r\n\r\nuniform mat4 model;\r\nuniform mat4 viewProjection;\r\n\r\nvoid main()\r\n{\r\n    gl_Position = viewProjection * model *  vec4(aPos,1.0f);\r\n    TexCoord = aTexCoord;\r\n}   "
+module.exports = "#version 300 es\r\nlayout (location = 0) in vec3 aPos;\r\nlayout (location = 1) in vec2 aTexCoord;\r\n\r\nout vec2 TexCoord;\r\n\r\nuniform mat4 model;\r\nuniform mat4 viewProjection;\r\n\r\nvoid main()\r\n{\r\n    gl_Position = viewProjection * model *  vec4(aPos,1.0f);\r\n    TexCoord = aTexCoord;\r\n}   "
 
 /***/ }),
-/* 36 */
+/* 46 */
 /***/ (function(module, exports) {
 
 module.exports = "#version 300 es\r\nprecision mediump  float;\r\nout vec4 FragColor;\r\n\r\nin vec2 TexCoord;\r\n\r\nuniform sampler2D texture1;\r\nuniform float ambient;\r\n\r\nvoid main()\r\n{\r\n    FragColor = vec4(ambient * texture(texture1, TexCoord).xyz,1.0);\r\n\r\n    //FragColor = vec4(1, 0.7, 0.5, 1); // set all 4 vector values to 1.0\r\n}"
 
 /***/ }),
-/* 37 */
+/* 47 */
 /***/ (function(module, exports) {
 
-module.exports = "#version 300 es\r\nlayout (location = 0) in vec3 aPos;\r\nlayout (location = 1) in vec3 aNormal;\r\nlayout (location = 2) in vec2 aTexCoord;\r\nlayout (location = 3) in vec3 aInstancedOffset;\r\nlayout (location = 4) in vec3 aScale;\r\n\r\n\r\nout vec3 FragPos;\r\nout vec3 Normal;\r\nout vec2 TexCoord;\r\n\r\nuniform mat4 model;\r\nuniform mat4 viewProjection;\r\n\r\nvoid main()\r\n{\r\n    vec4 vertexPos = vec4(aPos, 1);\r\n\r\n    if(aScale.x > 0.0 && aScale.z > 0.0){\r\n        vertexPos.x *= aScale.x;\r\n        vertexPos.y *= aScale.y;\r\n        vertexPos.z *= aScale.z;\r\n    }\r\n\r\n    vertexPos.xyz += aInstancedOffset.xyz;\r\n    TexCoord = aTexCoord;\r\n    gl_Position = viewProjection * model *  vertexPos;\r\n    Normal = mat3(transpose(inverse(model))) * normalize(aNormal);\r\n    FragPos = vec3(model * vertexPos);\r\n}   "
+module.exports = "#version 300 es\r\n\r\nuniform mat4 model_matrix;\r\nuniform mat4 view_matrix;\r\nuniform mat4 model_view_projection_matrix;\r\nuniform vec3 camera_pos;\r\n\r\nuniform bool tween_enabled;\r\nuniform float tween_factor;\r\n\r\nlayout (location = 0) in vec3 a_vertex;\r\nlayout (location = 1) in vec2 a_tex_coord;\r\nlayout (location = 2) in vec3 a_normal;\r\n\r\n\r\nout vec3 position;\r\nout vec2 tex_coord;\r\nout vec3 normal;\r\nout vec3 to_camera;\r\n\r\nvoid main()\r\n{\r\n//    vec3 new_normal = a_normal;\r\n//    vec3 new_vertex = a_vertex;\r\n//    if(tween_enabled)\r\n//\t{\r\n//\t\tnew_normal = mix(a_normal,a_normal1,tween_factor);      \r\n//        new_vertex = mix(a_vertex,a_vertex1,tween_factor);\r\n//    }\r\n\t\r\n\tvec4 world_position = model_matrix * vec4(a_vertex, 1.0);\r\n\r\n\tposition   = world_position.xyz;\r\n\ttex_coord = a_tex_coord;\r\n\tnormal    = mat3(transpose(inverse(model_matrix))) * a_normal;\r\n\tto_camera  = normalize(camera_pos - world_position.xyz);\r\n\r\n\tgl_Position = model_view_projection_matrix * vec4(a_vertex, 1.0);\r\n}\r\n"
 
 /***/ }),
-/* 38 */
+/* 48 */
 /***/ (function(module, exports) {
 
-module.exports = "#version 300 es\r\nprecision mediump  float;\r\nout vec4 FragColor;\r\n\r\nin vec3 FragPos;\r\nin vec3 Normal;\r\nin vec2 TexCoord;\r\n\r\nuniform vec3 viewPos;\r\n\r\nstruct Material {\r\n    sampler2D diffuse;\r\n   // sampler2D specular;\r\n//\tsampler2D emission;\r\n    vec3 diffuse_color; \r\n    vec3 ambient_color;\r\n    vec3 specular_color;\r\n    float shininess;\r\n}; \r\nuniform Material material;\r\n\r\nstruct DirLight {\r\n    vec3 direction;\r\n  \r\n    vec3 ambient;\r\n    vec3 diffuse;\r\n    vec3 specular;\r\n};  \r\nuniform DirLight dirLight;\r\n\r\nstruct PointLight{\r\n    vec3 position;\r\n    \r\n    float constant;\r\n    float linear;\r\n    float quadratic;\r\n    \r\n    vec3 ambient;\r\n    vec3 diffuse;\r\n    vec3 specular;\r\n};\r\n\r\nuniform PointLight playerLight;\r\n\r\nvec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir);\r\nvec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir);\r\n//vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir);\r\n\r\nvoid main()\r\n{\r\n    vec3 viewDir = normalize(viewPos - FragPos);\r\n    vec3 norm = normalize(Normal);\r\n\r\n    //point lights\r\n    vec3 result;\r\n    result = CalcDirLight(dirLight, norm, viewDir);\r\n    result += CalcPointLight(playerLight, norm, FragPos, viewDir);\r\n\r\n    FragColor = vec4(result, 1.0);\r\n    //FragColor = vec4(1, 0.7, 0.5, 1); // set all 4 vector values to 1.0\r\n}\r\n\r\nvec3 CalcDirLight(DirLight light, vec3 normal, vec3 viewDir){\r\n\r\n\tvec3 lightDir = normalize(-light.direction);\r\n\t//diffuse shading\r\n\tfloat diff = max(dot(normal, lightDir), 0.0);\r\n\t//specular shading\r\n\tvec3 reflectDir = reflect(-lightDir, normal);\r\n\tfloat spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);\r\n\r\n\t//combine\r\n\tvec3 ambient = light.ambient * material.ambient_color * vec3(texture(material.diffuse, TexCoord));\r\n\tvec3 diffuse = light.diffuse * diff * material.diffuse_color *  vec3(texture(material.diffuse, TexCoord));\r\n\tvec3 specular = light.specular * spec * vec3(texture(material.diffuse, TexCoord));\r\n\treturn (ambient + diffuse + specular);\r\n\r\n\r\n}\r\n\r\nvec3 CalcPointLight(PointLight light, vec3 normal, vec3 fragPos, vec3 viewDir)\r\n{\r\n    vec3 lightDir = normalize(light.position - fragPos);\r\n    // diffuse shading\r\n    float diff = max(dot(normal, lightDir), 0.0);\r\n    // specular shading\r\n    vec3 reflectDir = reflect(-lightDir, normal);\r\n    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);\r\n    // attenuation\r\n    float distance    = length(light.position - fragPos);\r\n    float attenuation = 1.0 / (light.constant + light.linear * distance + \r\n  \t\t\t     light.quadratic * (distance * distance));    \r\n    // combine results\r\n    vec3 ambient  = light.ambient  * vec3(texture(material.diffuse, TexCoord));\r\n    vec3 diffuse  = light.diffuse  * diff * vec3(texture(material.diffuse, TexCoord));\r\n    vec3 specular = light.specular * spec * vec3(texture(material.diffuse, TexCoord));\r\n    ambient  *= attenuation;\r\n    diffuse  *= attenuation; \r\n    specular *= attenuation;\r\n    vec3 result = ambient + diffuse + specular;\r\n    return result;\r\n} \r\n\r\n//vec3 CalcSpotLight(SpotLight light, vec3 normal, vec3 fragPos, vec3 viewDir)\r\n//{\r\n//    vec3 lightDir = normalize(light.position - fragPos);\r\n//    // diffuse shading\r\n//    float diff = max(dot(normal, lightDir), 0.0);\r\n//    // specular shading\r\n//    vec3 reflectDir = reflect(-lightDir, normal);\r\n//    float spec = pow(max(dot(viewDir, reflectDir), 0.0), material.shininess);\r\n//    \r\n//\r\n//    // combine results\r\n//    vec3 ambient  = light.ambient  * vec3(texture(material.diffuse, TexCoords));\r\n//    vec3 diffuse  = light.diffuse  * diff * vec3(texture(material.diffuse, TexCoords));\r\n//    vec3 specular = light.specular * spec * vec3(texture(material.specular, TexCoords));\r\n//\r\n//\t//spotlight\r\n//\tfloat theta = dot(lightDir, normalize(-light.direction));\r\n//\tfloat epsilon = light.cutOff - light.outerCutOff;\r\n//\tfloat intesity = clamp((theta - light.outerCutOff) / epsilon, 0.0, 1.0);\r\n//\tdiffuse *= intesity;\r\n//\tspecular *= intesity;\r\n//\r\n//\t// attenuation\r\n//    float distance    = length(light.position - fragPos);\r\n//\tfloat attenuation = 1.0 / (light.constant + light.linear * distance + light.quadratic * (distance * distance));\r\n//\tambient *= attenuation;\r\n//\tdiffuse *= attenuation;\r\n//\tspecular  *= attenuation;\r\n//    return (ambient + diffuse + specular);\r\n//} "
+module.exports = "#version 300 es\r\nprecision mediump  float;\r\n\r\nconst int LIGHT_COUNT = 8;\r\n\r\nstruct Material {\r\n\r\n    //Textures\r\n    bool is_texture_active[6];\r\n    sampler2D transparency_texture;\r\n    sampler2D emission_texture;\r\n    sampler2D ambient_texture;\r\n    sampler2D diffuse_texture;\r\n    sampler2D specular_texture;\r\n    sampler2D shininess_texture;\r\n            \r\n    //Colors\r\n    float transparency;\r\n    vec3 emission_colour;\r\n    vec3 ambient_colour;\r\n    vec3 diffuse_colour;\r\n    vec3 specular_colour;\r\n    float shininess;\r\n    int transparency_channel;\r\n    int shininess_channel;\r\n\r\n}; \r\nuniform Material material;\r\n\r\n\r\nstruct Light{\r\n    bool is_enabled;\r\n    vec4 position;\r\n    vec3 ambient;\r\n    vec3 diffuse;\r\n    vec3 specular;\r\n    vec3 attenuation;\r\n};\r\n\r\nuniform Light lights[LIGHT_COUNT];\r\n\r\nin vec3 position;\r\nin vec2 tex_coord;\r\nin vec3 normal;\r\nin vec3 to_camera;\r\n\r\nout vec4 FragColor;\r\n\r\nvoid main()\r\n{\r\n\r\n\r\n\tvec3 normalized_normal    = normalize(normal);\r\n\tvec3 normalized_to_camera = normalize(to_camera);\r\n\r\n\tfloat transparency_on_texture = texture(material.transparency_texture, tex_coord)[material.transparency_channel];\r\n\tvec3      emission_on_texture = texture(    material.emission_texture, tex_coord).rgb;\r\n\tvec3       ambient_on_texture = texture(     material.ambient_texture, tex_coord).rgb;\r\n\tvec3       diffuse_on_texture = texture(     material.diffuse_texture, tex_coord).rgb;\r\n\tvec3      specular_on_texture = texture(    material.specular_texture, tex_coord).rgb;\r\n\tfloat    shininess_on_texture = texture(   material.shininess_texture, tex_coord)[material.shininess_channel];\r\n\r\n\tfloat transparency2    = material.transparency;\r\n\tvec3  emission_surface = material.emission_colour;\r\n\tvec3   ambient_surface =  material.ambient_colour;\r\n\tvec3   diffuse_surface =  material.diffuse_colour;\r\n\tvec3  specular_surface = material.specular_colour;\r\n\tfloat shininess2       = material.shininess;\r\n\r\n\tif(material.is_texture_active[0]) transparency2    *= transparency_on_texture;\r\n\tif(material.is_texture_active[1]) emission_surface *=     emission_on_texture;\r\n\tif(material.is_texture_active[2])  ambient_surface *=      ambient_on_texture;\r\n\tif(material.is_texture_active[3])  diffuse_surface *=      diffuse_on_texture;\r\n\tif(material.is_texture_active[4]) specular_surface *=     specular_on_texture;\r\n\tif(material.is_texture_active[5]) shininess2       *=    shininess_on_texture;\r\n\r\n\tvec3 basic_colour      = emission_surface;\r\n\tvec4 seperate_specular = vec4(0.0, 0.0, 0.0, 0.0);\r\n\r\n\t// calculate the effects of each light\r\n\r\n\tfor(int i = 0; i < LIGHT_COUNT; i++)\r\n\t\tif(lights[i].is_enabled)\r\n\t\t{\r\n\t\t\tvec3 light_direction_from;\r\n\t\t\tfloat attenuation = 1.0;\r\n\t\t\tif(lights[i].position.w == 0.0)\r\n\t\t\t\tlight_direction_from = normalize(lights[i].position.xyz);\r\n\t\t\telse\r\n\t\t\t{\r\n\t\t\t\tvec3 offset_position = lights[i].position.xyz - position;\r\n\t\t\t\tlight_direction_from = normalize(offset_position);\r\n\t\t\t\tfloat light_distance = length(offset_position);\r\n\t\t\t\tattenuation = 1.0 / (lights[i].attenuation.x +\r\n\t\t\t\t                  lights[i].attenuation.y * light_distance +\r\n\t\t\t\t                    lights[i].attenuation.z * light_distance * light_distance);\r\n\t\t\t}\r\n\r\n\t\t\t//  Phong-Blinn shading\r\n\r\n\t\t\tvec3 half_angle_direction = normalize(normalized_to_camera + light_direction_from);\r\n\r\n\t\t\tfloat  ambient_intensity = attenuation;\r\n\t\t\tfloat  diffuse_intensity = attenuation *     max(0.0, dot(normalized_normal, light_direction_from));\r\n\t\t\tfloat specular_intensity = attenuation * pow(max(0.0, dot(normalized_normal, half_angle_direction)), shininess2);\r\n\r\n\t\t\tbasic_colour += ambient_surface * lights[i].ambient * ambient_intensity +\r\n\t\t\t                diffuse_surface * lights[i].diffuse * diffuse_intensity;\r\n\r\n\t\t\tvec3 specular_colour = specular_surface * lights[i].specular;\r\n//\t\t\tif(is_seperate_specular)\r\n//\t\t\t{\r\n//\t\t\t\tfloat specular_max = max(max(specular_colour.r, specular_colour.g), specular_colour.b);\r\n//\t\t\t\tif(specular_max > 0.0)\r\n//\t\t\t\t{\r\n//\t\t\t\t\tspecular_intensity *= specular_max;\r\n//\t\t\t\t\tspecular_colour    /= specular_max;\r\n//\r\n//\t\t\t\t\tseperate_specular = vec4(seperate_specular.rgb * seperate_specular.a +\r\n//\t\t\t\t\t                         specular_colour       * specular_intensity,\r\n//\t\t\t\t\t                         seperate_specular.a + specular_intensity);\r\n//\t\t\t\t}\r\n//\t\t\t\t// else no specular highlight\r\n//\t\t\t}\r\n//\t\t\telse\r\n\t\t\t\tbasic_colour += specular_colour * specular_intensity;\r\n\t\t}\r\n\r\n\t// calculate the final colour\r\n\r\n\tif(seperate_specular.a > 1.0)\r\n\t\tseperate_specular.a = 1.0;\r\n\r\n\tfloat basic_transparency = transparency2 * (1.0 - seperate_specular.a);\r\n\r\n\tif(basic_transparency + seperate_specular.a <= 0.0)\r\n\t\tdiscard;\r\n\r\n\tFragColor = vec4(basic_colour, basic_transparency) + seperate_specular;\r\n}\r\n"
 
 /***/ })
 /******/ ]);
