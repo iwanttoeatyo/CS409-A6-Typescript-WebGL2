@@ -8,7 +8,10 @@ import {Layout} from './lib/OBJ/layout';
 import {Player, Player_Movement} from "./entities/player";
 import {World, WorldMeshes} from "./entities/world";
 import {Skybox} from "./entities/skybox";
-
+import {BasicModel} from "./entities/models/basicmodel";
+import {Renderer} from "./Renderer";
+import {BasicModelShader} from "./basicmodelshader";
+import * as assert from "assert";
 
 let MainLoop = require('./lib/MainLoop/mainloop.js');
 
@@ -18,6 +21,8 @@ let gl: WebGL2RenderingContext;
 
 let shader: Shader;
 let instancedShader: Shader;
+let basicModelShader: BasicModelShader;
+let basicModelRenderer: Renderer;
 
 const playerOrigin = vec3.fromValues(0, 0.8, 0);
 const playerOriginRotation = vec3.fromValues(1, 0, 0);
@@ -92,8 +97,25 @@ class Main {
         this.world = new World(gl, _worldData, _worldMeshes, _worldMat);
         console.log("world gen time: " + (Date.now() - w) / 1000 + "s");
         shader = await new Shader(gl, require("../src/shaders/basic.vert"), require("../src/shaders/basic.frag"));
-        instancedShader = await new Shader(gl, require('../src/shaders/instanced.vert'), require("../src/shaders/instanced.frag"));
+        // instancedShader = await new Shader(gl, require('../src/shaders/instanced.vert'), require("../src/shaders/instanced.frag"));
+        basicModelShader = await new BasicModelShader(gl, require('../src/shaders/basicmodel.vert'), require("../src/shaders/basicmodelmanylights.frag"));
+        basicModelRenderer = new Renderer();
+        basicModelRenderer.init(basicModelShader);
+        basicModelRenderer.addBasicModel(this.player.model);
+        basicModelRenderer.addEntityToRenderList(this.player);
+        basicModelRenderer.addBasicModel(this.world.diskAModel);
+        basicModelRenderer.addBasicModel(this.world.diskBModel);
+        basicModelRenderer.addBasicModel(this.world.diskCModel);
+        basicModelRenderer.addBasicModel(this.world.diskDModel);
+        basicModelRenderer.addBasicModel(this.world.diskEModel);
 
+        this.world.disks.forEach(disk =>{
+            assert(disk.initialized);
+            basicModelRenderer.addEntityToRenderList(disk);
+            basicModelRenderer.addMeshlessModel(disk.heightMapModel);
+            basicModelRenderer.addEntityToRenderList(disk.heightMapEntity);
+        });
+        
         loading.remove();
         let end = Date.now();
         console.log("total time: " + (end - start) / 1000 + "s");
@@ -119,12 +141,12 @@ class Main {
         playerCamera.front = this.player.forward;
 
         shader.use();
-        shader.setInt("texture1", 0);
-        instancedShader.use();
-        instancedShader.setInt("material.diffuse", 0);
+        shader.setIntByName("texture1", 0);
+        basicModelShader.use();
+        // instancedShader.setInt("material.diffuse", 0);
         // instancedShader.setInt("material.specular", 1);
         // instancedShader.setInt("material.emission", 2);
-
+        BasicModel.initWithShader(gl, basicModelShader);
 
     }
 
@@ -201,68 +223,50 @@ class Main {
 
 
         //Setup view and projection
-        let projection = mat4.create();
-        let view = activeCamera.getViewMatrix();
-        mat4.perspective(projection, glMatrix.toRadian(80), canvas.width / canvas.height, 0.1, 10000);
-        let viewProjection = mat4.multiply(projection, projection, view);
-
+        let projection_matrix = mat4.create();
+        mat4.identity(projection_matrix);
+        let view_matrix = activeCamera.getViewMatrix();
+        mat4.perspective(projection_matrix, glMatrix.toRadian(80), canvas.width / canvas.height, 0.1, 10000);
 
         let model = mat4.create();
-
 
         //Draw Skybox
         gl.disable(gl.DEPTH_TEST);
         shader.use();
         mat4.translate(model, model, activeCamera.position);
-        shader.setFloat("ambient", 1.0);
+        shader.setFloatByName("ambient", 1.0);
 
-        shader.setMat4("model", model);
-        shader.setMat4("viewProjection", viewProjection);
+        shader.setMat4ByName("model", model);
+        let viewProjection = mat4.create();
+        viewProjection = mat4.multiply(viewProjection, projection_matrix, view_matrix);
+        shader.setMat4ByName("viewProjection", viewProjection);
         this.skybox.draw(gl);
 
-
-        instancedShader.use();
+        basicModelShader.use();
+        
         // directional light
-        instancedShader.setVec3("dirLight.direction", [-0.45, -1.0, -0.7]);
-        instancedShader.setVec3("dirLight.ambient", [1.0, 1.0, 1.0]);
-        instancedShader.setVec3("dirLight.diffuse", [1.0, 1.0, 1.0]);
-        instancedShader.setVec3("dirLight.specular", [0.0, 0.0, 0.0]);
+        basicModelShader.setBoolByName("lights[0].is_enabled", true);
+        basicModelShader.setVec4ByName("lights[0].position", [0.34, 0.83, 0.44, 0.0]);
+        basicModelShader.setVec3ByName("lights[0].ambient", [1.0, 1.0, 1.0]);
+        basicModelShader.setVec3ByName("lights[0].diffuse", [1.0, 1.0, 1.0]);
+        basicModelShader.setVec3ByName("lights[0].specular", [1.0, 1.0, 1.0]);
         //Setup player point light
 
-        instancedShader.setVec3("playerLight.position", [this.player.position[0], this.player.position[1], this.player.position[2]]);
-        instancedShader.setVec3("playerLight.ambient", [0.05, 0.05, 0.05]);
-        instancedShader.setVec3("playerLight.diffuse", [0.1, 0.1, 0.1]);
-        instancedShader.setVec3("playerLight.specular", [0.0, 0.0, 0.0]);
-        instancedShader.setFloat("playerLight.constant", 0.4);
-        instancedShader.setFloat("playerLight.linear", 0.09);
-        instancedShader.setFloat("playerLight.quadratic", 0.032);
-        instancedShader.setVec3("viewPos", playerCamera.position);
+        // basicModelShader.setBool("lights[1].is_enabled", true);
+        // basicModelShader.setVec4("lights[1].position", [this.player.position[0], this.player.position[1], this.player.position[2], 1.0]);
+        // basicModelShader.setVec3("lights[1].ambient", [0.05, 0.05, 0.05]);
+        // basicModelShader.setVec3("lights[1].diffuse", [0.1, 0.1, 0.1]);
+        // basicModelShader.setVec3("lights[1].specular", [0.0, 0.0, 0.0]);
+        // basicModelShader.setVec3("lights[1].attenuation", [0.4, 0.09, 0.032]);
 
-        // material properties
-        instancedShader.setFloat("material.shininess", 64.0);
+        basicModelShader.setVec3(basicModelShader.uniforms.camera_pos, activeCamera.position);
 
-        //Draw Disk
-        gl.enable(gl.DEPTH_TEST);
-        model = mat4.create();
-        instancedShader.use();
-        instancedShader.setMat4("viewProjection", viewProjection);
-        instancedShader.setMat4("model", model);
+        // //Draw Disk
+         gl.enable(gl.DEPTH_TEST);
+        // this.world.draw(gl, view_matrix, projection_matrix);
 
-        this.world.draw(gl, instancedShader);
-
-        //Draws Player in front of camera, always facing away from camera
-        instancedShader.use();
-        instancedShader.setMat4("viewProjection", viewProjection);
-        model = mat4.create();
-
-        //Move player model to its position
-        mat4.translate(model, model, this.player.position);
-        //Rotate model to face away from camera
-        mat4.rotateY(model, model, Math.atan2(this.player.forward[0], this.player.forward[2]) - Math.PI / 2);
-        instancedShader.setMat4("model", model);
-        //shader.setFloat("ambient", 0.75);
-        this.player.draw(gl);
-
+        basicModelRenderer.render(gl,view_matrix,projection_matrix);
+       // this.player.draw(gl, view_matrix, projection_matrix);
 
     }
 

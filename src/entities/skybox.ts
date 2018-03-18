@@ -15,8 +15,6 @@ export class Skybox {
 
     draw(gl: WebGL2RenderingContext) {
         this.model.draw(gl);
-
-
         
     }
 

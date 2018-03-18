@@ -11,9 +11,7 @@ export class DiskModel extends BasicModel {
         super.init(gl);
 
         //Initialize the textures: side tex, side black, top tex
-        if (!this.initTexture(gl, 0)) {
-            console.warn("Disk model texture 0 wasn't downloaded")
-        }
+        this.initAllTextures(gl);
 
         let blackTexture = gl.createTexture();
         gl.activeTexture(gl.TEXTURE0);
@@ -23,9 +21,7 @@ export class DiskModel extends BasicModel {
         this.setTexture(blackTexture, 1);
 
 
-        if (!this.initTexture(gl, 2)) {
-            console.warn("Disk model texture 2 wasn't downloaded")
-        }
+   
     }
     
 }

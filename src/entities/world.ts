@@ -5,6 +5,7 @@ let OBJ = require("../lib/OBJ/index.js");
 import {Mesh} from "../lib/OBJ/index.js";
 import {MaterialLibrary} from "../lib/OBJ/index.js";
 import {Shader} from "../shader";
+import {mat4, vec3} from "gl-matrix";
 
 export interface WorldMeshes {
     DiskA: Mesh;
@@ -23,7 +24,6 @@ export class World {
     worldData: string;
 
     disks: Array<Disk>;
-    diskAHeightMap: number[][];
 
     constructor(gl: WebGL2RenderingContext, worldData: string, meshes: WorldMeshes, mat: MaterialLibrary) {
         meshes.DiskA.addMaterialLibrary(mat);
@@ -130,9 +130,9 @@ export class World {
         return require('../../assets/worlds/maps/Basic.txt');
     }
 
-    draw(gl: WebGL2RenderingContext, shader: Shader) {
+    draw(gl: WebGL2RenderingContext, view_matrix: mat4, projection_matrix: mat4) {
         this.disks.forEach(disk => {
-            disk.draw(gl, shader);
+            disk.draw(gl, view_matrix, projection_matrix);
         })
     }
 

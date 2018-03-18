@@ -28,34 +28,65 @@ export class Shader {
         this.gl.useProgram(this.ID);
     }
 
-    setBool(name: string, value: number) {
+    setBoolByName(name: string, value: boolean) {
+        this.gl.uniform1i(this.getUniformLocation(name), value ? 1 : 0);
+    }
+
+    setBool(id: number | WebGLUniformLocation, value: boolean) {
+        this.gl.uniform1i(id, value ? 1 : 0);
+    }
+
+    setInt(id: number | WebGLUniformLocation, value: number) {
+        this.gl.uniform1i(id, value);
+    }
+    setIntByName(name: string, value: number) {
         this.gl.uniform1i(this.getUniformLocation(name), value);
     }
 
-    setInt(name: string, value: number) {
-        this.gl.uniform1i(this.getUniformLocation(name), value);
+
+    setIntV(id: number | WebGLUniformLocation, value: number[]) {
+        this.gl.uniform1iv(id, value);
     }
 
-    setFloat(name: string, value: number) {
+    setIntVByName(name: string, value: number[]) {
+        this.gl.uniform1iv(this.getUniformLocation(name), value);
+    }
+    
+    setFloat(id: number | WebGLUniformLocation, value: number) {
+        this.gl.uniform1f(id, value);
+    }
+    setFloatByName(name: string, value: number) {
         this.gl.uniform1f(this.getUniformLocation(name), value);
     }
 
     getUniformLocation(name: string) {
-        return this.gl.getUniformLocation(this.ID, name);
+        var a = this.gl.getUniformLocation(this.ID, name);
+        return a;
     }
 
-    setMat4(name: string, matrix: mat4 | number[]) {
+    setMat4(id: number | WebGLUniformLocation, matrix: mat4 | number[]) {
+        this.gl.uniformMatrix4fv(id, false, matrix);
+    }
+
+    setMat4ByName(name: string, matrix: mat4 | number[]) {
         this.gl.uniformMatrix4fv(this.getUniformLocation(name), false, matrix);
     }
-
-    setVec3(name: string, vec: vec3| number[]) {
+    
+    setVec3(id: number | WebGLUniformLocation, vec: vec3| number[]) {
+        this.gl.uniform3fv(id, vec);
+    }
+    
+    setVec3ByName (name: string, vec: vec3| number[]) {
         this.gl.uniform3fv(this.getUniformLocation(name), vec);
     }
     
-    setVec4(name: string, vec: vec4| number[]){
-        this.gl.uniform4fv(this.getUniformLocation(name), vec);
+    setVec4(id: number | WebGLUniformLocation, vec: vec4| number[]){
+        this.gl.uniform4fv(id, vec);
     }
 
+    setVec4ByName(name: string, vec: vec4| number[]){
+        this.gl.uniform4fv(this.getUniformLocation(name), vec);
+    }
 
 }
 

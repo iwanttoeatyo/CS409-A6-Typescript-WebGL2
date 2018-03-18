@@ -25,6 +25,7 @@ export default class Mesh {
 		self.has_materials = !!options.materials;
 		// maps material name to Material() instance
 		self.materials = {};
+		self.submesh = {};
 		// the list of unique vertex, normal, texture, attributes
 		self.vertices = [];
 		self.vertexNormals = [];
@@ -123,7 +124,7 @@ export default class Mesh {
 		unpacked.materialIndices = [];
 		unpacked.index = 0;
 		
-		let materials = [];
+		let submesh = [];
 		let currFaceCounter = 0;
 		let totalFaceCounter = 0;
 
@@ -163,7 +164,7 @@ export default class Mesh {
 					// new material we've never seen
 					
 					if(currFaceCounter !== 0)
-						materials.push({offset: totalFaceCounter, numItems: currFaceCounter});
+						submesh.push({offset: totalFaceCounter, numItems: currFaceCounter});
 					totalFaceCounter += currFaceCounter;
 					currFaceCounter = 0;
                     
@@ -267,14 +268,14 @@ export default class Mesh {
 				}
 			}
 		}
-		materials.push({offset: totalFaceCounter, numItems: currFaceCounter});
+		submesh.push({offset: totalFaceCounter, numItems: currFaceCounter});
 		
 		self.vertices = unpacked.verts;
 		self.vertexNormals = unpacked.norms;
 		self.textures = unpacked.textures;
 		self.vertexMaterialIndices = unpacked.materialIndices;
 		self.indices = unpacked.indices;
-		self.materials = materials;
+		self.submesh = submesh;
 
 		self.materialNames = materialNamesByIndex;
 		self.materialIndices = materialIndicesByName;
@@ -460,6 +461,7 @@ export default class Mesh {
 			const materialIndex = this.materialIndices[material.name]
 
 			// Put the material into the materialsByIndex object at the right
+			this.materials[name] = material;
 			// spot as determined when the obj file was parsed
 			this.materialsByIndex[materialIndex] = material;
 		}
