@@ -9374,7 +9374,7 @@ function downloadMtlTextures (mtl, root) {
       continue;
     }
     material = mtl.materials[material];
-
+    let loading = {};
     for (let attr of mapAttributes) {
      
       let mapData = material[attr];
@@ -9383,26 +9383,29 @@ function downloadMtlTextures (mtl, root) {
       }
 
       let url = root + mapData.filename;
-
-      textures.push(
-        fetch(url)
-          .then((response) => {
-            if (!response.ok) {
-              throw new Error()
-            }
-            return response.blob();
-          })
-          .then(function(data) {
-            let image = new Image();
-            image.src = URL.createObjectURL(data);
-            mapData.texture = image;
-          })
-          .catch(() => {
-            console.error(`Unable to download texture: ${url}`);
-          })
-      );
-
+      if(!loading.hasOwnProperty(mapData.filename)){
+        loading[mapData.filename] = new Image();
+		  textures.push(
+			  fetch(url)
+				  .then((response) => {
+					  if (!response.ok) {
+						  throw new Error()
+					  }
+					  return response.blob();
+				  })
+				  .then(function(data) {
+					  loading[mapData.filename].src = URL.createObjectURL(data);
+					  mapData.texture = loading[mapData.filename];
+				  })
+				  .catch(() => {
+					  console.error(`Unable to download texture: ${url}`);
+				  })
+		  );
+	  }else{
+        mapData.texture = loading[mapData.filename];
+      }
     }
+
   }
 
   return Promise.all(textures);
