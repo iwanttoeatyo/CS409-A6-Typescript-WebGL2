@@ -4759,6 +4759,8 @@ const Renderer_1 = __webpack_require__(37);
 const basicmodelshader_1 = __webpack_require__(38);
 const assert = __webpack_require__(39);
 let MainLoop = __webpack_require__(44);
+let is_mobile;
+let demo_ticker = 0;
 let document = window.document;
 let canvas;
 let gl;
@@ -4817,6 +4819,9 @@ class Main {
         };
         canvas = document.getElementById("canvas");
         this.initGL();
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            is_mobile = true;
+        }
         //Set the background color before we load any assets
         gl.clearColor(0.2, 0.3, 0.3, 1.0);
         gl.enable(gl.DEPTH_TEST);
@@ -4911,43 +4916,48 @@ class Main {
      */
     begin(timestamp, delta) {
         delta /= 1000;
-        if (keys[40] || keys[83]) {
-            //     camera.processKeyboard(Camera_Movement.BACKWARD, delta);
-            this.player.move(player_1.Player_Movement.BACKWARD, delta);
-        }
-        else if ((keys[38] || keys[87]) || (mouseKeys[1] && mouseKeys[3])) {
-            //     camera.processKeyboard(Camera_Movement.FORWARD, delta);
-            this.player.move(player_1.Player_Movement.FORWARD, delta);
-        }
-        if (keys[65]) {
-            //   camera.processKeyboard(Camera_Movement.LEFT, delta);
-            this.player.move(player_1.Player_Movement.LEFT, delta);
-        }
-        else if (keys[68]) {
-            //   camera.processKeyboard(Camera_Movement.RIGHT, delta);
-            this.player.move(player_1.Player_Movement.RIGHT, delta);
-        }
-        if (keys[37]) {
-            this.player.rotate(delta);
-            playerCamera.front[0] = this.player.forward[0];
-            playerCamera.front[2] = this.player.forward[2];
-            playerCamera.up = this.player.up;
-        }
-        if (keys[39]) {
-            this.player.rotate(-delta);
-            playerCamera.front[0] = this.player.forward[0];
-            playerCamera.front[2] = this.player.forward[2];
-            playerCamera.up = this.player.up;
-        }
-        if (keys[82]) {
-            gl_matrix_1.vec3.copy(this.player.position, playerOrigin);
-            gl_matrix_1.vec3.copy(this.player.forward, playerOriginRotation);
-        }
-        if (keys[79]) {
-            activeCamera = worldCamera;
+        if (is_mobile) {
+            this.doDemo(delta);
         }
         else {
-            activeCamera = playerCamera;
+            if (keys[40] || keys[83]) {
+                //     camera.processKeyboard(Camera_Movement.BACKWARD, delta);
+                this.player.move(player_1.Player_Movement.BACKWARD, delta);
+            }
+            else if ((keys[38] || keys[87]) || (mouseKeys[1] && mouseKeys[3])) {
+                //     camera.processKeyboard(Camera_Movement.FORWARD, delta);
+                this.player.move(player_1.Player_Movement.FORWARD, delta);
+            }
+            if (keys[65]) {
+                //   camera.processKeyboard(Camera_Movement.LEFT, delta);
+                this.player.move(player_1.Player_Movement.LEFT, delta);
+            }
+            else if (keys[68]) {
+                //   camera.processKeyboard(Camera_Movement.RIGHT, delta);
+                this.player.move(player_1.Player_Movement.RIGHT, delta);
+            }
+            if (keys[37]) {
+                this.player.rotate(delta);
+                playerCamera.front[0] = this.player.forward[0];
+                playerCamera.front[2] = this.player.forward[2];
+                playerCamera.up = this.player.up;
+            }
+            if (keys[39]) {
+                this.player.rotate(-delta);
+                playerCamera.front[0] = this.player.forward[0];
+                playerCamera.front[2] = this.player.forward[2];
+                playerCamera.up = this.player.up;
+            }
+            if (keys[82]) {
+                gl_matrix_1.vec3.copy(this.player.position, playerOrigin);
+                gl_matrix_1.vec3.copy(this.player.forward, playerOriginRotation);
+            }
+            if (keys[79]) {
+                activeCamera = worldCamera;
+            }
+            else {
+                activeCamera = playerCamera;
+            }
         }
     }
     /**
@@ -5005,6 +5015,13 @@ class Main {
             var discardedTime = Math.round(MainLoop.resetFrameDelta());
             console.warn("Main loop panicked, probably because the browser tab was put in the background. Discarding " + discardedTime + 'ms');
         }
+    }
+    doDemo(delta) {
+        demo_ticker++;
+        this.player.move(player_1.Player_Movement.FORWARD, delta / 2);
+        this.player.rotate(delta / 8);
+        playerCamera.front[0] = this.player.forward[0];
+        playerCamera.front[2] = this.player.forward[2];
     }
     resize() {
         let min = Math.min(window.innerHeight, window.innerWidth);

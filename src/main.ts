@@ -15,6 +15,8 @@ import * as assert from "assert";
 
 let MainLoop = require('./lib/MainLoop/mainloop.js');
 
+let is_mobile;
+let demo_ticker = 0;
 let document = window.document;
 let canvas: HTMLCanvasElement;
 let gl: WebGL2RenderingContext;
@@ -48,6 +50,10 @@ class Main {
 
         canvas = <HTMLCanvasElement> document.getElementById("canvas");
         this.initGL();
+
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            is_mobile = true;
+        }
 
         //Set the background color before we load any assets
         gl.clearColor(0.2, 0.3, 0.3, 1.0);
@@ -109,13 +115,13 @@ class Main {
         basicModelRenderer.addBasicModel(this.world.diskDModel);
         basicModelRenderer.addBasicModel(this.world.diskEModel);
 
-        this.world.disks.forEach(disk =>{
+        this.world.disks.forEach(disk => {
             assert(disk.initialized);
             basicModelRenderer.addEntityToRenderList(disk);
             basicModelRenderer.addMeshlessModel(disk.heightMapModel);
             basicModelRenderer.addEntityToRenderList(disk.heightMapEntity);
         });
-        
+
         loading.remove();
         let end = Date.now();
         console.log("total time: " + (end - start) / 1000 + "s");
@@ -164,44 +170,50 @@ class Main {
     begin(timestamp, delta) {
         delta /= 1000;
 
-        if (keys[40] || keys[83]) {
-            //     camera.processKeyboard(Camera_Movement.BACKWARD, delta);
-            this.player.move(Player_Movement.BACKWARD, delta);
-        } else if ((keys[38] || keys[87]) || (mouseKeys[1] && mouseKeys[3])) {
-            //     camera.processKeyboard(Camera_Movement.FORWARD, delta);
-            this.player.move(Player_Movement.FORWARD, delta);
-        }
-        if (keys[65]) {
-            //   camera.processKeyboard(Camera_Movement.LEFT, delta);
-            this.player.move(Player_Movement.LEFT, delta);
-        } else if (keys[68]) {
-            //   camera.processKeyboard(Camera_Movement.RIGHT, delta);
-            this.player.move(Player_Movement.RIGHT, delta);
-        }
-
-        if (keys[37]) {
-            this.player.rotate(delta);
-            playerCamera.front[0] = this.player.forward[0];
-            playerCamera.front[2] = this.player.forward[2];
-            playerCamera.up = this.player.up;
-        }
-        if (keys[39]) {
-            this.player.rotate(-delta);
-            playerCamera.front[0] = this.player.forward[0];
-            playerCamera.front[2] = this.player.forward[2];
-            playerCamera.up = this.player.up;
-        }
-
-        if (keys[82]) {
-            vec3.copy(this.player.position, playerOrigin);
-            vec3.copy(this.player.forward, playerOriginRotation);
-        }
-
-        if (keys[79]) {
-            activeCamera = worldCamera;
+        if (is_mobile) {
+            this.doDemo(delta);
         } else {
-            activeCamera = playerCamera;
+            if (keys[40] || keys[83]) {
+                //     camera.processKeyboard(Camera_Movement.BACKWARD, delta);
+                this.player.move(Player_Movement.BACKWARD, delta);
+            } else if ((keys[38] || keys[87]) || (mouseKeys[1] && mouseKeys[3])) {
+                //     camera.processKeyboard(Camera_Movement.FORWARD, delta);
+                this.player.move(Player_Movement.FORWARD, delta);
+            }
+            if (keys[65]) {
+                //   camera.processKeyboard(Camera_Movement.LEFT, delta);
+                this.player.move(Player_Movement.LEFT, delta);
+            } else if (keys[68]) {
+                //   camera.processKeyboard(Camera_Movement.RIGHT, delta);
+                this.player.move(Player_Movement.RIGHT, delta);
+            }
+
+            if (keys[37]) {
+                this.player.rotate(delta);
+                playerCamera.front[0] = this.player.forward[0];
+                playerCamera.front[2] = this.player.forward[2];
+                playerCamera.up = this.player.up;
+            }
+            if (keys[39]) {
+                this.player.rotate(-delta);
+                playerCamera.front[0] = this.player.forward[0];
+                playerCamera.front[2] = this.player.forward[2];
+                playerCamera.up = this.player.up;
+            }
+
+            if (keys[82]) {
+                vec3.copy(this.player.position, playerOrigin);
+                vec3.copy(this.player.forward, playerOriginRotation);
+            }
+
+            if (keys[79]) {
+                activeCamera = worldCamera;
+            } else {
+                activeCamera = playerCamera;
+            }
         }
+
+
     }
 
 
@@ -243,7 +255,7 @@ class Main {
         this.skybox.draw(gl);
 
         basicModelShader.use();
-        
+
         // directional light
         basicModelShader.setBoolByName("lights[0].is_enabled", true);
         basicModelShader.setVec4ByName("lights[0].position", [0.34, 0.83, 0.44, 0.0]);
@@ -262,11 +274,11 @@ class Main {
         basicModelShader.setVec3(basicModelShader.uniforms.camera_pos, activeCamera.position);
 
         // //Draw Disk
-         gl.enable(gl.DEPTH_TEST);
+        gl.enable(gl.DEPTH_TEST);
         // this.world.draw(gl, view_matrix, projection_matrix);
 
-        basicModelRenderer.render(gl,view_matrix,projection_matrix);
-       // this.player.draw(gl, view_matrix, projection_matrix);
+        basicModelRenderer.render(gl, view_matrix, projection_matrix);
+        // this.player.draw(gl, view_matrix, projection_matrix);
 
     }
 
@@ -276,6 +288,17 @@ class Main {
             var discardedTime = Math.round(MainLoop.resetFrameDelta());
             console.warn("Main loop panicked, probably because the browser tab was put in the background. Discarding " + discardedTime + 'ms');
         }
+    }
+
+
+    doDemo(delta: number) {
+        demo_ticker++;
+        this.player.move(Player_Movement.FORWARD, delta / 2);
+       
+            this.player.rotate(delta / 8);
+            playerCamera.front[0] = this.player.forward[0];
+            playerCamera.front[2] = this.player.forward[2];
+        
     }
 
     resize(): void {
