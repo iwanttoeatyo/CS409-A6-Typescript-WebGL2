@@ -83,14 +83,4 @@ export class Player  extends Entity{
         ]);
     }
 
-    static load(): Object {
-        let a = new Mesh(require('../../assets/models/actors/cbabe/cbabe_stand.obj'));
-        let b = new MaterialLibrary(require('../../assets/models/actors/cbabe/cbabe.mtl'));
-        a.addMaterialLibrary(b);
-        let c = require('../../assets/models/actors/cbabe/cbabe_base64.txt');
-        let image = new Image();
-        image.src = 'data:image/jpeg;base64,' + c;
-        a.materialsByIndex[0].mapDiffuse.texture = image;
-        return a;
-    }
 }

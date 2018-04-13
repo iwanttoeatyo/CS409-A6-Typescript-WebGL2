@@ -1,6 +1,7 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const ImageminPlugin = require('imagemin-webpack-plugin').default;
 
 module.exports = {
 	entry: './src/main.ts',
@@ -9,15 +10,22 @@ module.exports = {
 		filename: 'bundle.js',
 		publicPath: ''
 	},
-	plugins: [new HtmlWebpackPlugin({
-				title: 'CS409 A2 Typsecript WebGL2',
+	plugins: [
+		new HtmlWebpackPlugin({
+				title: 'CS409 A2 Typescript WebGL2',
 				filename: 'index.html',
 				template: 'index.html'
 			}
-	),
+		),
 		new CopyWebpackPlugin([
 			{from: 'assets', to: 'assets'}
-		])
+		]),
+		new ImageminPlugin(
+			{test: /\.(jpe?g|png|gif|svg)$/i,
+				jpegtran: {
+					progressive: true
+				}}
+		)
 	],
 	resolve: {
 		modules: [
