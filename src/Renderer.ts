@@ -69,6 +69,10 @@ export class Renderer {
 
     }
 
+    public removeEntity(entity: Entity){
+            this.entities.delete(entity.id);
+        
+    }
 
     prepareBasicModelShader(gl: WebGL2RenderingContext) {
         this.basicModelShader.use();

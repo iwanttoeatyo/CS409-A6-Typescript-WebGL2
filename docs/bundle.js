@@ -435,9 +435,9 @@ var Model_Type;
 class Entity {
     constructor(mesh_name, model_type, pos, forward = gl_matrix_1.vec3.fromValues(0, 0, -1), scale = gl_matrix_1.vec3.fromValues(1, 1, 1)) {
         this.id = guid_1.Guid.newGuid();
-        this.position = pos;
-        this.scalar = scale;
-        this.forward = forward;
+        this.position = gl_matrix_1.vec3.clone(pos);
+        this.scalar = gl_matrix_1.vec3.clone(scale);
+        this.forward = gl_matrix_1.vec3.clone(forward);
         this.mesh_name = mesh_name;
         this.model_type = model_type;
     }
@@ -3343,6 +3343,7 @@ class Mesh {
 						// add v2/t2/vn2 in again before continuing to 3
 						j = 2;
 						quad = true;
+						currFaceCounter++;
 					}
 					const hash0 = elements[0] + ',' + currentMaterialIndex;
 					const hash = elements[j] + ',' + currentMaterialIndex;
@@ -4753,8 +4754,8 @@ class Disk extends entity_1.Entity {
     }
     getHeightAtPosition(x, z) {
         //get x,z within the height map centered on the bottom left corner
-        let cx = (x - this.position[0]) * (this.heightMapSize / 2.0) / (this.radius * 2 * Math.SQRT1_2) + (this.heightMapSize / 2.0);
-        let cz = (z - this.position[2]) * (this.heightMapSize / 2.0) / (this.radius * 2 * Math.SQRT1_2) + (this.heightMapSize / 2.0);
+        let cx = (x - this.position[0]) * (this.heightMapSize / 2.0) / (this.radius * Math.SQRT1_2) + (this.heightMapSize / 2.0);
+        let cz = (z - this.position[2]) * (this.heightMapSize / 2.0) / (this.radius * Math.SQRT1_2) + (this.heightMapSize / 2.0);
         //If outside height map return 0
         if ((cx > this.heightMapSize || cx < 0) || (cz > this.heightMapSize || cz < 0))
             return 0.0;
@@ -4872,9 +4873,11 @@ let basicModelShader;
 let basicModelRenderer;
 const playerOrigin = gl_matrix_1.vec3.fromValues(0, 0.8, 0);
 const playerOriginRotation = gl_matrix_1.vec3.fromValues(1, 0, 0);
+const PLAYER_CAMERA_OFFSET = gl_matrix_1.vec3.fromValues(0, player_1.Player.half_height, 0);
 let keys = [];
 let mouseKeys = [];
 let fpsCounter = document.getElementById('fpscounter');
+let score_element = document.getElementById('score');
 let playerCamera = new camera_1.Camera(gl_matrix_1.vec3.fromValues(0, 1.6, 0), gl_matrix_1.vec3.fromValues(0, 1, 0), 0);
 let worldCamera = new camera_1.Camera(gl_matrix_1.vec3.fromValues(100, 200, 10), gl_matrix_1.vec3.fromValues(0, 1, 0), 0, 0);
 //Set overview camera to look at origin.
@@ -5022,10 +5025,20 @@ class Main {
      */
     update(delta) {
         delta /= 1000;
-        let height = this.world.getHeightAtCirclePosition(this.player.position[0], this.player.position[1], player_1.Player.radius);
+        let height = this.world.getHeightAtCirclePosition(this.player.position[0], this.player.position[2], player_1.Player.radius);
         this.player.position[1] = height + player_1.Player.half_height;
         this.world.update(delta);
+        this.world.pickup_manager.checkForPickupsCylinderIntersection(this.player.position, player_1.Player.radius, player_1.Player.half_height, basicModelRenderer);
         //console.log(this.player.position[0] + ", " + this.player.position[1] + ", " + this.player.position[2] );
+        playerCamera.front[0] = this.player.forward[0];
+        //playerCamera.front[1] = 1;
+        playerCamera.front[2] = this.player.forward[2];
+        playerCamera.up = this.player.up;
+        let new_cam_position = gl_matrix_1.vec3.clone(this.player.position);
+        new_cam_position[0] -= 4.0 * this.player.forward[0];
+        new_cam_position[2] -= 4.0 * this.player.forward[2];
+        gl_matrix_1.vec3.add(new_cam_position, new_cam_position, PLAYER_CAMERA_OFFSET);
+        playerCamera.position = new_cam_position;
     }
     /**
      * Called once per frame before update and draw
@@ -5054,15 +5067,9 @@ class Main {
             }
             if (keys[37]) {
                 this.player.rotate(delta);
-                playerCamera.front[0] = this.player.forward[0];
-                playerCamera.front[2] = this.player.forward[2];
-                playerCamera.up = this.player.up;
             }
             if (keys[39]) {
                 this.player.rotate(-delta);
-                playerCamera.front[0] = this.player.forward[0];
-                playerCamera.front[2] = this.player.forward[2];
-                playerCamera.up = this.player.up;
             }
             if (keys[82]) {
                 gl_matrix_1.vec3.copy(this.player.position, playerOrigin);
@@ -5127,6 +5134,7 @@ class Main {
     }
     end(fps, panic) {
         fpsCounter.textContent = Math.round(fps) + ' FPS';
+        score_element.textContent = 'Score: ' + this.world.pickup_manager.getScore();
         if (panic) {
             var discardedTime = Math.round(MainLoop.resetFrameDelta());
             console.warn("Main loop panicked, probably because the browser tab was put in the background. Discarding " + discardedTime + 'ms');
@@ -9953,8 +9961,9 @@ class World {
     }
     getHeightAtCirclePosition(x, z, r) {
         for (let i = 0; i < this.disks.length; i++) {
-            if (collision_1.Collision.circleIntersection(x, z, r, this.disks[i].position[0], this.disks[i].position[2], this.disks[i].radius))
+            if (collision_1.Collision.circleIntersection(x, z, r, this.disks[i].position[0], this.disks[i].position[2], this.disks[i].radius)) {
                 return this.disks[i].getHeightAtPosition(x, z);
+            }
         }
         //No collision with a disk
         return 0.0;
@@ -10277,12 +10286,13 @@ class PickupManager {
                 ring.update(delta_time_ms);
         });
     }
-    checkForPickupsCylinderIntersection(position, radius, half_height) {
+    checkForPickupsCylinderIntersection(position, radius, half_height, renderer) {
         this.rings.forEach(ring => {
             if (!ring.picked_up)
                 if (collision_1.Collision.cylinderIntersection(position, radius, half_height, ring.position, ring_1.Ring.radius, ring_1.Ring.half_height)) {
                     ring.picked_up = true;
                     this.score += ring_1.Ring.point_value;
+                    renderer.removeEntity(ring);
                 }
         });
         this.rods.forEach(rod => {
@@ -10290,6 +10300,7 @@ class PickupManager {
                 if (collision_1.Collision.cylinderIntersection(position, radius, half_height, rod.position, rod_1.Rod.radius, rod_1.Rod.half_height)) {
                     rod.picked_up = true;
                     this.score += rod.point_value;
+                    renderer.removeEntity(rod);
                 }
         });
     }
@@ -10298,6 +10309,9 @@ class PickupManager {
     }
     addRing(position) {
         this.rings.push(new ring_1.Ring(this.rings.length, this.world, this.ring_model, position));
+    }
+    getScore() {
+        return this.score;
     }
     destroy() {
         this.rings = [];
@@ -10338,7 +10352,7 @@ class Ring extends entity_1.Entity {
         //Rotate ring based on distance moved
         let rot = Ring.rotation_speed * distance;
         gl_matrix_1.vec3.rotateY(this.forward, this.forward, gl_matrix_1.vec3.create(), rot);
-        this.position[1] = this.world.getHeightAtCirclePosition(this.position[0], this.position[2], Ring.radius) + Ring.half_height;
+        this.position[1] = this.world.getHeightAtCirclePosition(this.position[0], this.position[2], Ring.radius) + 2 * Ring.half_height;
         //If on center of disk get new target
         if (collision_1.Collision.pointCircleIntersection(this.target_position[0], this.target_position[2], this.position[0], this.position[2], Ring.radius)) {
             this.target_position = this.world.getRandomDiskPosition();
@@ -10346,7 +10360,7 @@ class Ring extends entity_1.Entity {
     }
 }
 Ring.point_value = 1;
-Ring.speed = 2.5 / 1000.0;
+Ring.speed = 2.5;
 Ring.rotation_speed = 1.3;
 Ring.radius = 0.7;
 Ring.half_height = 0.1;
@@ -10519,6 +10533,9 @@ class Renderer {
                 console.log("Meshless Model Missing: " + entity.mesh_name);
             }
         }
+    }
+    removeEntity(entity) {
+        this.entities.delete(entity.id);
     }
     prepareBasicModelShader(gl) {
         this.basicModelShader.use();

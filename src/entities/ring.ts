@@ -9,7 +9,7 @@ export class Ring extends Entity {
     private world: World;
 
     static readonly point_value: number = 1;
-    static readonly speed: number = 2.5 / 1000.0;
+    static readonly speed: number = 2.5;
     static readonly rotation_speed: number = 1.3;
     static readonly radius: number = 0.7;
     static readonly half_height: number = 0.1;
@@ -41,7 +41,7 @@ export class Ring extends Entity {
         let rot = Ring.rotation_speed * distance;
         vec3.rotateY(this.forward,this.forward,vec3.create(),rot);
 
-        this.position[1] = this.world.getHeightAtCirclePosition(this.position[0],this.position[2], Ring.radius) + Ring.half_height;
+        this.position[1] = this.world.getHeightAtCirclePosition(this.position[0],this.position[2], Ring.radius) + 2*Ring.half_height;
 
         //If on center of disk get new target
         if (Collision.pointCircleIntersection(this.target_position[0],this.target_position[2], this.position[0],this.position[2], Ring.radius))

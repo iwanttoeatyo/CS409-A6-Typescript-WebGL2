@@ -50,6 +50,16 @@
 		position: absolute;
 	}
 
+	#score {
+		z-index:2147483647;
+		color: white;
+		top: 10px;
+		display: block;
+		right: 20px;
+		position: absolute;
+		font-size: 2em;
+	}
+
 	#loading {
 		position: absolute;
 		top: 50%;
@@ -65,6 +75,7 @@
 </style>
 	<canvas id="canvas" width="800" height="600"></canvas>
 <div id="fpscounter">0 FPS</div>
+<div id="score"></div>
 <div id ="loading"></div>
 </body>
 </html>

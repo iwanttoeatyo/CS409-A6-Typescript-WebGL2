@@ -21,9 +21,10 @@ export class Entity {
                 scale: vec3 = vec3.fromValues(1, 1, 1)) {
         
         this.id = Guid.newGuid();
-        this.position = pos;
-        this.scalar = scale;
-        this.forward = forward;
+        
+        this.position = vec3.clone(pos);
+        this.scalar = vec3.clone(scale);
+        this.forward = vec3.clone(forward);
         this.mesh_name = mesh_name;
         this.model_type = model_type;
     }

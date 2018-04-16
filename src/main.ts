@@ -25,11 +25,13 @@ let basicModelRenderer: Renderer;
 
 const playerOrigin = vec3.fromValues(0, 0.8, 0);
 const playerOriginRotation = vec3.fromValues(1, 0, 0);
+const PLAYER_CAMERA_OFFSET = vec3.fromValues(0,Player.half_height, 0);
 
 let keys: boolean[] = [];
 let mouseKeys: boolean[] = [];
 
 let fpsCounter = document.getElementById('fpscounter');
+let score_element = document.getElementById('score');
 
 let playerCamera: Camera = new Camera(vec3.fromValues(0, 1.6, 0), vec3.fromValues(0, 1, 0), 0);
 let worldCamera: Camera = new Camera(vec3.fromValues(100, 200, 10), vec3.fromValues(0, 1, 0), 0, 0);
@@ -170,11 +172,24 @@ class Main {
      */
     update(delta) {
         delta /= 1000;
-        let height = this.world.getHeightAtCirclePosition(this.player.position[0],this.player.position[1], Player.radius);
+        let height = this.world.getHeightAtCirclePosition(this.player.position[0],this.player.position[2], Player.radius);
         this.player.position[1] = height + Player.half_height;
         
         this.world.update(delta);
+        this.world.pickup_manager.checkForPickupsCylinderIntersection(this.player.position,Player.radius,Player.half_height, basicModelRenderer);
+        
         //console.log(this.player.position[0] + ", " + this.player.position[1] + ", " + this.player.position[2] );
+
+        playerCamera.front[0] = this.player.forward[0];
+        //playerCamera.front[1] = 1;
+        playerCamera.front[2] = this.player.forward[2];
+        playerCamera.up = this.player.up;
+        
+        let new_cam_position = vec3.clone(this.player.position);
+        new_cam_position[0] -= 4.0 * this.player.forward[0];
+        new_cam_position[2] -= 4.0 * this.player.forward[2];
+        vec3.add(new_cam_position,new_cam_position,PLAYER_CAMERA_OFFSET);
+        playerCamera.position = new_cam_position;
     }
 
     /**
@@ -203,15 +218,10 @@ class Main {
 
             if (keys[37]) {
                 this.player.rotate(delta);
-                playerCamera.front[0] = this.player.forward[0];
-                playerCamera.front[2] = this.player.forward[2];
-                playerCamera.up = this.player.up;
             }
             if (keys[39]) {
                 this.player.rotate(-delta);
-                playerCamera.front[0] = this.player.forward[0];
-                playerCamera.front[2] = this.player.forward[2];
-                playerCamera.up = this.player.up;
+
             }
 
             if (keys[82]) {
@@ -297,6 +307,7 @@ class Main {
 
     end(fps, panic) {
         fpsCounter.textContent = Math.round(fps) + ' FPS';
+        score_element.textContent = 'Score: ' + this.world.pickup_manager.getScore();
         if (panic) {
             var discardedTime = Math.round(MainLoop.resetFrameDelta());
             console.warn("Main loop panicked, probably because the browser tab was put in the background. Discarding " + discardedTime + 'ms');

@@ -384,8 +384,8 @@ export class Disk extends Entity{
     public getHeightAtPosition(x: number, z:number) : number {
 
         //get x,z within the height map centered on the bottom left corner
-        let cx = (x - this.position[0]) * (this.heightMapSize / 2.0) / (this.radius * 2 * Math.SQRT1_2) + (this.heightMapSize / 2.0);
-        let cz = (z - this.position[2]) * (this.heightMapSize / 2.0) / (this.radius * 2 * Math.SQRT1_2) + (this.heightMapSize / 2.0);
+        let cx = (x - this.position[0]) * (this.heightMapSize / 2.0) / (this.radius * Math.SQRT1_2) + (this.heightMapSize / 2.0);
+        let cz = (z - this.position[2]) * (this.heightMapSize / 2.0) / (this.radius * Math.SQRT1_2) + (this.heightMapSize / 2.0);
 
         //If outside height map return 0
         if ((cx > this.heightMapSize || cx < 0) || (cz > this.heightMapSize || cz < 0))

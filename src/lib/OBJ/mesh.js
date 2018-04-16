@@ -195,6 +195,7 @@ export default class Mesh {
 						// add v2/t2/vn2 in again before continuing to 3
 						j = 2;
 						quad = true;
+						currFaceCounter++;
 					}
 					const hash0 = elements[0] + ',' + currentMaterialIndex;
 					const hash = elements[j] + ',' + currentMaterialIndex;

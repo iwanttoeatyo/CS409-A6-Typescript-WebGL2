@@ -142,8 +142,10 @@ export class World {
 
     public getHeightAtCirclePosition(x: number, z: number, r: number): number {
         for (let i = 0; i < this.disks.length; i++) {
-            if (Collision.circleIntersection(x, z, r, this.disks[i].position[0], this.disks[i].position[2], this.disks[i].radius))
+            if (Collision.circleIntersection(x, z, r, this.disks[i].position[0], this.disks[i].position[2], this.disks[i].radius)){
                 return this.disks[i].getHeightAtPosition(x, z);
+            }
+                
         }
         //No collision with a disk
         return 0.0;
