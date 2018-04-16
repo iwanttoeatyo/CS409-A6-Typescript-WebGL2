@@ -12,7 +12,7 @@ module.exports = {
 	},
 	plugins: [
 		new HtmlWebpackPlugin({
-				title: 'CS409 A2 Typescript WebGL2',
+				title: 'CS409 A3 Typescript WebGL2',
 				filename: 'index.html',
 				template: 'index.html'
 			}

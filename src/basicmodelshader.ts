@@ -49,7 +49,7 @@ export class BasicModelShader extends  Shader{
         this.uniforms.material_ambient_colour = this.getUniformLocation("material.ambient_colour");
         this.uniforms.material_diffuse_colour = this.getUniformLocation("material.diffuse_colour");
         this.uniforms.material_specular_colour = this.getUniformLocation("material.specular_colour");
-        this.uniforms.material_emissive_colour = this.getUniformLocation("material.emissive_colour");
+        this.uniforms.material_emissive_colour = this.getUniformLocation("material.emission_colour");
         this.uniforms.material_shininess = this.getUniformLocation("material.shininess");
         this.uniforms.material_is_texture_active = this.getUniformLocation("material.is_texture_active");
     }

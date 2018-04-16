@@ -20,15 +20,17 @@ export enum Player_Movement {
 export class Player  extends Entity{
     model: PlayerModel;
     up: vec3;
+    static readonly radius = 0.25;
+    static readonly half_height = 0.8;
 
     constructor(gl: WebGL2RenderingContext, mesh: Mesh, pos: vec3) {
-        super(pos,null,vec3.fromValues(1,0,0),mesh.name, Model_Type.BASIC);
+        super(mesh.name, Model_Type.BASIC, pos, vec3.fromValues(0,0,-1));
         this.model = new PlayerModel(mesh);
         this.model.rotation_offset = vec3.fromValues(0,0,- Math.PI / 2);
         this.model.init(gl);
         this.up = vec3.fromValues(0, 1, 0);
     }
-
+ 
 
     rotate(angle: number): void {
         vec3.rotateY(this.forward, this.forward, [0, 0, 0], angle * 2);

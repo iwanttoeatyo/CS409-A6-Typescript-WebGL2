@@ -1,12 +1,10 @@
-import {glMatrix, mat4, vec3, vec4} from "gl-matrix";
+import {glMatrix, mat4, vec3} from "gl-matrix";
 import {Shader} from "./shader";
-import {Camera, Camera_Movement} from "./camera";
-
+import {Camera} from "./camera";
 import {Mesh} from './lib/OBJ/mesh';
-import {MaterialLibrary} from './lib/OBJ/index.js';
 import {Layout} from './lib/OBJ/layout';
 import {Player, Player_Movement} from "./entities/player";
-import {World, WorldMeshes} from "./entities/world";
+import {World} from "./entities/world";
 import {Skybox} from "./entities/skybox";
 import {BasicModel} from "./entities/models/basicmodel";
 import {Renderer} from "./Renderer";
@@ -22,7 +20,6 @@ let canvas: HTMLCanvasElement;
 let gl: WebGL2RenderingContext;
 
 let shader: Shader;
-let instancedShader: Shader;
 let basicModelShader: BasicModelShader;
 let basicModelRenderer: Renderer;
 
@@ -93,6 +90,7 @@ class Main {
         let _worldMeshes = await World.loadWorldMeshes();
         let _worldMat = await World.loadWorldMat();
         let _worldData = await World.loadWorldData();
+        let _pickupMeshes = await World.loadPickupMeshes();
 
         let skybox_model = await Skybox.load();
         let _playerData = await Player.loadMesh();
@@ -100,7 +98,7 @@ class Main {
         this.player = new Player(gl, _playerData["cbabe"], playerOrigin);
         this.skybox = new Skybox(gl, skybox_model["Skybox"]);
         let w = Date.now();
-        this.world = new World(gl, _worldData, _worldMeshes, _worldMat);
+        this.world = new World(gl, _worldData, _worldMeshes, _worldMat, _pickupMeshes);
         console.log("world gen time: " + (Date.now() - w) / 1000 + "s");
         shader = await new Shader(gl, require("../src/shaders/basic.vert"), require("../src/shaders/basic.frag"));
         // instancedShader = await new Shader(gl, require('../src/shaders/instanced.vert'), require("../src/shaders/instanced.frag"));
@@ -114,6 +112,8 @@ class Main {
         basicModelRenderer.addBasicModel(this.world.diskCModel);
         basicModelRenderer.addBasicModel(this.world.diskDModel);
         basicModelRenderer.addBasicModel(this.world.diskEModel);
+        basicModelRenderer.addBasicModel(this.world.ring_model);
+        basicModelRenderer.addBasicModel(this.world.rod_model);
 
         this.world.disks.forEach(disk => {
             assert(disk.initialized);
@@ -122,6 +122,13 @@ class Main {
             basicModelRenderer.addEntityToRenderList(disk.heightMapEntity);
         });
 
+        this.world.pickup_manager.rings.forEach(ring=>{
+            basicModelRenderer.addEntityToRenderList(ring);
+        });
+        this.world.pickup_manager.rods.forEach(rod=>{
+            basicModelRenderer.addEntityToRenderList(rod);
+        });
+        
         loading.remove();
         let end = Date.now();
         console.log("total time: " + (end - start) / 1000 + "s");
@@ -162,6 +169,12 @@ class Main {
      *   The amount of time since the last update, in seconds.
      */
     update(delta) {
+        delta /= 1000;
+        let height = this.world.getHeightAtCirclePosition(this.player.position[0],this.player.position[1], Player.radius);
+        this.player.position[1] = height + Player.half_height;
+        
+        this.world.update(delta);
+        //console.log(this.player.position[0] + ", " + this.player.position[1] + ", " + this.player.position[2] );
     }
 
     /**

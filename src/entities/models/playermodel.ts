@@ -10,7 +10,7 @@ export class PlayerModel extends BasicModel {
     init(gl: WebGL2RenderingContext) {
         super.init(gl);
 
-        this.initAllTextures(gl);
+        //this.initAllTextures(gl);
         // if (!this.initTexture(gl, 0)) {
         //     console.warn("Player model texture 0 wasn't downloaded")
         // }

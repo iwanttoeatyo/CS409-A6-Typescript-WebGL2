@@ -1,5 +1,4 @@
-import {glMatrix, mat4} from "gl-matrix";
-import {vec3} from "gl-matrix";
+import {vec3, glMatrix, mat4} from "gl-matrix";
 
 const YAW: number = 90.0;
 const PITCH: number = 0.0;
@@ -41,7 +40,7 @@ export class Camera {
         this.updateCameraVectors();
     }
 
-    getViewMatrix() {
+    public getViewMatrix() : mat4 {
         let forward = vec3.create();
         vec3.add(forward, this.position, this.front);
         

@@ -1,12 +1,14 @@
 import {DiskModel} from "./models/diskmodel";
-import {mat4, vec3} from "gl-matrix";
+import {mat4, vec2, vec3} from "gl-matrix";
 import {BasicModel} from "./models/basicmodel";
 import {Shader} from "../shader";
 import {MeshlessModel} from "./models/meshlessmodel";
-import * as Random from "../random";
+
 import {Noisefield} from "../noisefield";
 import {version} from "punycode";
 import {Entity, Model_Type} from "./entity";
+import {MathHelper} from "../mathhelper";
+import {Random} from "../random";
 
 export enum Terrain {
     RED_ROCK = 0,
@@ -30,7 +32,7 @@ export class Disk extends Entity{
     static height_map_model_gen_count = 0;
     
     constructor(diskModel: DiskModel, type: Terrain, radius: number, x: number, y: number, z: number) {
-        super(vec3.fromValues(x,y,z),vec3.fromValues(radius,1,radius), vec3.fromValues(0,0,0), diskModel.mesh.name, Model_Type.BASIC);
+        super( diskModel.mesh.name, Model_Type.BASIC, vec3.fromValues(x,y,z),vec3.fromValues(0,0,0), vec3.fromValues(radius,1,radius));
         if (!diskModel.initialized) throw "DiskModel was not initialized";
         this.diskModel = diskModel;
         this.radius = radius;
@@ -45,7 +47,7 @@ export class Disk extends Entity{
         let corner = this.radius * Math.SQRT2 / 2;
         let scale =vec3.fromValues(corner * 2 / this.heightMapSize,1,corner * 2 / this.heightMapSize);
         let position = vec3.fromValues(this.position[0], this.position[1] + 0.0001, this.position[2]);
-        this.heightMapEntity = new Entity(position, scale,this.forward,this.heightMapModel.name,Model_Type.MESHLESS);
+        this.heightMapEntity = new Entity(this.heightMapModel.name,Model_Type.MESHLESS, position, this.forward, scale);
         Disk.height_map_model_gen_count++;
         this.initialized = true;
     }
@@ -365,5 +367,66 @@ export class Disk extends Entity{
         mat4.scale(model, model, vec3.fromValues(corner * 2 / this.heightMapSize, 1, corner * 2 / this.heightMapSize));
         BasicModel.setMVPMatrices(model,view_matrix, projection_matrix);
         this.heightMapModel.draw(gl);
+    }
+    
+    public getSpeedFactor():number{
+        switch (this.type)
+        {
+            case Terrain.RED_ROCK: return 1.0;
+            case Terrain.LEAFY: return 0.5;
+            case Terrain.ICY: return 0.25;
+            case Terrain.SANDY: return 0.75;
+            case Terrain.GREY_ROCK: return 1.0;
+        }
+        return 1.0;
+    }
+    
+    public getHeightAtPosition(x: number, z:number) : number {
+
+        //get x,z within the height map centered on the bottom left corner
+        let cx = (x - this.position[0]) * (this.heightMapSize / 2.0) / (this.radius * 2 * Math.SQRT1_2) + (this.heightMapSize / 2.0);
+        let cz = (z - this.position[2]) * (this.heightMapSize / 2.0) / (this.radius * 2 * Math.SQRT1_2) + (this.heightMapSize / 2.0);
+
+        //If outside height map return 0
+        if ((cx > this.heightMapSize || cx < 0) || (cz > this.heightMapSize || cz < 0))
+            return 0.0;
+
+        //Index in height map
+        let ix = Math.floor(cx);
+        let kz = Math.floor(cz);
+
+        let fx = cx - ix;
+        let fz = cz - kz;
+
+        let p0 = vec3.create();
+        let p1 = vec3.fromValues(ix, this.heightMap[ix][kz], kz);
+        let p2 = vec3.fromValues(ix + 1, this.heightMap[ix + 1][kz + 1], kz + 1);
+        
+        //Upper right triangle
+        if (fx > fz)
+        {
+            vec3.set(p0,ix + 1, this.heightMap[ix + 1][kz], kz)
+        } else
+        {
+            //Lower right triangle
+            vec3.set(p0,ix, this.heightMap[ix][kz + 1], kz + 1);
+        }
+   
+        let height;
+
+        //Non - Barycentric**
+        //Vector3 normal = (p1 - p0).crossProduct(p2 - p0);
+        //height = (-normal.x*ix - normal.z*kz + normal.dotProduct(p0)) / normal.y;
+     
+        //Barycentric
+        let p = vec2.fromValues(cx,cz);
+        let p00 = vec2.fromValues(p0[0], p0[2]);
+        let p11 = vec2.fromValues(p1[0], p1[2]);
+        let p22 = vec2.fromValues(p2[0], p2[2]);
+
+        let weights:vec3 = MathHelper.barycentric(p, p00, p11, p22);
+        height = weights[0] * p0[1] + weights[1] * p1[1] + weights[2] * p2[1];
+   
+        return height;
     }
 }

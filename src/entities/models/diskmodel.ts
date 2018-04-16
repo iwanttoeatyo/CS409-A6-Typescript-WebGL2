@@ -11,7 +11,7 @@ export class DiskModel extends BasicModel {
         super.init(gl);
 
         //Initialize the textures: side tex, side black, top tex
-        this.initAllTextures(gl);
+        //this.initAllTextures(gl);
 
         let blackTexture = gl.createTexture();
         gl.activeTexture(gl.TEXTURE0);

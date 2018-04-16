@@ -60,7 +60,7 @@
 /******/ 	__webpack_require__.p = "";
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 14);
+/******/ 	return __webpack_require__(__webpack_require__.s = 16);
 /******/ })
 /************************************************************************/
 /******/ ([
@@ -70,14 +70,14 @@
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__gl_matrix_common__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__gl_matrix_mat2__ = __webpack_require__(15);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__gl_matrix_mat2d__ = __webpack_require__(16);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__gl_matrix_mat3__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__gl_matrix_mat4__ = __webpack_require__(17);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__gl_matrix_quat__ = __webpack_require__(18);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__gl_matrix_vec2__ = __webpack_require__(19);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__gl_matrix_vec3__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__gl_matrix_vec4__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__gl_matrix_mat2__ = __webpack_require__(17);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__gl_matrix_mat2d__ = __webpack_require__(18);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__gl_matrix_mat3__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_4__gl_matrix_mat4__ = __webpack_require__(19);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_5__gl_matrix_quat__ = __webpack_require__(20);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_6__gl_matrix_vec2__ = __webpack_require__(21);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_7__gl_matrix_vec3__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_8__gl_matrix_vec4__ = __webpack_require__(9);
 /* harmony reexport (module object) */ __webpack_require__.d(__webpack_exports__, "glMatrix", function() { return __WEBPACK_IMPORTED_MODULE_0__gl_matrix_common__; });
 /* harmony reexport (module object) */ __webpack_require__.d(__webpack_exports__, "mat2", function() { return __WEBPACK_IMPORTED_MODULE_1__gl_matrix_mat2__; });
 /* harmony reexport (module object) */ __webpack_require__.d(__webpack_exports__, "mat2d", function() { return __WEBPACK_IMPORTED_MODULE_2__gl_matrix_mat2d__; });
@@ -261,6 +261,7 @@ class BasicModel {
         // gl.disableVertexAttribArray(3);
         // gl.disableVertexAttribArray(4);
         this.textures = [];
+        this.initAllTextures(gl);
         this.initialized = true;
     }
     initAllTextures(gl) {
@@ -392,10 +393,10 @@ exports.BasicModel = BasicModel;
 
 "use strict";
 Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__mesh__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__material__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__layout__ = __webpack_require__(4);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__utils__ = __webpack_require__(23);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__mesh__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__material__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__layout__ = __webpack_require__(5);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__utils__ = __webpack_require__(25);
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "Mesh", function() { return __WEBPACK_IMPORTED_MODULE_0__mesh__["a"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "Material", function() { return __WEBPACK_IMPORTED_MODULE_1__material__["a"]; });
 /* harmony reexport (binding) */ __webpack_require__.d(__webpack_exports__, "MaterialLibrary", function() { return __WEBPACK_IMPORTED_MODULE_1__material__["b"]; });
@@ -419,6 +420,33 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 
 /***/ }),
 /* 4 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const gl_matrix_1 = __webpack_require__(0);
+const guid_1 = __webpack_require__(26);
+var Model_Type;
+(function (Model_Type) {
+    Model_Type[Model_Type["BASIC"] = 0] = "BASIC";
+    Model_Type[Model_Type["MESHLESS"] = 1] = "MESHLESS";
+})(Model_Type = exports.Model_Type || (exports.Model_Type = {}));
+class Entity {
+    constructor(mesh_name, model_type, pos, forward = gl_matrix_1.vec3.fromValues(0, 0, -1), scale = gl_matrix_1.vec3.fromValues(1, 1, 1)) {
+        this.id = guid_1.Guid.newGuid();
+        this.position = pos;
+        this.scalar = scale;
+        this.forward = forward;
+        this.mesh_name = mesh_name;
+        this.model_type = model_type;
+    }
+}
+exports.Entity = Entity;
+
+
+/***/ }),
+/* 5 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -681,34 +709,45 @@ Layout.MAP_EMISSIVE = new Attribute('mapEmissive', 1, 'SHORT');
 
 
 /***/ }),
-/* 5 */
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const gl_matrix_1 = __webpack_require__(0);
-const guid_1 = __webpack_require__(24);
-var Model_Type;
-(function (Model_Type) {
-    Model_Type[Model_Type["BASIC"] = 0] = "BASIC";
-    Model_Type[Model_Type["MESHLESS"] = 1] = "MESHLESS";
-})(Model_Type = exports.Model_Type || (exports.Model_Type = {}));
-class Entity {
-    constructor(pos, scale, forward, mesh_name, model_type) {
-        this.id = guid_1.Guid.newGuid();
-        this.position = pos;
-        this.scalar = scale || gl_matrix_1.vec3.fromValues(1, 1, 1);
-        this.forward = forward || gl_matrix_1.vec3.create();
-        this.mesh_name = mesh_name;
-        this.model_type = model_type;
+var Collision;
+(function (Collision) {
+    function circleIntersection(x1, y1, r1, x2, y2, r2) {
+        let dx = x1 - x2;
+        let dy = y1 - y2;
+        return (dx * dx + dy * dy) <= (r1 + r2) * (r1 + r2);
     }
-}
-exports.Entity = Entity;
+    Collision.circleIntersection = circleIntersection;
+    //Determines if there is an intersetion between a circle of radius r1 at
+    //	position x1,y2 and a circle with radius r2 at position x2,r2
+    function pointCircleIntersection(x1, y1, x2, y2, r2) {
+        return circleIntersection(x1, y1, 0, x2, y2, r2);
+    }
+    Collision.pointCircleIntersection = pointCircleIntersection;
+    //Determines if there is an intersection between two cylinders of radius r1 at position p1 with a height of h1
+    //against a cylinder of radius r2 at position p2 with a height of h2
+    function cylinderIntersection(p1, r1, half_height1, p2, r2, half_height2) {
+        let h1 = half_height1;
+        let h2 = half_height2;
+        //Check for height collision first
+        //Top of p1 doesn't reach bottom of p2
+        //Or bottom of p1 doesn't reach  top of p2
+        if (p1[1] + h1 < p2[1] - h2 || p1[1] - h1 > p2[1] + h2)
+            return false;
+        //Check for circle collision second
+        return circleIntersection(p1[0], p1[2], r1, p2[0], p2[2], r2);
+    }
+    Collision.cylinderIntersection = cylinderIntersection;
+})(Collision = exports.Collision || (exports.Collision = {}));
 
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -1516,7 +1555,7 @@ const sub = subtract;
 
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -2356,7 +2395,7 @@ const forEach = (function() {
 
 
 /***/ }),
-/* 8 */
+/* 9 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3018,7 +3057,7 @@ const forEach = (function() {
 
 
 /***/ }),
-/* 9 */
+/* 10 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -3102,11 +3141,11 @@ function getShader(gl, sourceCode, type) {
 
 
 /***/ }),
-/* 10 */
+/* 11 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__layout__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__layout__ = __webpack_require__(5);
 
 
 /**
@@ -3581,7 +3620,7 @@ class Mesh {
 
 
 /***/ }),
-/* 11 */
+/* 12 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -4404,7 +4443,7 @@ class MaterialLibrary {
 
 
 /***/ }),
-/* 12 */
+/* 13 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4412,10 +4451,11 @@ class MaterialLibrary {
 Object.defineProperty(exports, "__esModule", { value: true });
 const gl_matrix_1 = __webpack_require__(0);
 const basicmodel_1 = __webpack_require__(2);
-const meshlessmodel_1 = __webpack_require__(26);
-const Random = __webpack_require__(27);
-const noisefield_1 = __webpack_require__(28);
-const entity_1 = __webpack_require__(5);
+const meshlessmodel_1 = __webpack_require__(28);
+const noisefield_1 = __webpack_require__(29);
+const entity_1 = __webpack_require__(4);
+const mathhelper_1 = __webpack_require__(30);
+const random_1 = __webpack_require__(14);
 var Terrain;
 (function (Terrain) {
     Terrain[Terrain["RED_ROCK"] = 0] = "RED_ROCK";
@@ -4426,7 +4466,7 @@ var Terrain;
 })(Terrain = exports.Terrain || (exports.Terrain = {}));
 class Disk extends entity_1.Entity {
     constructor(diskModel, type, radius, x, y, z) {
-        super(gl_matrix_1.vec3.fromValues(x, y, z), gl_matrix_1.vec3.fromValues(radius, 1, radius), gl_matrix_1.vec3.fromValues(0, 0, 0), diskModel.mesh.name, entity_1.Model_Type.BASIC);
+        super(diskModel.mesh.name, entity_1.Model_Type.BASIC, gl_matrix_1.vec3.fromValues(x, y, z), gl_matrix_1.vec3.fromValues(0, 0, 0), gl_matrix_1.vec3.fromValues(radius, 1, radius));
         if (!diskModel.initialized)
             throw "DiskModel was not initialized";
         this.diskModel = diskModel;
@@ -4440,7 +4480,7 @@ class Disk extends entity_1.Entity {
         let corner = this.radius * Math.SQRT2 / 2;
         let scale = gl_matrix_1.vec3.fromValues(corner * 2 / this.heightMapSize, 1, corner * 2 / this.heightMapSize);
         let position = gl_matrix_1.vec3.fromValues(this.position[0], this.position[1] + 0.0001, this.position[2]);
-        this.heightMapEntity = new entity_1.Entity(position, scale, this.forward, this.heightMapModel.name, entity_1.Model_Type.MESHLESS);
+        this.heightMapEntity = new entity_1.Entity(this.heightMapModel.name, entity_1.Model_Type.MESHLESS, position, this.forward, scale);
         Disk.height_map_model_gen_count++;
         this.initialized = true;
     }
@@ -4555,7 +4595,7 @@ class Disk extends entity_1.Entity {
     }
     initSandyHeightMap() {
         this.heightMap = [];
-        let ns = new noisefield_1.Noisefield(16, 8, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF));
+        let ns = new noisefield_1.Noisefield(16, 8, random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF));
         let xz_6 = new Array(this.heightMapSize + 1);
         let pow_divisor = (1.0 - Math.pow(0.5, 6));
         for (let x = 0; x <= this.heightMapSize; x++) {
@@ -4574,11 +4614,11 @@ class Disk extends entity_1.Entity {
     initGreyRockHeightMap() {
         this.heightMap = [];
         let ns = [
-            new noisefield_1.Noisefield(32, 1.0, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF)),
-            new noisefield_1.Noisefield(16, 7.0, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF)),
-            new noisefield_1.Noisefield(8, 5.0, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF)),
-            new noisefield_1.Noisefield(4, 3.5, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF)),
-            new noisefield_1.Noisefield(2, 2.5, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF)),
+            new noisefield_1.Noisefield(32, 1.0, random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF)),
+            new noisefield_1.Noisefield(16, 7.0, random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF)),
+            new noisefield_1.Noisefield(8, 5.0, random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF)),
+            new noisefield_1.Noisefield(4, 3.5, random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF)),
+            new noisefield_1.Noisefield(2, 2.5, random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF), random_1.Random.randi(0xFFFFFFFF)),
         ];
         for (let x = 0; x <= this.heightMapSize; x++) {
             this.heightMap[x] = [];
@@ -4635,8 +4675,8 @@ class Disk extends entity_1.Entity {
         let RI = Math.random() * (2) - 1;
         let RM = Math.random() * (2) - 1;
         let RO = Math.random() * (2) - 1;
-        let a1 = Random.randi(7);
-        let a2 = Random.randi(7);
+        let a1 = random_1.Random.randi(7);
+        let a2 = random_1.Random.randi(7);
         let ARM_COUNT = a1 < a2 ? a1 : a2;
         let ARM_RADIANS = Math.random() * (Math.PI * 2);
         let AI = Math.random();
@@ -4701,13 +4741,76 @@ class Disk extends entity_1.Entity {
         basicmodel_1.BasicModel.setMVPMatrices(model, view_matrix, projection_matrix);
         this.heightMapModel.draw(gl);
     }
+    getSpeedFactor() {
+        switch (this.type) {
+            case Terrain.RED_ROCK: return 1.0;
+            case Terrain.LEAFY: return 0.5;
+            case Terrain.ICY: return 0.25;
+            case Terrain.SANDY: return 0.75;
+            case Terrain.GREY_ROCK: return 1.0;
+        }
+        return 1.0;
+    }
+    getHeightAtPosition(x, z) {
+        //get x,z within the height map centered on the bottom left corner
+        let cx = (x - this.position[0]) * (this.heightMapSize / 2.0) / (this.radius * 2 * Math.SQRT1_2) + (this.heightMapSize / 2.0);
+        let cz = (z - this.position[2]) * (this.heightMapSize / 2.0) / (this.radius * 2 * Math.SQRT1_2) + (this.heightMapSize / 2.0);
+        //If outside height map return 0
+        if ((cx > this.heightMapSize || cx < 0) || (cz > this.heightMapSize || cz < 0))
+            return 0.0;
+        //Index in height map
+        let ix = Math.floor(cx);
+        let kz = Math.floor(cz);
+        let fx = cx - ix;
+        let fz = cz - kz;
+        let p0 = gl_matrix_1.vec3.create();
+        let p1 = gl_matrix_1.vec3.fromValues(ix, this.heightMap[ix][kz], kz);
+        let p2 = gl_matrix_1.vec3.fromValues(ix + 1, this.heightMap[ix + 1][kz + 1], kz + 1);
+        //Upper right triangle
+        if (fx > fz) {
+            gl_matrix_1.vec3.set(p0, ix + 1, this.heightMap[ix + 1][kz], kz);
+        }
+        else {
+            //Lower right triangle
+            gl_matrix_1.vec3.set(p0, ix, this.heightMap[ix][kz + 1], kz + 1);
+        }
+        let height;
+        //Non - Barycentric**
+        //Vector3 normal = (p1 - p0).crossProduct(p2 - p0);
+        //height = (-normal.x*ix - normal.z*kz + normal.dotProduct(p0)) / normal.y;
+        //Barycentric
+        let p = gl_matrix_1.vec2.fromValues(cx, cz);
+        let p00 = gl_matrix_1.vec2.fromValues(p0[0], p0[2]);
+        let p11 = gl_matrix_1.vec2.fromValues(p1[0], p1[2]);
+        let p22 = gl_matrix_1.vec2.fromValues(p2[0], p2[2]);
+        let weights = mathhelper_1.MathHelper.barycentric(p, p00, p11, p22);
+        height = weights[0] * p0[1] + weights[1] * p1[1] + weights[2] * p2[1];
+        return height;
+    }
 }
 Disk.height_map_model_gen_count = 0;
 exports.Disk = Disk;
 
 
 /***/ }),
-/* 13 */
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+//Return random signed int
+Object.defineProperty(exports, "__esModule", { value: true });
+var Random;
+(function (Random) {
+    function randi(max) {
+        return Math.floor(Math.random() * Math.floor(max));
+    }
+    Random.randi = randi;
+})(Random = exports.Random || (exports.Random = {}));
+
+
+/***/ }),
+/* 15 */
 /***/ (function(module, exports) {
 
 var g;
@@ -4734,7 +4837,7 @@ module.exports = g;
 
 
 /***/ }),
-/* 14 */
+/* 16 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -4749,23 +4852,22 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const gl_matrix_1 = __webpack_require__(0);
-const shader_1 = __webpack_require__(9);
-const camera_1 = __webpack_require__(20);
-const player_1 = __webpack_require__(21);
-const world_1 = __webpack_require__(25);
-const skybox_1 = __webpack_require__(32);
+const shader_1 = __webpack_require__(10);
+const camera_1 = __webpack_require__(22);
+const player_1 = __webpack_require__(23);
+const world_1 = __webpack_require__(27);
+const skybox_1 = __webpack_require__(37);
 const basicmodel_1 = __webpack_require__(2);
-const Renderer_1 = __webpack_require__(34);
-const basicmodelshader_1 = __webpack_require__(35);
-const assert = __webpack_require__(36);
-let MainLoop = __webpack_require__(41);
+const Renderer_1 = __webpack_require__(39);
+const basicmodelshader_1 = __webpack_require__(40);
+const assert = __webpack_require__(41);
+let MainLoop = __webpack_require__(46);
 let is_mobile;
 let demo_ticker = 0;
 let document = window.document;
 let canvas;
 let gl;
 let shader;
-let instancedShader;
 let basicModelShader;
 let basicModelRenderer;
 const playerOrigin = gl_matrix_1.vec3.fromValues(0, 0.8, 0);
@@ -4852,16 +4954,17 @@ class Main {
             let _worldMeshes = yield world_1.World.loadWorldMeshes();
             let _worldMat = yield world_1.World.loadWorldMat();
             let _worldData = yield world_1.World.loadWorldData();
+            let _pickupMeshes = yield world_1.World.loadPickupMeshes();
             let skybox_model = yield skybox_1.Skybox.load();
             let _playerData = yield player_1.Player.loadMesh();
             this.player = new player_1.Player(gl, _playerData["cbabe"], playerOrigin);
             this.skybox = new skybox_1.Skybox(gl, skybox_model["Skybox"]);
             let w = Date.now();
-            this.world = new world_1.World(gl, _worldData, _worldMeshes, _worldMat);
+            this.world = new world_1.World(gl, _worldData, _worldMeshes, _worldMat, _pickupMeshes);
             console.log("world gen time: " + (Date.now() - w) / 1000 + "s");
-            shader = yield new shader_1.Shader(gl, __webpack_require__(42), __webpack_require__(43));
+            shader = yield new shader_1.Shader(gl, __webpack_require__(47), __webpack_require__(48));
             // instancedShader = await new Shader(gl, require('../src/shaders/instanced.vert'), require("../src/shaders/instanced.frag"));
-            basicModelShader = yield new basicmodelshader_1.BasicModelShader(gl, __webpack_require__(44), __webpack_require__(45));
+            basicModelShader = yield new basicmodelshader_1.BasicModelShader(gl, __webpack_require__(49), __webpack_require__(50));
             basicModelRenderer = new Renderer_1.Renderer();
             basicModelRenderer.init(basicModelShader);
             basicModelRenderer.addBasicModel(this.player.model);
@@ -4871,11 +4974,19 @@ class Main {
             basicModelRenderer.addBasicModel(this.world.diskCModel);
             basicModelRenderer.addBasicModel(this.world.diskDModel);
             basicModelRenderer.addBasicModel(this.world.diskEModel);
+            basicModelRenderer.addBasicModel(this.world.ring_model);
+            basicModelRenderer.addBasicModel(this.world.rod_model);
             this.world.disks.forEach(disk => {
                 assert(disk.initialized);
                 basicModelRenderer.addEntityToRenderList(disk);
                 basicModelRenderer.addMeshlessModel(disk.heightMapModel);
                 basicModelRenderer.addEntityToRenderList(disk.heightMapEntity);
+            });
+            this.world.pickup_manager.rings.forEach(ring => {
+                basicModelRenderer.addEntityToRenderList(ring);
+            });
+            this.world.pickup_manager.rods.forEach(rod => {
+                basicModelRenderer.addEntityToRenderList(rod);
             });
             loading.remove();
             let end = Date.now();
@@ -4910,6 +5021,11 @@ class Main {
      *   The amount of time since the last update, in seconds.
      */
     update(delta) {
+        delta /= 1000;
+        let height = this.world.getHeightAtCirclePosition(this.player.position[0], this.player.position[1], player_1.Player.radius);
+        this.player.position[1] = height + player_1.Player.half_height;
+        this.world.update(delta);
+        //console.log(this.player.position[0] + ", " + this.player.position[1] + ", " + this.player.position[2] );
     }
     /**
      * Called once per frame before update and draw
@@ -5063,7 +5179,7 @@ new Main();
 
 
 /***/ }),
-/* 15 */
+/* 17 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5533,7 +5649,7 @@ const sub = subtract;
 
 
 /***/ }),
-/* 16 */
+/* 18 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -6035,7 +6151,7 @@ const sub = subtract;
 
 
 /***/ }),
-/* 17 */
+/* 19 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -7773,7 +7889,7 @@ const sub = subtract;
 
 
 /***/ }),
-/* 18 */
+/* 20 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -7794,9 +7910,9 @@ Object.defineProperty(__webpack_exports__, "__esModule", { value: true });
 /* harmony export (immutable) */ __webpack_exports__["fromEuler"] = fromEuler;
 /* harmony export (immutable) */ __webpack_exports__["str"] = str;
 /* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__common__ = __webpack_require__(1);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__mat3__ = __webpack_require__(6);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__vec3__ = __webpack_require__(7);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__vec4__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__mat3__ = __webpack_require__(7);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__vec3__ = __webpack_require__(8);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_3__vec4__ = __webpack_require__(9);
 /* Copyright (c) 2015, Brandon Jones, Colin MacKenzie IV.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -8464,7 +8580,7 @@ const setAxes = (function() {
 
 
 /***/ }),
-/* 19 */
+/* 21 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -9107,14 +9223,13 @@ const forEach = (function() {
 
 
 /***/ }),
-/* 20 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const gl_matrix_1 = __webpack_require__(0);
-const gl_matrix_2 = __webpack_require__(0);
 const YAW = 90.0;
 const PITCH = 0.0;
 const SPEED = 20.0;
@@ -9128,9 +9243,9 @@ var Camera_Movement;
     Camera_Movement[Camera_Movement["RIGHT"] = 3] = "RIGHT";
 })(Camera_Movement = exports.Camera_Movement || (exports.Camera_Movement = {}));
 class Camera {
-    constructor(pos = gl_matrix_2.vec3.fromValues(0, 0, 0), up = gl_matrix_2.vec3.fromValues(0, 1, 0), yaw = YAW, pitch = PITCH) {
+    constructor(pos = gl_matrix_1.vec3.fromValues(0, 0, 0), up = gl_matrix_1.vec3.fromValues(0, 1, 0), yaw = YAW, pitch = PITCH) {
         this.position = pos;
-        this.front = gl_matrix_2.vec3.fromValues(0, 0, -1);
+        this.front = gl_matrix_1.vec3.fromValues(0, 0, -1);
         this.worldUp = up;
         this.movementSpeed = SPEED;
         this.mouseSensitivity = SENSITIVITY;
@@ -9140,21 +9255,21 @@ class Camera {
         this.updateCameraVectors();
     }
     getViewMatrix() {
-        let forward = gl_matrix_2.vec3.create();
-        gl_matrix_2.vec3.add(forward, this.position, this.front);
+        let forward = gl_matrix_1.vec3.create();
+        gl_matrix_1.vec3.add(forward, this.position, this.front);
         let look = gl_matrix_1.mat4.create();
         gl_matrix_1.mat4.lookAt(look, this.position, forward, this.up);
         return look;
     }
     lookAt(pos) {
-        let a = gl_matrix_2.vec3.create();
-        gl_matrix_2.vec3.subtract(a, pos, this.position);
-        gl_matrix_2.vec3.normalize(a, a);
+        let a = gl_matrix_1.vec3.create();
+        gl_matrix_1.vec3.subtract(a, pos, this.position);
+        gl_matrix_1.vec3.normalize(a, a);
         this.front = a;
     }
     getInverseViewMatrix() {
-        let forward = gl_matrix_2.vec3.create();
-        gl_matrix_2.vec3.add(forward, this.position, this.front);
+        let forward = gl_matrix_1.vec3.create();
+        gl_matrix_1.vec3.add(forward, this.position, this.front);
         let look = gl_matrix_1.mat4.create();
         gl_matrix_1.mat4.lookAt(look, this.position, forward, this.up);
         gl_matrix_1.mat4.invert(look, look);
@@ -9165,24 +9280,24 @@ class Camera {
         let a = this.front;
         let b = this.right;
         if (direction == Camera_Movement.FORWARD) {
-            let offset = gl_matrix_2.vec3.create();
-            gl_matrix_2.vec3.scale(offset, a, velocity);
-            gl_matrix_2.vec3.add(this.position, this.position, offset);
+            let offset = gl_matrix_1.vec3.create();
+            gl_matrix_1.vec3.scale(offset, a, velocity);
+            gl_matrix_1.vec3.add(this.position, this.position, offset);
         }
         if (direction == Camera_Movement.BACKWARD) {
-            let offset = gl_matrix_2.vec3.create();
-            gl_matrix_2.vec3.scale(offset, a, -velocity);
-            gl_matrix_2.vec3.add(this.position, this.position, offset);
+            let offset = gl_matrix_1.vec3.create();
+            gl_matrix_1.vec3.scale(offset, a, -velocity);
+            gl_matrix_1.vec3.add(this.position, this.position, offset);
         }
         if (direction == Camera_Movement.LEFT) {
-            let offset = gl_matrix_2.vec3.create();
-            gl_matrix_2.vec3.scale(offset, b, -velocity);
-            gl_matrix_2.vec3.add(this.position, this.position, offset);
+            let offset = gl_matrix_1.vec3.create();
+            gl_matrix_1.vec3.scale(offset, b, -velocity);
+            gl_matrix_1.vec3.add(this.position, this.position, offset);
         }
         if (direction == Camera_Movement.RIGHT) {
-            let offset = gl_matrix_2.vec3.create();
-            gl_matrix_2.vec3.scale(offset, b, velocity);
-            gl_matrix_2.vec3.add(this.position, this.position, offset);
+            let offset = gl_matrix_1.vec3.create();
+            gl_matrix_1.vec3.scale(offset, b, velocity);
+            gl_matrix_1.vec3.add(this.position, this.position, offset);
         }
     }
     //TODO Change calculation to move camera position up and down and keep same target on player
@@ -9213,14 +9328,14 @@ class Camera {
         let x = Math.cos(gl_matrix_1.glMatrix.toRadian(this.yaw)) * Math.cos(gl_matrix_1.glMatrix.toRadian(this.pitch));
         let y = Math.sin(gl_matrix_1.glMatrix.toRadian(this.pitch));
         let z = Math.sin(gl_matrix_1.glMatrix.toRadian(this.yaw)) * Math.cos(gl_matrix_1.glMatrix.toRadian(this.pitch));
-        let newFront = gl_matrix_2.vec3.fromValues(x, y, z);
-        gl_matrix_2.vec3.normalize(newFront, newFront);
+        let newFront = gl_matrix_1.vec3.fromValues(x, y, z);
+        gl_matrix_1.vec3.normalize(newFront, newFront);
         this.front = newFront;
-        let cross = gl_matrix_2.vec3.create();
-        gl_matrix_2.vec3.normalize(cross, gl_matrix_2.vec3.cross(cross, this.front, this.worldUp));
+        let cross = gl_matrix_1.vec3.create();
+        gl_matrix_1.vec3.normalize(cross, gl_matrix_1.vec3.cross(cross, this.front, this.worldUp));
         this.right = cross;
-        let cross2 = gl_matrix_2.vec3.create();
-        gl_matrix_2.vec3.normalize(cross2, gl_matrix_2.vec3.cross(cross2, this.right, this.front));
+        let cross2 = gl_matrix_1.vec3.create();
+        gl_matrix_1.vec3.normalize(cross2, gl_matrix_1.vec3.cross(cross2, this.right, this.front));
         this.up = cross2;
     }
 }
@@ -9228,7 +9343,7 @@ exports.Camera = Camera;
 
 
 /***/ }),
-/* 21 */
+/* 23 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9243,9 +9358,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const gl_matrix_1 = __webpack_require__(0);
-const playermodel_1 = __webpack_require__(22);
+const playermodel_1 = __webpack_require__(24);
 const basicmodel_1 = __webpack_require__(2);
-const entity_1 = __webpack_require__(5);
+const entity_1 = __webpack_require__(4);
 let OBJ = __webpack_require__(3);
 const SPEED = 20;
 var Player_Movement;
@@ -9257,7 +9372,7 @@ var Player_Movement;
 })(Player_Movement = exports.Player_Movement || (exports.Player_Movement = {}));
 class Player extends entity_1.Entity {
     constructor(gl, mesh, pos) {
-        super(pos, null, gl_matrix_1.vec3.fromValues(1, 0, 0), mesh.name, entity_1.Model_Type.BASIC);
+        super(mesh.name, entity_1.Model_Type.BASIC, pos, gl_matrix_1.vec3.fromValues(0, 0, -1));
         this.model = new playermodel_1.PlayerModel(mesh);
         this.model.rotation_offset = gl_matrix_1.vec3.fromValues(0, 0, -Math.PI / 2);
         this.model.init(gl);
@@ -9313,11 +9428,13 @@ class Player extends entity_1.Entity {
         });
     }
 }
+Player.radius = 0.25;
+Player.half_height = 0.8;
 exports.Player = Player;
 
 
 /***/ }),
-/* 22 */
+/* 24 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9330,7 +9447,7 @@ class PlayerModel extends basicmodel_1.BasicModel {
     }
     init(gl) {
         super.init(gl);
-        this.initAllTextures(gl);
+        //this.initAllTextures(gl);
         // if (!this.initTexture(gl, 0)) {
         //     console.warn("Player model texture 0 wasn't downloaded")
         // }
@@ -9340,7 +9457,7 @@ exports.PlayerModel = PlayerModel;
 
 
 /***/ }),
-/* 23 */
+/* 25 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -9349,9 +9466,9 @@ exports.PlayerModel = PlayerModel;
 /* harmony export (immutable) */ __webpack_exports__["b"] = downloadMeshes;
 /* harmony export (immutable) */ __webpack_exports__["e"] = initMeshBuffers;
 /* harmony export (immutable) */ __webpack_exports__["a"] = deleteMeshBuffers;
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__mesh__ = __webpack_require__(10);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__material__ = __webpack_require__(11);
-/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__layout__ = __webpack_require__(4);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_0__mesh__ = __webpack_require__(11);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_1__material__ = __webpack_require__(12);
+/* harmony import */ var __WEBPACK_IMPORTED_MODULE_2__layout__ = __webpack_require__(5);
 
 
 
@@ -9700,7 +9817,7 @@ function deleteMeshBuffers ( gl, mesh ) {
 
 
 /***/ }),
-/* 24 */
+/* 26 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9718,7 +9835,7 @@ exports.Guid = Guid;
 
 
 /***/ }),
-/* 25 */
+/* 27 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -9732,12 +9849,19 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-const disk_1 = __webpack_require__(12);
-const diskmodel_1 = __webpack_require__(29);
+const disk_1 = __webpack_require__(13);
+const diskmodel_1 = __webpack_require__(31);
 let OBJ = __webpack_require__(3);
 const index_js_1 = __webpack_require__(3);
+const gl_matrix_1 = __webpack_require__(0);
+const collision_1 = __webpack_require__(6);
+const random_1 = __webpack_require__(14);
+const pickupmanager_1 = __webpack_require__(32);
+const basicmodel_1 = __webpack_require__(2);
 class World {
-    constructor(gl, worldData, meshes, mat) {
+    constructor(gl, worldData, meshes, mat, pickup_meshes) {
+        this.pickup_manager = new pickupmanager_1.PickupManager();
+        this.disks = [];
         meshes.DiskA.addMaterialLibrary(mat);
         meshes.DiskB.addMaterialLibrary(mat);
         meshes.DiskC.addMaterialLibrary(mat);
@@ -9748,16 +9872,20 @@ class World {
         this.diskCModel = new diskmodel_1.DiskModel(meshes.DiskC);
         this.diskDModel = new diskmodel_1.DiskModel(meshes.DiskD);
         this.diskEModel = new diskmodel_1.DiskModel(meshes.DiskE);
-        this.worldData = worldData;
-        this.disks = [];
+        this.rod_model = new basicmodel_1.BasicModel(pickup_meshes.Rod);
+        this.ring_model = new basicmodel_1.BasicModel(pickup_meshes.Ring);
         this.diskAModel.init(gl);
         this.diskBModel.init(gl);
         this.diskCModel.init(gl);
         this.diskDModel.init(gl);
         this.diskEModel.init(gl);
+        this.rod_model.init(gl);
+        this.ring_model.init(gl);
+        this.pickup_manager.init(this, this.rod_model, this.ring_model);
         const lines = worldData.split('\n');
         if (lines[0].indexOf("version 1") == -1)
             console.warn("Can't read Disk World File");
+        this.world_radius = parseInt(lines[1]);
         let count = parseInt(lines[2]);
         lines.splice(0, 3);
         for (let i = 0; i < count; i++) {
@@ -9795,6 +9923,56 @@ class World {
         }
         this.disks.forEach(disk => {
             disk.init(gl);
+            let pos = gl_matrix_1.vec3.fromValues(disk.position[0], disk.getHeightAtPosition(disk.position[0], disk.position[2]), disk.position[2]);
+            this.pickup_manager.addRod(pos, disk.type + 1);
+            this.pickup_manager.addRing(pos);
+        });
+    }
+    update(delta_time_ms) {
+        this.pickup_manager.update(delta_time_ms);
+    }
+    draw(gl, view_matrix, projection_matrix) {
+        this.disks.forEach(disk => {
+            disk.draw(gl, view_matrix, projection_matrix);
+        });
+    }
+    getSpeedFactorAtPosition(x, z, radius = 0) {
+        for (let i = 0; i < this.disks.length; i++) {
+            if (collision_1.Collision.circleIntersection(x, z, radius, this.disks[i].position[0], this.disks[i].position[2], this.disks[i].radius))
+                return this.disks[i].getSpeedFactor();
+        }
+        //No collision with a disk
+        return 1.0;
+    }
+    getRandomDiskPosition() {
+        let i = random_1.Random.randi(this.disks.length - 1);
+        return this.disks[i].position;
+    }
+    getHeightAtPointPosition(x, z) {
+        return this.getHeightAtCirclePosition(x, z, 0);
+    }
+    getHeightAtCirclePosition(x, z, r) {
+        for (let i = 0; i < this.disks.length; i++) {
+            if (collision_1.Collision.circleIntersection(x, z, r, this.disks[i].position[0], this.disks[i].position[2], this.disks[i].radius))
+                return this.disks[i].getHeightAtPosition(x, z);
+        }
+        //No collision with a disk
+        return 0.0;
+    }
+    static loadPickupMeshes() {
+        return __awaiter(this, void 0, void 0, function* () {
+            return OBJ.downloadModels([
+                {
+                    name: 'Ring',
+                    obj: "/assets/models/environment/ring/Ring.obj",
+                    mtl: "/assets/models/environment/ring/Ring.mtl"
+                },
+                {
+                    name: 'Rod',
+                    obj: "/assets/models/environment/rod/Rod.obj",
+                    mtl: "/assets/models/environment/rod/Rod.mtl"
+                }
+            ]);
         });
     }
     static loadWorldMeshes() {
@@ -9830,19 +10008,14 @@ class World {
     }
     static loadWorldMat() {
         return __awaiter(this, void 0, void 0, function* () {
-            let mat = new index_js_1.MaterialLibrary(__webpack_require__(30));
+            let mat = new index_js_1.MaterialLibrary(__webpack_require__(35));
             yield OBJ.downloadMtlTextures(mat, window.location.href.substr(0, window.location.href.lastIndexOf("/")) + '/assets/models/environment/disks/');
             return mat;
         });
     }
     static loadWorldData() {
         return __awaiter(this, void 0, void 0, function* () {
-            return __webpack_require__(31);
-        });
-    }
-    draw(gl, view_matrix, projection_matrix) {
-        this.disks.forEach(disk => {
-            disk.draw(gl, view_matrix, projection_matrix);
+            return __webpack_require__(36);
         });
     }
 }
@@ -9850,13 +10023,13 @@ exports.World = World;
 
 
 /***/ }),
-/* 26 */
+/* 28 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const disk_1 = __webpack_require__(12);
+const disk_1 = __webpack_require__(13);
 const basicmodel_1 = __webpack_require__(2);
 const gl_matrix_1 = __webpack_require__(0);
 class MeshlessModel {
@@ -9941,21 +10114,7 @@ exports.MeshlessModel = MeshlessModel;
 
 
 /***/ }),
-/* 27 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-Object.defineProperty(exports, "__esModule", { value: true });
-//Return random signed int
-function randi(max) {
-    return Math.floor(Math.random() * Math.floor(max));
-}
-exports.randi = randi;
-
-
-/***/ }),
-/* 28 */
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10031,7 +10190,40 @@ exports.Noisefield = Noisefield;
 
 
 /***/ }),
-/* 29 */
+/* 30 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const gl_matrix_1 = __webpack_require__(0);
+var MathHelper;
+(function (MathHelper) {
+    function barycentric(p, a, b, c) {
+        let v0 = gl_matrix_1.vec2.create();
+        let v1 = gl_matrix_1.vec2.create();
+        let v2 = gl_matrix_1.vec2.create();
+        gl_matrix_1.vec2.sub(v0, b, a);
+        gl_matrix_1.vec2.sub(v1, c, a);
+        gl_matrix_1.vec2.sub(v2, p, a);
+        let d00 = gl_matrix_1.vec2.dot(v0, v0);
+        let d01 = gl_matrix_1.vec2.dot(v0, v1);
+        let d11 = gl_matrix_1.vec2.dot(v1, v1);
+        let d20 = gl_matrix_1.vec2.dot(v2, v0);
+        let d21 = gl_matrix_1.vec2.dot(v2, v1);
+        let inv_denom = 1 / (d00 * d11 - d01 * d01);
+        let result = gl_matrix_1.vec3.create();
+        result[1] = (d11 * d20 - d01 * d21) * inv_denom;
+        result[2] = (d00 * d21 - d01 * d20) * inv_denom;
+        result[0] = 1.0 - result[1] - result[2];
+        return result;
+    }
+    MathHelper.barycentric = barycentric;
+})(MathHelper = exports.MathHelper || (exports.MathHelper = {}));
+
+
+/***/ }),
+/* 31 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10045,7 +10237,7 @@ class DiskModel extends basicmodel_1.BasicModel {
     init(gl) {
         super.init(gl);
         //Initialize the textures: side tex, side black, top tex
-        this.initAllTextures(gl);
+        //this.initAllTextures(gl);
         let blackTexture = gl.createTexture();
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, blackTexture);
@@ -10058,19 +10250,147 @@ exports.DiskModel = DiskModel;
 
 
 /***/ }),
-/* 30 */
+/* 32 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const ring_1 = __webpack_require__(33);
+const rod_1 = __webpack_require__(34);
+const collision_1 = __webpack_require__(6);
+class PickupManager {
+    constructor() {
+    }
+    ;
+    init(w, rod, ring) {
+        this.score = 0;
+        this.world = w;
+        this.rod_model = rod;
+        this.ring_model = ring;
+        this.rings = [];
+        this.rods = [];
+    }
+    update(delta_time_ms) {
+        this.rings.forEach(ring => {
+            if (!ring.picked_up)
+                ring.update(delta_time_ms);
+        });
+    }
+    checkForPickupsCylinderIntersection(position, radius, half_height) {
+        this.rings.forEach(ring => {
+            if (!ring.picked_up)
+                if (collision_1.Collision.cylinderIntersection(position, radius, half_height, ring.position, ring_1.Ring.radius, ring_1.Ring.half_height)) {
+                    ring.picked_up = true;
+                    this.score += ring_1.Ring.point_value;
+                }
+        });
+        this.rods.forEach(rod => {
+            if (!rod.picked_up)
+                if (collision_1.Collision.cylinderIntersection(position, radius, half_height, rod.position, rod_1.Rod.radius, rod_1.Rod.half_height)) {
+                    rod.picked_up = true;
+                    this.score += rod.point_value;
+                }
+        });
+    }
+    addRod(position, value) {
+        this.rods.push(new rod_1.Rod(this.rod_model, position, value));
+    }
+    addRing(position) {
+        this.rings.push(new ring_1.Ring(this.rings.length, this.world, this.ring_model, position));
+    }
+    destroy() {
+        this.rings = [];
+        this.rods = [];
+        this.score = 0;
+    }
+}
+exports.PickupManager = PickupManager;
+
+
+/***/ }),
+/* 33 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const entity_1 = __webpack_require__(4);
+const gl_matrix_1 = __webpack_require__(0);
+const collision_1 = __webpack_require__(6);
+class Ring extends entity_1.Entity {
+    //public path: Array<number>;
+    //public curr_node_id: number;
+    //public target_node_id: number;
+    constructor(index, world, model, position) {
+        super(model.mesh.name, entity_1.Model_Type.BASIC, position);
+        this.picked_up = false;
+        this.target_position = position;
+        this.world = world;
+    }
+    update(delta_time_ms) {
+        let direction = gl_matrix_1.vec3.create();
+        gl_matrix_1.vec3.sub(direction, this.target_position, this.position);
+        gl_matrix_1.vec3.normalize(direction, direction);
+        let speed_factor = this.world.getSpeedFactorAtPosition(this.position[0], this.position[2]);
+        let distance = Ring.speed * delta_time_ms * speed_factor;
+        gl_matrix_1.vec3.scaleAndAdd(this.position, this.position, direction, distance);
+        //Rotate ring based on distance moved
+        let rot = Ring.rotation_speed * distance;
+        gl_matrix_1.vec3.rotateY(this.forward, this.forward, gl_matrix_1.vec3.create(), rot);
+        this.position[1] = this.world.getHeightAtCirclePosition(this.position[0], this.position[2], Ring.radius) + Ring.half_height;
+        //If on center of disk get new target
+        if (collision_1.Collision.pointCircleIntersection(this.target_position[0], this.target_position[2], this.position[0], this.position[2], Ring.radius)) {
+            this.target_position = this.world.getRandomDiskPosition();
+        }
+    }
+}
+Ring.point_value = 1;
+Ring.speed = 2.5 / 1000.0;
+Ring.rotation_speed = 1.3;
+Ring.radius = 0.7;
+Ring.half_height = 0.1;
+exports.Ring = Ring;
+
+
+/***/ }),
+/* 34 */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+const entity_1 = __webpack_require__(4);
+class Rod extends entity_1.Entity {
+    constructor(model, position, value) {
+        super(model.mesh.name, entity_1.Model_Type.BASIC, position);
+        this.picked_up = false;
+        this.position = position;
+        this.point_value = value;
+    }
+    update(delta_time_ms) {
+        //does nothing
+    }
+}
+Rod.radius = 0.1;
+Rod.half_height = 1.0;
+exports.Rod = Rod;
+
+
+/***/ }),
+/* 35 */
 /***/ (function(module, exports) {
 
 module.exports = "#\r\n#  Disks.mtl\r\n#\r\n\r\nnewmtl diskA\r\nillum 1\r\nKd 0.80 0.80 0.80\r\nKa 0.20 0.20 0.20\r\nmap_Kd DiskA.jpg\r\nmap_Ka DiskA.jpg\r\n\r\nnewmtl diskA_side\r\nillum 1\r\nKd 0.80 0.80 0.80\r\nKa 0.20 0.20 0.20\r\nmap_Kd DiskA_side.jpg\r\nmap_Ka DiskA_side.jpg\r\n\r\nnewmtl diskB\r\nillum 1\r\nKd 0.80 0.80 0.80\r\nKa 0.20 0.20 0.20\r\nmap_Kd DiskB.jpg\r\nmap_Ka DiskB.jpg\r\n\r\nnewmtl diskB_side\r\nillum 1\r\nKd 0.80 0.80 0.80\r\nKa 0.20 0.20 0.20\r\nmap_Kd DiskB_side.jpg\r\nmap_Ka DiskB_side.jpg\r\n\r\nnewmtl diskC\r\nillum 1\r\nKd 0.80 0.80 0.80\r\nKa 0.20 0.20 0.20\r\nmap_Kd DiskC.jpg\r\nmap_Ka DiskC.jpg\r\n\r\n\r\nnewmtl diskC_side\r\nillum 1\r\nKd 0.80 0.80 0.80\r\nKa 0.20 0.20 0.20\r\nmap_Kd DiskC_side.jpg\r\nmap_Ka DiskC_side.jpg\r\n\r\nnewmtl diskD\r\nillum 1\r\nKd 0.80 0.80 0.80\r\nKa 0.20 0.20 0.20\r\nKs 0.0 0.0 0.0\r\nmap_Kd DiskD.jpg\r\nmap_Ka DiskD.jpg\r\n\r\nnewmtl diskD_side\r\nillum 1\r\nKd 0.80 0.80 0.80\r\nKa 0.20 0.20 0.20\r\nmap_Kd DiskD_side.jpg\r\nmap_Ka DiskD_side.jpg\r\n\r\nnewmtl diskE\r\nillum 1\r\nKd 0.80 0.80 0.80\r\nKa 0.20 0.20 0.20\r\nmap_Kd DiskE.jpg\r\nmap_Ka DiskE.jpg\r\n\r\nnewmtl diskE_side\r\nillum 1\r\nKd 0.80 0.80 0.80\r\nKa 0.20 0.20 0.20\r\nmap_Kd DiskE_side.jpg\r\nmap_Ka DiskE_side.jpg\r\n\r\nnewmtl flat_black\r\nillum 0\r\nKd 0.00 0.00 0.00\r\nKa 0.00 0.00 0.00\r\n\r\nnewmtl rainbow\r\nillum 1\r\nKd 0.80 0.80 0.80\r\nKa 0.20 0.20 0.20\r\nmap_Kd Rainbow.jpg\r\nmap_Ka Rainbow.jpg\r\n"
 
 /***/ }),
-/* 31 */
+/* 36 */
 /***/ (function(module, exports) {
 
 module.exports = "DISK version 1\r\n159.835\r\n61\r\n5.61676\t34.6006\t6.55774\t\r\n4.5521\t49.1698\t8.0504\t\r\n6.29182\t17.456\t10.6\t\r\n19.2771\t30.399\t7.7341\t\r\n-5.63964\t-6.61964\t16.2699\t\r\n-34.8144\t-13.928\t13.8063\t\r\n17.7224\t44.1054\t6.06006\t\r\n16.9081\t56.4082\t6.2697\t\r\n-51.3318\t-2.99788\t6\t\r\n-61.6816\t3.18528\t6.0561\t\r\n2.67116\t-44.403\t22.4166\t\r\n-61.7976\t-8.87178\t6.00154\t\r\n20.3596\t-15.7251\t11.2777\t\r\n53.2492\t45.6392\t29.4998\t\r\n28.4818\t20.19\t6.01188\t\r\n-56.16\t-23.3322\t9.51902\t\r\n29.7014\t5.71352\t8.51594\t\r\n-4.05204\t60.2884\t6.00862\t\r\n-73.0756\t12.5486\t8.6916\t\r\n-13.4131\t76.324\t12.5593\t\r\n-73.0176\t-2.86702\t6.72414\t\r\n-72.7376\t-17.5524\t7.96394\t\r\n-69.9778\t-32.1062\t6.84908\t\r\n-21.5382\t-69.3478\t12.3445\t\r\n-43.1694\t-31.9836\t6.08872\t\r\n10.4786\t-94.7314\t28.5138\t\r\n68.47\t106.494\t33.2292\t\r\n-55.834\t-44.7244\t11.8756\t\r\n-90.5932\t35.5246\t20.2006\t\r\n-42.9236\t-77.4838\t10.5364\t\r\n58.784\t-6.65676\t23.0884\t\r\n30.7258\t-49.0178\t6.01498\t\r\n-23.5632\t-87.8066\t6.22514\t\r\n-50.58\t-62.8268\t6\t\r\n35.7504\t-30.2686\t9.89758\t\r\n-48.2148\t94.9572\t26.9168\t\r\n29.0574\t108.357\t6.22754\t\r\n-82.3006\t-74.0996\t27.664\t\r\n31.4576\t120.811\t6.45576\t\r\n106.947\t61.002\t26.3522\t\r\n-71.8658\t55.0002\t6.81826\t\r\n-14.8019\t95.3308\t6.4983\t\r\n-87.6702\t-35.6198\t11.1887\t\r\n39.751\t-56.9514\t6.00168\t\r\n-1.16644\t108.714\t12.6072\t\r\n42.0084\t-44.884\t6.0011\t\r\n-115.571\t-43.2198\t17.7283\t\r\n-10.0822\t-128.608\t11.1144\t\r\n-72.6896\t69.6884\t7.89294\t\r\n39.1888\t-68.9426\t6.0027\t\r\n42.1076\t-80.6828\t6.09486\t\r\n-59.1878\t-102.758\t7.0319\t\r\n-99.9152\t88.4796\t25.1878\t\r\n-117.585\t54.717\t12.919\t\r\n50.7834\t-36.2758\t6.29124\t\r\n53.196\t-63.5894\t8.99256\t\r\n-59.0672\t-116.049\t6.25942\t\r\n-113.225\t21.0036\t6.6893\t\r\n-72.514\t-107.455\t7.09802\t\r\n81.1576\t23.6564\t6.0266\t\r\n69.0202\t-52.9854\t10.0561\t\r\n"
 
 /***/ }),
-/* 32 */
+/* 37 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10085,7 +10405,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 let OBJ = __webpack_require__(3);
-const skyboxmodel_1 = __webpack_require__(33);
+const skyboxmodel_1 = __webpack_require__(38);
 class Skybox {
     constructor(gl, mesh) {
         this.model = new skyboxmodel_1.SkyboxModel(mesh);
@@ -10110,7 +10430,7 @@ exports.Skybox = Skybox;
 
 
 /***/ }),
-/* 33 */
+/* 38 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10146,14 +10466,14 @@ exports.SkyboxModel = SkyboxModel;
 
 
 /***/ }),
-/* 34 */
+/* 39 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
 const basicmodel_1 = __webpack_require__(2);
-const entity_1 = __webpack_require__(5);
+const entity_1 = __webpack_require__(4);
 const gl_matrix_1 = __webpack_require__(0);
 class Renderer {
     constructor() {
@@ -10171,6 +10491,8 @@ class Renderer {
         }
         for (var key in model.mesh.materialNames) {
             if (this.materials.get(model.mesh.materialNames[key]) === undefined) {
+                if (model.mesh.materialsByIndex[key] === undefined)
+                    throw "Missing material on model";
                 this.materials.set(model.mesh.materialNames[key], model.mesh.materialsByIndex[key]);
             }
         }
@@ -10328,13 +10650,13 @@ exports.Renderer = Renderer;
 
 
 /***/ }),
-/* 35 */
+/* 40 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-const shader_1 = __webpack_require__(9);
+const shader_1 = __webpack_require__(10);
 class Uniforms {
 }
 ;
@@ -10359,7 +10681,7 @@ class BasicModelShader extends shader_1.Shader {
         this.uniforms.material_ambient_colour = this.getUniformLocation("material.ambient_colour");
         this.uniforms.material_diffuse_colour = this.getUniformLocation("material.diffuse_colour");
         this.uniforms.material_specular_colour = this.getUniformLocation("material.specular_colour");
-        this.uniforms.material_emissive_colour = this.getUniformLocation("material.emissive_colour");
+        this.uniforms.material_emissive_colour = this.getUniformLocation("material.emission_colour");
         this.uniforms.material_shininess = this.getUniformLocation("material.shininess");
         this.uniforms.material_is_texture_active = this.getUniformLocation("material.is_texture_active");
     }
@@ -10428,7 +10750,7 @@ function getShader(gl, sourceCode, type) {
 
 
 /***/ }),
-/* 36 */
+/* 41 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -10500,7 +10822,7 @@ function isBuffer(b) {
 // ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
 // WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-var util = __webpack_require__(37);
+var util = __webpack_require__(42);
 var hasOwn = Object.prototype.hasOwnProperty;
 var pSlice = Array.prototype.slice;
 var functionsHaveNames = (function () {
@@ -10923,10 +11245,10 @@ var objectKeys = Object.keys || function (obj) {
   return keys;
 };
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(13)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(15)))
 
 /***/ }),
-/* 37 */
+/* 42 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /* WEBPACK VAR INJECTION */(function(global, process) {// Copyright Joyent, Inc. and other Node contributors.
@@ -11454,7 +11776,7 @@ function isPrimitive(arg) {
 }
 exports.isPrimitive = isPrimitive;
 
-exports.isBuffer = __webpack_require__(39);
+exports.isBuffer = __webpack_require__(44);
 
 function objectToString(o) {
   return Object.prototype.toString.call(o);
@@ -11498,7 +11820,7 @@ exports.log = function() {
  *     prototype.
  * @param {function} superCtor Constructor function to inherit prototype from.
  */
-exports.inherits = __webpack_require__(40);
+exports.inherits = __webpack_require__(45);
 
 exports._extend = function(origin, add) {
   // Don't do anything if add isn't an object
@@ -11516,10 +11838,10 @@ function hasOwnProperty(obj, prop) {
   return Object.prototype.hasOwnProperty.call(obj, prop);
 }
 
-/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(13), __webpack_require__(38)))
+/* WEBPACK VAR INJECTION */}.call(exports, __webpack_require__(15), __webpack_require__(43)))
 
 /***/ }),
-/* 38 */
+/* 43 */
 /***/ (function(module, exports) {
 
 // shim for using process in browser
@@ -11709,7 +12031,7 @@ process.umask = function() { return 0; };
 
 
 /***/ }),
-/* 39 */
+/* 44 */
 /***/ (function(module, exports) {
 
 module.exports = function isBuffer(arg) {
@@ -11720,7 +12042,7 @@ module.exports = function isBuffer(arg) {
 }
 
 /***/ }),
-/* 40 */
+/* 45 */
 /***/ (function(module, exports) {
 
 if (typeof Object.create === 'function') {
@@ -11749,7 +12071,7 @@ if (typeof Object.create === 'function') {
 
 
 /***/ }),
-/* 41 */
+/* 46 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;/*
@@ -12514,25 +12836,25 @@ var __WEBPACK_AMD_DEFINE_FACTORY__, __WEBPACK_AMD_DEFINE_RESULT__;/*
 })(this);
 
 /***/ }),
-/* 42 */
+/* 47 */
 /***/ (function(module, exports) {
 
 module.exports = "#version 300 es\r\nlayout (location = 0) in vec3 aPos;\r\nlayout (location = 1) in vec2 aTexCoord;\r\n\r\nout vec2 TexCoord;\r\n\r\nuniform mat4 model;\r\nuniform mat4 viewProjection;\r\n\r\nvoid main()\r\n{\r\n    gl_Position = viewProjection * model *  vec4(aPos,1.0f);\r\n    TexCoord = aTexCoord;\r\n}   "
 
 /***/ }),
-/* 43 */
+/* 48 */
 /***/ (function(module, exports) {
 
 module.exports = "#version 300 es\r\nprecision mediump  float;\r\nout vec4 FragColor;\r\n\r\nin vec2 TexCoord;\r\n\r\nuniform sampler2D texture1;\r\nuniform float ambient;\r\n\r\nvoid main()\r\n{\r\n    FragColor = vec4(ambient * texture(texture1, TexCoord).xyz,1.0);\r\n\r\n    //FragColor = vec4(1, 0.7, 0.5, 1); // set all 4 vector values to 1.0\r\n}"
 
 /***/ }),
-/* 44 */
+/* 49 */
 /***/ (function(module, exports) {
 
 module.exports = "#version 300 es\r\n\r\nuniform mat4 model_matrix;\r\nuniform mat4 view_matrix;\r\nuniform mat4 model_view_projection_matrix;\r\nuniform vec3 camera_pos;\r\n\r\nuniform bool tween_enabled;\r\nuniform float tween_factor;\r\n\r\nlayout (location = 0) in vec3 a_vertex;\r\nlayout (location = 1) in vec2 a_tex_coord;\r\nlayout (location = 2) in vec3 a_normal;\r\n\r\n\r\nout vec3 position;\r\nout vec2 tex_coord;\r\nout vec3 normal;\r\nout vec3 to_camera;\r\n\r\nvoid main()\r\n{\r\n//    vec3 new_normal = a_normal;\r\n//    vec3 new_vertex = a_vertex;\r\n//    if(tween_enabled)\r\n//\t{\r\n//\t\tnew_normal = mix(a_normal,a_normal1,tween_factor);      \r\n//        new_vertex = mix(a_vertex,a_vertex1,tween_factor);\r\n//    }\r\n\t\r\n\tvec4 world_position = model_matrix * vec4(a_vertex, 1.0);\r\n\r\n\tposition   = world_position.xyz;\r\n\ttex_coord = a_tex_coord;\r\n\tnormal    = mat3(transpose(inverse(model_matrix))) * a_normal;\r\n\tto_camera  = normalize(camera_pos - world_position.xyz);\r\n\r\n\tgl_Position = model_view_projection_matrix * vec4(a_vertex, 1.0);\r\n}\r\n"
 
 /***/ }),
-/* 45 */
+/* 50 */
 /***/ (function(module, exports) {
 
 module.exports = "#version 300 es\r\nprecision mediump  float;\r\n\r\nconst int LIGHT_COUNT = 8;\r\n\r\nstruct Material {\r\n\r\n    //Textures\r\n    bool is_texture_active[6];\r\n    sampler2D transparency_texture;\r\n    sampler2D emission_texture;\r\n    sampler2D ambient_texture;\r\n    sampler2D diffuse_texture;\r\n    sampler2D specular_texture;\r\n    sampler2D shininess_texture;\r\n            \r\n    //Colors\r\n    float transparency;\r\n    vec3 emission_colour;\r\n    vec3 ambient_colour;\r\n    vec3 diffuse_colour;\r\n    vec3 specular_colour;\r\n    float shininess;\r\n    int transparency_channel;\r\n    int shininess_channel;\r\n\r\n}; \r\nuniform Material material;\r\n\r\n\r\nstruct Light{\r\n    bool is_enabled;\r\n    vec4 position;\r\n    vec3 ambient;\r\n    vec3 diffuse;\r\n    vec3 specular;\r\n    vec3 attenuation;\r\n};\r\n\r\nuniform Light lights[LIGHT_COUNT];\r\n\r\nin vec3 position;\r\nin vec2 tex_coord;\r\nin vec3 normal;\r\nin vec3 to_camera;\r\n\r\nout vec4 FragColor;\r\n\r\nvoid main()\r\n{\r\n\r\n\r\n\tvec3 normalized_normal    = normalize(normal);\r\n\tvec3 normalized_to_camera = normalize(to_camera);\r\n\r\n\tfloat transparency_on_texture = texture(material.transparency_texture, tex_coord)[material.transparency_channel];\r\n\tvec3      emission_on_texture = texture(    material.emission_texture, tex_coord).rgb;\r\n\tvec3       ambient_on_texture = texture(     material.ambient_texture, tex_coord).rgb;\r\n\tvec3       diffuse_on_texture = texture(     material.diffuse_texture, tex_coord).rgb;\r\n\tvec3      specular_on_texture = texture(    material.specular_texture, tex_coord).rgb;\r\n\tfloat    shininess_on_texture = texture(   material.shininess_texture, tex_coord)[material.shininess_channel];\r\n\r\n\tfloat transparency2    = material.transparency;\r\n\tvec3  emission_surface = material.emission_colour;\r\n\tvec3   ambient_surface =  material.ambient_colour;\r\n\tvec3   diffuse_surface =  material.diffuse_colour;\r\n\tvec3  specular_surface = material.specular_colour;\r\n\tfloat shininess2       = material.shininess;\r\n\r\n\tif(material.is_texture_active[0]) transparency2    *= transparency_on_texture;\r\n\tif(material.is_texture_active[1]) emission_surface *=     emission_on_texture;\r\n\tif(material.is_texture_active[2])  ambient_surface *=      ambient_on_texture;\r\n\tif(material.is_texture_active[3])  diffuse_surface *=      diffuse_on_texture;\r\n\tif(material.is_texture_active[4]) specular_surface *=     specular_on_texture;\r\n\tif(material.is_texture_active[5]) shininess2       *=    shininess_on_texture;\r\n\r\n\tvec3 basic_colour      = emission_surface;\r\n\tvec4 seperate_specular = vec4(0.0, 0.0, 0.0, 0.0);\r\n\r\n\t// calculate the effects of each light\r\n\r\n\tfor(int i = 0; i < LIGHT_COUNT; i++)\r\n\t\tif(lights[i].is_enabled)\r\n\t\t{\r\n\t\t\tvec3 light_direction_from;\r\n\t\t\tfloat attenuation = 1.0;\r\n\t\t\tif(lights[i].position.w == 0.0)\r\n\t\t\t\tlight_direction_from = normalize(lights[i].position.xyz);\r\n\t\t\telse\r\n\t\t\t{\r\n\t\t\t\tvec3 offset_position = lights[i].position.xyz - position;\r\n\t\t\t\tlight_direction_from = normalize(offset_position);\r\n\t\t\t\tfloat light_distance = length(offset_position);\r\n\t\t\t\tattenuation = 1.0 / (lights[i].attenuation.x +\r\n\t\t\t\t                  lights[i].attenuation.y * light_distance +\r\n\t\t\t\t                    lights[i].attenuation.z * light_distance * light_distance);\r\n\t\t\t}\r\n\r\n\t\t\t//  Phong-Blinn shading\r\n\r\n\t\t\tvec3 half_angle_direction = normalize(normalized_to_camera + light_direction_from);\r\n\r\n\t\t\tfloat  ambient_intensity = attenuation;\r\n\t\t\tfloat  diffuse_intensity = attenuation *     max(0.0, dot(normalized_normal, light_direction_from));\r\n\t\t\tfloat specular_intensity = attenuation * pow(max(0.0, dot(normalized_normal, half_angle_direction)), shininess2);\r\n\r\n\t\t\tbasic_colour += ambient_surface * lights[i].ambient * ambient_intensity +\r\n\t\t\t                diffuse_surface * lights[i].diffuse * diffuse_intensity;\r\n\r\n\t\t\tvec3 specular_colour = specular_surface * lights[i].specular;\r\n//\t\t\tif(is_seperate_specular)\r\n//\t\t\t{\r\n//\t\t\t\tfloat specular_max = max(max(specular_colour.r, specular_colour.g), specular_colour.b);\r\n//\t\t\t\tif(specular_max > 0.0)\r\n//\t\t\t\t{\r\n//\t\t\t\t\tspecular_intensity *= specular_max;\r\n//\t\t\t\t\tspecular_colour    /= specular_max;\r\n//\r\n//\t\t\t\t\tseperate_specular = vec4(seperate_specular.rgb * seperate_specular.a +\r\n//\t\t\t\t\t                         specular_colour       * specular_intensity,\r\n//\t\t\t\t\t                         seperate_specular.a + specular_intensity);\r\n//\t\t\t\t}\r\n//\t\t\t\t// else no specular highlight\r\n//\t\t\t}\r\n//\t\t\telse\r\n\t\t\t\tbasic_colour += specular_colour * specular_intensity;\r\n\t\t}\r\n\r\n\t// calculate the final colour\r\n\r\n\tif(seperate_specular.a > 1.0)\r\n\t\tseperate_specular.a = 1.0;\r\n\r\n\tfloat basic_transparency = transparency2 * (1.0 - seperate_specular.a);\r\n\r\n\tif(basic_transparency + seperate_specular.a <= 0.0)\r\n\t\tdiscard;\r\n\r\n\tFragColor = vec4(basic_colour, basic_transparency) + seperate_specular;\r\n}\r\n"

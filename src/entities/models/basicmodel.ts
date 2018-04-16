@@ -77,7 +77,7 @@ export class BasicModel {
 
         this.textures = [];
 
-
+        this.initAllTextures(gl);
         this.initialized = true;
     }
 

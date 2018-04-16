@@ -33,7 +33,9 @@ export class Renderer {
         }
 
         for (var key in model.mesh.materialNames) {
+         
             if (this.materials.get(model.mesh.materialNames[key]) === undefined) {
+                if( model.mesh.materialsByIndex[key] === undefined) throw "Missing material on model";
                 this.materials.set(model.mesh.materialNames[key], model.mesh.materialsByIndex[key]);
             }
         }
@@ -144,6 +146,7 @@ export class Renderer {
                         mat4.translate(model_matrix, model_matrix, entities_to_draw[i].position);
                         //Rotate model to face away from camera
                         mat4.rotateY(model_matrix, model_matrix, Math.atan2(entities_to_draw[i].forward[0] + model.rotation_offset[0], entities_to_draw[i].forward[2]) + model.rotation_offset[2]);
+                        
                         //Scale
                         mat4.scale(model_matrix, model_matrix, entities_to_draw[i].scalar);
                         //Set matrices in shader
