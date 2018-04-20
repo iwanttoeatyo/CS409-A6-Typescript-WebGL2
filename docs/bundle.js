@@ -4876,6 +4876,8 @@ const playerOriginRotation = gl_matrix_1.vec3.fromValues(1, 0, 0);
 const PLAYER_CAMERA_OFFSET = gl_matrix_1.vec3.fromValues(0, player_1.Player.half_height, 0);
 let keys = [];
 let mouseKeys = [];
+let mouseXTotal = 0;
+let mouseYTotal = 0;
 let fpsCounter = document.getElementById('fpscounter');
 let score_element = document.getElementById('score');
 let playerCamera = new camera_1.Camera(gl_matrix_1.vec3.fromValues(0, 1.6, 0), gl_matrix_1.vec3.fromValues(0, 1, 0), 0);
@@ -4919,8 +4921,8 @@ class Main {
                 e.mozMovementY ||
                 e.webkitMovementY ||
                 0;
-            this.player.rotate(-movementX / 600);
-            playerCamera.processMouseMovement(this.player.forward, this.player.position, movementX, -movementY, true);
+            mouseXTotal += movementX;
+            mouseYTotal += movementY;
         };
         canvas = document.getElementById("canvas");
         this.initGL();
@@ -5025,6 +5027,42 @@ class Main {
      */
     update(delta) {
         delta /= 1000;
+        if (keys[40] || keys[83]) {
+            //     camera.processKeyboard(Camera_Movement.BACKWARD, delta);
+            this.player.move(player_1.Player_Movement.BACKWARD, delta);
+        }
+        else if ((keys[38] || keys[87]) || (mouseKeys[1] && mouseKeys[3])) {
+            //     camera.processKeyboard(Camera_Movement.FORWARD, delta);
+            this.player.move(player_1.Player_Movement.FORWARD, delta);
+        }
+        if (keys[65]) {
+            //   camera.processKeyboard(Camera_Movement.LEFT, delta);
+            this.player.move(player_1.Player_Movement.LEFT, delta);
+        }
+        else if (keys[68]) {
+            //   camera.processKeyboard(Camera_Movement.RIGHT, delta);
+            this.player.move(player_1.Player_Movement.RIGHT, delta);
+        }
+        if (keys[37]) {
+            this.player.rotate(delta);
+        }
+        if (keys[39]) {
+            this.player.rotate(-delta);
+        }
+        if (keys[82]) {
+            gl_matrix_1.vec3.copy(this.player.position, playerOrigin);
+            gl_matrix_1.vec3.copy(this.player.forward, playerOriginRotation);
+        }
+        if (keys[79]) {
+            activeCamera = worldCamera;
+        }
+        else {
+            activeCamera = playerCamera;
+        }
+        this.player.rotate(-mouseXTotal / 600);
+        playerCamera.processMouseMovement(this.player.forward, this.player.position, mouseXTotal, -mouseYTotal, true);
+        mouseXTotal = 0;
+        mouseYTotal = 0;
         let height = this.world.getHeightAtCirclePosition(this.player.position[0], this.player.position[2], player_1.Player.radius);
         this.player.position[1] = height + player_1.Player.half_height;
         this.world.update(delta);
@@ -5035,53 +5073,18 @@ class Main {
         playerCamera.front[2] = this.player.forward[2];
         playerCamera.up = this.player.up;
         let new_cam_position = gl_matrix_1.vec3.clone(this.player.position);
-        new_cam_position[0] -= 4.0 * this.player.forward[0];
-        new_cam_position[2] -= 4.0 * this.player.forward[2];
+        new_cam_position[0] -= 2.0 * this.player.forward[0];
+        new_cam_position[2] -= 2.0 * this.player.forward[2];
         gl_matrix_1.vec3.add(new_cam_position, new_cam_position, PLAYER_CAMERA_OFFSET);
-        playerCamera.position = new_cam_position;
+        gl_matrix_1.vec3.copy(playerCamera.position, new_cam_position);
     }
     /**
      * Called once per frame before update and draw
      */
     begin(timestamp, delta) {
         delta /= 1000;
-        if (is_mobile) {
+        if (is_mobile)
             this.doDemo(delta);
-        }
-        else {
-            if (keys[40] || keys[83]) {
-                //     camera.processKeyboard(Camera_Movement.BACKWARD, delta);
-                this.player.move(player_1.Player_Movement.BACKWARD, delta);
-            }
-            else if ((keys[38] || keys[87]) || (mouseKeys[1] && mouseKeys[3])) {
-                //     camera.processKeyboard(Camera_Movement.FORWARD, delta);
-                this.player.move(player_1.Player_Movement.FORWARD, delta);
-            }
-            if (keys[65]) {
-                //   camera.processKeyboard(Camera_Movement.LEFT, delta);
-                this.player.move(player_1.Player_Movement.LEFT, delta);
-            }
-            else if (keys[68]) {
-                //   camera.processKeyboard(Camera_Movement.RIGHT, delta);
-                this.player.move(player_1.Player_Movement.RIGHT, delta);
-            }
-            if (keys[37]) {
-                this.player.rotate(delta);
-            }
-            if (keys[39]) {
-                this.player.rotate(-delta);
-            }
-            if (keys[82]) {
-                gl_matrix_1.vec3.copy(this.player.position, playerOrigin);
-                gl_matrix_1.vec3.copy(this.player.forward, playerOriginRotation);
-            }
-            if (keys[79]) {
-                activeCamera = worldCamera;
-            }
-            else {
-                activeCamera = playerCamera;
-            }
-        }
     }
     /**
      * @param {Number} interpolationPercentage
@@ -5090,16 +5093,11 @@ class Main {
     draw(interpolationPercentage) {
         this.resize();
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-        //Move camera behind player
-        playerCamera.position[0] = this.player.position[0];
-        playerCamera.position[2] = this.player.position[2];
-        playerCamera.position[0] -= 2 * this.player.forward[0];
-        playerCamera.position[2] -= 2 * this.player.forward[2];
         //Setup view and projection
         let projection_matrix = gl_matrix_1.mat4.create();
         gl_matrix_1.mat4.identity(projection_matrix);
         let view_matrix = activeCamera.getViewMatrix();
-        gl_matrix_1.mat4.perspective(projection_matrix, gl_matrix_1.glMatrix.toRadian(80), canvas.width / canvas.height, 0.1, 10000);
+        gl_matrix_1.mat4.perspective(projection_matrix, gl_matrix_1.glMatrix.toRadian(80), canvas.clientWidth / canvas.clientHeight, 0.1, 2000);
         let model = gl_matrix_1.mat4.create();
         //Draw Skybox
         gl.disable(gl.DEPTH_TEST);
@@ -5151,7 +5149,7 @@ class Main {
         let min = Math.min(window.innerHeight, window.innerWidth);
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
-        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     }
     initPointerLock() {
         let _canvas = canvas;
@@ -9370,7 +9368,7 @@ const playermodel_1 = __webpack_require__(24);
 const basicmodel_1 = __webpack_require__(2);
 const entity_1 = __webpack_require__(4);
 let OBJ = __webpack_require__(3);
-const SPEED = 20;
+const SPEED = 10;
 var Player_Movement;
 (function (Player_Movement) {
     Player_Movement[Player_Movement["FORWARD"] = 0] = "FORWARD";

@@ -264,7 +264,7 @@ class Main {
         let projection_matrix = mat4.create();
         mat4.identity(projection_matrix);
         let view_matrix = activeCamera.getViewMatrix();
-        mat4.perspective(projection_matrix, glMatrix.toRadian(80), canvas.width / canvas.height, 0.1, 10000);
+        mat4.perspective(projection_matrix, glMatrix.toRadian(80), canvas.clientWidth / canvas.clientHeight, 0.1, 2000);
 
         let model = mat4.create();
 
