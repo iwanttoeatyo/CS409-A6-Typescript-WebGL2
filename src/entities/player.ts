@@ -8,7 +8,7 @@ import {Entity, Model_Type} from "./entity";
 
 let OBJ = require("../lib/OBJ/index.js");
 
-const SPEED = 20;
+const SPEED = 10;
 
 export enum Player_Movement {
     FORWARD,

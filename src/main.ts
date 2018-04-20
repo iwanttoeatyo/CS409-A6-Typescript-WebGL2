@@ -25,10 +25,12 @@ let basicModelRenderer: Renderer;
 
 const playerOrigin = vec3.fromValues(0, 0.8, 0);
 const playerOriginRotation = vec3.fromValues(1, 0, 0);
-const PLAYER_CAMERA_OFFSET = vec3.fromValues(0,Player.half_height, 0);
+const PLAYER_CAMERA_OFFSET = vec3.fromValues(0, Player.half_height, 0);
 
 let keys: boolean[] = [];
 let mouseKeys: boolean[] = [];
+let mouseXTotal: number = 0;
+let mouseYTotal: number = 0;
 
 let fpsCounter = document.getElementById('fpscounter');
 let score_element = document.getElementById('score');
@@ -124,13 +126,13 @@ class Main {
             basicModelRenderer.addEntityToRenderList(disk.heightMapEntity);
         });
 
-        this.world.pickup_manager.rings.forEach(ring=>{
+        this.world.pickup_manager.rings.forEach(ring => {
             basicModelRenderer.addEntityToRenderList(ring);
         });
-        this.world.pickup_manager.rods.forEach(rod=>{
+        this.world.pickup_manager.rods.forEach(rod => {
             basicModelRenderer.addEntityToRenderList(rod);
         });
-        
+
         loading.remove();
         let end = Date.now();
         console.log("total time: " + (end - start) / 1000 + "s");
@@ -172,24 +174,66 @@ class Main {
      */
     update(delta) {
         delta /= 1000;
-        let height = this.world.getHeightAtCirclePosition(this.player.position[0],this.player.position[2], Player.radius);
+
+        if (keys[40] || keys[83]) {
+            //     camera.processKeyboard(Camera_Movement.BACKWARD, delta);
+            this.player.move(Player_Movement.BACKWARD, delta);
+        } else if ((keys[38] || keys[87]) || (mouseKeys[1] && mouseKeys[3])) {
+            //     camera.processKeyboard(Camera_Movement.FORWARD, delta);
+            this.player.move(Player_Movement.FORWARD, delta);
+        }
+        if (keys[65]) {
+            //   camera.processKeyboard(Camera_Movement.LEFT, delta);
+            this.player.move(Player_Movement.LEFT, delta);
+        } else if (keys[68]) {
+            //   camera.processKeyboard(Camera_Movement.RIGHT, delta);
+            this.player.move(Player_Movement.RIGHT, delta);
+        }
+
+        if (keys[37]) {
+            this.player.rotate(delta);
+        }
+        if (keys[39]) {
+            this.player.rotate(-delta);
+
+        }
+
+        if (keys[82]) {
+            vec3.copy(this.player.position, playerOrigin);
+            vec3.copy(this.player.forward, playerOriginRotation);
+        }
+
+        if (keys[79]) {
+            activeCamera = worldCamera;
+        } else {
+            activeCamera = playerCamera;
+        }
+
+        this.player.rotate(-mouseXTotal / 600);
+        playerCamera.processMouseMovement(this.player.forward, this.player.position, mouseXTotal, -mouseYTotal, true);
+        mouseXTotal = 0;
+        mouseYTotal = 0;
+        
+        let height = this.world.getHeightAtCirclePosition(this.player.position[0], this.player.position[2], Player.radius);
         this.player.position[1] = height + Player.half_height;
-        
+
         this.world.update(delta);
-        this.world.pickup_manager.checkForPickupsCylinderIntersection(this.player.position,Player.radius,Player.half_height, basicModelRenderer);
-        
+        this.world.pickup_manager.checkForPickupsCylinderIntersection(this.player.position, Player.radius, Player.half_height, basicModelRenderer);
+
         //console.log(this.player.position[0] + ", " + this.player.position[1] + ", " + this.player.position[2] );
 
         playerCamera.front[0] = this.player.forward[0];
         //playerCamera.front[1] = 1;
         playerCamera.front[2] = this.player.forward[2];
         playerCamera.up = this.player.up;
-        
+
         let new_cam_position = vec3.clone(this.player.position);
-        new_cam_position[0] -= 4.0 * this.player.forward[0];
-        new_cam_position[2] -= 4.0 * this.player.forward[2];
-        vec3.add(new_cam_position,new_cam_position,PLAYER_CAMERA_OFFSET);
-        playerCamera.position = new_cam_position;
+        new_cam_position[0] -= 2.0 * this.player.forward[0];
+        new_cam_position[2] -= 2.0 * this.player.forward[2];
+        vec3.add(new_cam_position, new_cam_position, PLAYER_CAMERA_OFFSET);
+        vec3.copy(playerCamera.position, new_cam_position);
+
+
     }
 
     /**
@@ -198,43 +242,9 @@ class Main {
     begin(timestamp, delta) {
         delta /= 1000;
 
-        if (is_mobile) {
+        if (is_mobile)
             this.doDemo(delta);
-        } else {
-            if (keys[40] || keys[83]) {
-                //     camera.processKeyboard(Camera_Movement.BACKWARD, delta);
-                this.player.move(Player_Movement.BACKWARD, delta);
-            } else if ((keys[38] || keys[87]) || (mouseKeys[1] && mouseKeys[3])) {
-                //     camera.processKeyboard(Camera_Movement.FORWARD, delta);
-                this.player.move(Player_Movement.FORWARD, delta);
-            }
-            if (keys[65]) {
-                //   camera.processKeyboard(Camera_Movement.LEFT, delta);
-                this.player.move(Player_Movement.LEFT, delta);
-            } else if (keys[68]) {
-                //   camera.processKeyboard(Camera_Movement.RIGHT, delta);
-                this.player.move(Player_Movement.RIGHT, delta);
-            }
 
-            if (keys[37]) {
-                this.player.rotate(delta);
-            }
-            if (keys[39]) {
-                this.player.rotate(-delta);
-
-            }
-
-            if (keys[82]) {
-                vec3.copy(this.player.position, playerOrigin);
-                vec3.copy(this.player.forward, playerOriginRotation);
-            }
-
-            if (keys[79]) {
-                activeCamera = worldCamera;
-            } else {
-                activeCamera = playerCamera;
-            }
-        }
 
 
     }
@@ -248,13 +258,6 @@ class Main {
 
         this.resize();
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
-
-        //Move camera behind player
-        playerCamera.position[0] = this.player.position [0];
-        playerCamera.position[2] = this.player.position[2];
-        playerCamera.position[0] -= 2 * this.player.forward[0];
-        playerCamera.position[2] -= 2 * this.player.forward[2];
 
 
         //Setup view and projection
@@ -318,11 +321,11 @@ class Main {
     doDemo(delta: number) {
         demo_ticker++;
         this.player.move(Player_Movement.FORWARD, delta / 2);
-       
-            this.player.rotate(delta / 8);
-            playerCamera.front[0] = this.player.forward[0];
-            playerCamera.front[2] = this.player.forward[2];
-        
+
+        this.player.rotate(delta / 8);
+        playerCamera.front[0] = this.player.forward[0];
+        playerCamera.front[2] = this.player.forward[2];
+
     }
 
     resize(): void {
@@ -330,7 +333,7 @@ class Main {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
 
-        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     }
 
 
@@ -392,8 +395,9 @@ class Main {
             e.mozMovementY ||
             e.webkitMovementY ||
             0;
-        this.player.rotate(-movementX / 600);
-        playerCamera.processMouseMovement(this.player.forward, this.player.position, movementX, -movementY, true);
+        mouseXTotal += movementX;
+        mouseYTotal += movementY;
+
     }
 
 }
