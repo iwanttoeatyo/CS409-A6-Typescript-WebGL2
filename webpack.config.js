@@ -2,6 +2,7 @@ const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
 const ImageminPlugin = require('imagemin-webpack-plugin').default;
+const UglifyJsPlugin = require("uglifyjs-webpack-plugin");
 
 module.exports = {
 	entry: './src/main.ts',
@@ -11,7 +12,6 @@ module.exports = {
 		publicPath: ''
 	},
 	plugins: [
-	
 		new HtmlWebpackPlugin({
 				title: 'CS409 A3 Typescript WebGL2',
 				filename: 'index.html',
@@ -19,14 +19,28 @@ module.exports = {
 			}
 		),
 		new CopyWebpackPlugin([
-			{from: 'assets', to: 'assets'}
+			{from: 'assets',
+				to: 'assets',
+				ignore: [ '*.bmp' ]
+			}
 		]),
 		new ImageminPlugin(
-			{test: /\.(jpe?g|png|gif|svg)$/i,
+			{
+				test: /\.(jpe?g|png|gif|svg)$/i,
 				jpegtran: {
 					progressive: true
-				}}
-		)
+				}
+			}
+		), new UglifyJsPlugin({
+			uglifyOptions: {
+				sourceMap: true,
+				compress: {
+					ecma: 6,
+					warnings: false
+				},
+				output: {comments: false}
+			}
+		})
 	],
 	resolve: {
 		modules: [
