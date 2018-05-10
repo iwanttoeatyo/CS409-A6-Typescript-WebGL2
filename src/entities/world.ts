@@ -4,11 +4,11 @@ import {DiskModel} from "./models/diskmodel";
 let OBJ = require("../lib/OBJ/index.js");
 import {Mesh} from "../lib/OBJ/index.js";
 import {MaterialLibrary} from "../lib/OBJ/index.js";
-import {Shader} from "../shader";
+
 import {mat4, vec3} from "gl-matrix";
 import {Collision} from "../collision";
 import {Random} from "../random";
-import {PickupManager} from "../pickupmanager";
+
 import {BasicModel} from "./models/basicmodel";
 
 
@@ -26,6 +26,10 @@ export interface WorldMeshes {
 }
 
 export class World {
+    static world_meshes: WorldMeshes;
+    static world_mat_lib: MaterialLibrary;
+    static loaded: boolean;
+
     public readonly diskAModel: DiskModel;
     public readonly diskBModel: DiskModel;
     public readonly diskCModel: DiskModel;
@@ -33,37 +37,38 @@ export class World {
     public readonly diskEModel: DiskModel;
     public readonly rod_model: BasicModel;
     public readonly ring_model: BasicModel;
-    private readonly world_radius: number;
-    public pickup_manager: PickupManager = new PickupManager();
 
-    disks: Array<Disk> = [];
+    private world_radius: number;
 
-    public constructor(gl: WebGL2RenderingContext, worldData: string, meshes: WorldMeshes, mat: MaterialLibrary, pickup_meshes: PickupMeshes) {
-        meshes.DiskA.addMaterialLibrary(mat);
-        meshes.DiskB.addMaterialLibrary(mat);
-        meshes.DiskC.addMaterialLibrary(mat);
-        meshes.DiskD.addMaterialLibrary(mat);
-        meshes.DiskE.addMaterialLibrary(mat);
+    public disks: Array<Disk> = [];
 
-        this.diskAModel = new DiskModel(meshes.DiskA);
-        this.diskBModel = new DiskModel(meshes.DiskB);
-        this.diskCModel = new DiskModel(meshes.DiskC);
-        this.diskDModel = new DiskModel(meshes.DiskD);
-        this.diskEModel = new DiskModel(meshes.DiskE);
-        this.rod_model = new BasicModel(pickup_meshes.Rod);
-        this.ring_model = new BasicModel(pickup_meshes.Ring);
+    public constructor(gl: WebGL2RenderingContext, worldData: string) {
+        if (!World.loaded) throw "World loadAssets must be called before constructor.";
+
+        World.world_meshes.DiskA.addMaterialLibrary(World.world_mat_lib);
+        World.world_meshes.DiskB.addMaterialLibrary(World.world_mat_lib);
+        World.world_meshes.DiskC.addMaterialLibrary(World.world_mat_lib);
+        World.world_meshes.DiskD.addMaterialLibrary(World.world_mat_lib);
+        World.world_meshes.DiskE.addMaterialLibrary(World.world_mat_lib);
+
+        this.diskAModel = new DiskModel(World.world_meshes.DiskA);
+        this.diskBModel = new DiskModel(World.world_meshes.DiskB);
+        this.diskCModel = new DiskModel(World.world_meshes.DiskC);
+        this.diskDModel = new DiskModel(World.world_meshes.DiskD);
+        this.diskEModel = new DiskModel(World.world_meshes.DiskE);
+
 
         this.diskAModel.init(gl);
         this.diskBModel.init(gl);
         this.diskCModel.init(gl);
         this.diskDModel.init(gl);
         this.diskEModel.init(gl);
-        this.rod_model.init(gl);
-        this.ring_model.init(gl);
 
-        this.pickup_manager.init(this, this.rod_model, this.ring_model);
+        this.init(gl, worldData);
+    }
 
-        const lines = worldData.split('\n');
+    public init(gl: WebGL2RenderingContext, world_data: string): void {
+        const lines = world_data.split('\n');
 
         if (lines[0].indexOf("version 1") == -1) console.warn("Can't read Disk World File");
 
@@ -105,14 +110,16 @@ export class World {
         }
         this.disks.forEach(disk => {
             disk.init(gl);
-            let pos = vec3.fromValues(disk.position[0], disk.getHeightAtPosition(disk.position[0], disk.position[2]), disk.position[2]);
-            this.pickup_manager.addRod(pos, disk.type + 1);
-            this.pickup_manager.addRing(pos);
-        })
+        });
     }
 
+    public destroy():void{
+        delete this.disks;
+        
+    }
+    
     public update(delta_time_ms: number): void {
-        this.pickup_manager.update(delta_time_ms);
+ 
     }
 
     public draw(gl: WebGL2RenderingContext, view_matrix: mat4, projection_matrix: mat4): void {
@@ -142,32 +149,26 @@ export class World {
 
     public getHeightAtCirclePosition(x: number, z: number, r: number): number {
         for (let i = 0; i < this.disks.length; i++) {
-            if (Collision.circleIntersection(x, z, r, this.disks[i].position[0], this.disks[i].position[2], this.disks[i].radius)){
+            if (Collision.circleIntersection(x, z, r, this.disks[i].position[0], this.disks[i].position[2], this.disks[i].radius)) {
                 return this.disks[i].getHeightAtPosition(x, z);
             }
-                
+
         }
         //No collision with a disk
         return 0.0;
     }
 
-
-    public static async loadPickupMeshes(): Promise<PickupMeshes> {
-        return OBJ.downloadModels([
-            {
-                name: 'Ring',
-                obj: "/assets/models/environment/ring/Ring.obj",
-                mtl: "/assets/models/environment/ring/Ring.mtl"
-            },
-            {
-                name: 'Rod',
-                obj: "/assets/models/environment/rod/Rod.obj",
-                mtl: "/assets/models/environment/rod/Rod.mtl"
-            }
-        ])
+    
+    
+    public static async loadAssets(): Promise<void> {
+        this.world_meshes =  await this.loadWorldMeshes();
+        this.world_mat_lib = await this.loadWorldMat();
+        this.loaded = true; 
+        return;
     }
 
-    public static async loadWorldMeshes(): Promise<WorldMeshes> {
+
+    private static async loadWorldMeshes(): Promise<WorldMeshes> {
         return OBJ.downloadModels([
             {
                 name: 'DiskA',
@@ -196,15 +197,12 @@ export class World {
             }]);
     }
 
-    public static async loadWorldMat(): Promise<MaterialLibrary> {
+    private static async loadWorldMat(): Promise<MaterialLibrary> {
         let mat = new MaterialLibrary(require('../../assets/models/environment/disks/Disks.mtl'));
         await OBJ.downloadMtlTextures(mat,
             window.location.href.substr(0, window.location.href.lastIndexOf("/")) + '/assets/models/environment/disks/');
         return mat;
     }
 
-    public static async loadWorldData(): Promise<string> {
-        return require('../../assets/worlds/maps/Basic.txt');
-    }
 
 }

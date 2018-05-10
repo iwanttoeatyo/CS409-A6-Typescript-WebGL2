@@ -1,7 +1,8 @@
 <html>
 <head>
 	<link rel="shortcut icon" href="assets/Disks.ico"/>
-</head>n
+</head>
+n
 <body>
 
 <style>
@@ -16,7 +17,7 @@
 	}
 
 	html, body {
-		font-family: Arial,sans-serif;
+		font-family: Arial, sans-serif;
 		font-size: 20px;
 		height: 100%;
 		letter-spacing: 0.5px;
@@ -42,7 +43,7 @@
 	}
 
 	#fpscounter {
-		z-index:2147483647;
+		z-index: 2147483647;
 		color: greenyellow;
 		top: 10px;
 		display: block;
@@ -51,7 +52,7 @@
 	}
 
 	#score {
-		z-index:2147483647;
+		z-index: 2147483647;
 		color: white;
 		top: 10px;
 		display: block;
@@ -60,22 +61,24 @@
 		font-size: 2em;
 	}
 
-	#loading {
-		position: absolute;
-		top: 50%;
+	#loading-container {
+		position: relative;
 		left: 50%;
-		margin-top: -20px;
-		margin-left: -150px;
-		width: 300px;
-		height: 40px;
-		font-size: 1em;
-	}​
+		top: 50%;
+		float: left;
+	}
 	
+	#loading-text {
+		position: relative;
+		left: -50%;
+		float: left;
+		font-size: 1em;
+	}
 
 </style>
-	<canvas id="canvas" width="800" height="600"></canvas>
+<canvas id="canvas" width="800" height="600"></canvas>
 <div id="fpscounter">0 FPS</div>
 <div id="score"></div>
-<div id ="loading"></div>
+<div id="loading-container"><span id="loading-text"></span></div>
 <script type="text/javascript" src="bundle.js"></script></body>
 </html>

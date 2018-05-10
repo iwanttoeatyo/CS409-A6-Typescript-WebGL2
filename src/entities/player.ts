@@ -17,20 +17,27 @@ export enum Player_Movement {
     RIGHT
 }
 
-export class Player  extends Entity{
-    model: PlayerModel;
+interface Player_Mesh {
+    cbabe:Mesh;
+}
+
+export class Player extends Entity {
+    static readonly PLAYER_FILENAME: string = "/assets/models/actors/cbabe/cbabe";
+    static model: PlayerModel;
+    static loaded: boolean;
     up: vec3;
     static readonly radius = 0.25;
     static readonly half_height = 0.8;
 
-    constructor(gl: WebGL2RenderingContext, mesh: Mesh, pos: vec3) {
-        super(mesh.name, Model_Type.BASIC, pos, vec3.fromValues(0,0,-1));
-        this.model = new PlayerModel(mesh);
-        this.model.rotation_offset = vec3.fromValues(0,0,- Math.PI / 2);
-        this.model.init(gl);
+    constructor(gl: WebGL2RenderingContext, pos: vec3) {
+        if (!Player.loaded) throw "Player load must be called before constructor";
+        super(Player.model.mesh.name, Model_Type.BASIC, pos, vec3.fromValues(0, 0, -1));
+
+        Player.model.rotation_offset = vec3.fromValues(0, 0, -Math.PI / 2);
+        Player.model.init(gl);
         this.up = vec3.fromValues(0, 1, 0);
     }
- 
+
 
     rotate(angle: number): void {
         vec3.rotateY(this.forward, this.forward, [0, 0, 0], angle * 2);
@@ -69,20 +76,23 @@ export class Player  extends Entity{
         mat4.translate(model, model, this.position);
         //Rotate model to face away from camera
         mat4.rotateY(model, model, Math.atan2(this.forward[0], this.forward[2]) - Math.PI / 2);
-        BasicModel.setMVPMatrices(model,view_matrix,projection_matrix);
-        this.model.draw(gl);
+        BasicModel.setMVPMatrices(model, view_matrix, projection_matrix);
+        Player.model.draw(gl);
 
 
     }
 
-    static async loadMesh() {
-        return OBJ.downloadModels([
-            {
-                name: 'cbabe',
-                obj: "/assets/models/actors/cbabe/cbabe_stand.obj",
-                mtl: "/assets/models/actors/cbabe/cbabe.mtl"
-            }
-        ]);
+    static async load(): Promise<void> {
+       let mesh = await OBJ.downloadModels(
+           [{
+               name: 'cbabe',
+               obj: this.PLAYER_FILENAME + "_stand.obj",
+               mtl: this.PLAYER_FILENAME + ".mtl"
+           }]);
+        
+        Player.model = new PlayerModel(mesh.cbabe);
+        Player.loaded = true;
+        return;
     }
 
 }

@@ -7,15 +7,15 @@ export class SkyboxModel extends BasicModel {
         super(mesh);
     }
 
-    init(gl: WebGL2RenderingContext) {
-        super.init(gl);
-
-     
-        //Initialize the textures: side tex, side black, top tex
-        if (!this.initTexture(gl, 0, true)) {
-            console.warn("Skybox model texture 0 wasn't downloaded")
-        }
-    }
+    // init(gl: WebGL2RenderingContext) {
+    //     super.init(gl);
+    //
+    // 
+    //     //Initialize the textures: side tex, side black, top tex
+    //     if (!this.initTexture(gl, 0, true)) {
+    //         console.warn("Skybox model texture 0 wasn't downloaded")
+    //     }
+    // }
 
     
     draw(gl:WebGL2RenderingContext){

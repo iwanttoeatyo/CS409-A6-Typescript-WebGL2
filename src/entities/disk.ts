@@ -1,11 +1,8 @@
 import {DiskModel} from "./models/diskmodel";
 import {mat4, vec2, vec3} from "gl-matrix";
 import {BasicModel} from "./models/basicmodel";
-import {Shader} from "../shader";
 import {MeshlessModel} from "./models/meshlessmodel";
-
 import {Noisefield} from "../noisefield";
-import {version} from "punycode";
 import {Entity, Model_Type} from "./entity";
 import {MathHelper} from "../mathhelper";
 import {Random} from "../random";

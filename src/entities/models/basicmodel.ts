@@ -25,7 +25,8 @@ export class BasicModel {
 
     static initWithShader(gl: WebGL2RenderingContext, shader: BasicModelShader) {
         this.shader= shader;
-
+    
+        shader.use();
         gl.bindAttribLocation(shader.ID, 0, "a_vertex");
         gl.bindAttribLocation(shader.ID, 1, "a_tex_coord");
         gl.bindAttribLocation(shader.ID, 2, "a_normal");
@@ -150,6 +151,8 @@ export class BasicModel {
         this.textures[texture_num] = texture;
     }
 
+    
+    
     draw(gl: WebGL2RenderingContext) {
         this.activateBuffers(gl);
 

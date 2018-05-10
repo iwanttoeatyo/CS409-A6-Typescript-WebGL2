@@ -17,17 +17,24 @@ export class PickupManager {
 
     private score: number;
 
-    public constructor() {
-
-    };
-
-    public init(w: World, rod: BasicModel, ring: BasicModel): void {
-        this.score = 0;
+    public constructor(w: World, rod: BasicModel, ring: BasicModel) {
         this.world = w;
         this.rod_model = rod;
         this.ring_model = ring;
+        this.init();
+    };
+
+    public init(): void {
+        this.score = 0;
         this.rings = [];
         this.rods = [];
+        
+        this.world.disks.forEach( disk =>{
+            let pos:vec3 = vec3.clone(disk.position);
+            pos[1] = this.world.getHeightAtPointPosition(pos[0],pos[2]);
+            this.addRod(pos,disk.type + 1);
+            this.addRing(pos);
+        })
     }
 
     public update(delta_time_ms: number): void {
@@ -69,9 +76,4 @@ export class PickupManager {
         return this.score;
     }
     
-    public destroy(): void {
-        this.rings = [];
-        this.rods = [];
-        this.score = 0;
-    }
 }

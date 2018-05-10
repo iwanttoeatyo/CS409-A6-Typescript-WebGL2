@@ -4,6 +4,8 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 const ImageminPlugin = require('imagemin-webpack-plugin').default;
 const UglifyJsPlugin = require("uglifyjs-webpack-plugin");
 
+let PROD = (process.env.NODE_ENV.trim() === 'production');
+
 module.exports = {
 	entry: './src/main.ts',
 	output: {
@@ -31,16 +33,7 @@ module.exports = {
 					progressive: true
 				}
 			}
-		), new UglifyJsPlugin({
-			uglifyOptions: {
-				sourceMap: true,
-				compress: {
-					ecma: 6,
-					warnings: false
-				},
-				output: {comments: false}
-			}
-		})
+		)
 	],
 	resolve: {
 		modules: [
@@ -73,3 +66,15 @@ module.exports = {
 	devtool: "source-map"
 };
 
+if(PROD){
+	module.exports.plugins.push(new UglifyJsPlugin({
+		uglifyOptions: {
+			sourceMap: true,
+			compress: {
+				ecma: 6,
+				warnings: false
+			},
+			output: {comments: false}
+		}
+	}));
+}
