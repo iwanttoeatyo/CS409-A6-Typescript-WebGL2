@@ -3,6 +3,8 @@ src/**/*.js
 src/*.js
 src/*.map
 !src/lib/**
+src/lib/guid/*.js
+src/lib/guid/*.map
 .idea/
 dist/
 node_modules/

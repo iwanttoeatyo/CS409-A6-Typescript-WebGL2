@@ -1,5 +1,5 @@
 import {vec3, vec4} from "gl-matrix";
-import {Guid} from "../lib/guid";
+import {Guid} from "../lib/guid/guid";
 
 export enum Model_Type {
     BASIC = 0,
