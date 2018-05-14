@@ -20,39 +20,39 @@ const ICY_SIZE = 48;
 const SANDY_SIZE = 64;
 const GREY_ROCK_SIZE = 80;
 
-export class Disk extends Entity{
-    initialized : boolean;
+export class Disk extends Entity {
+    initialized: boolean;
     model: BasicModel;
     heightMapModel: MeshlessModel;
-    heightMapEntity:Entity;
+    heightMapEntity: Entity;
     heightMap: number[][];
     radius: number;
     type: Terrain;
     heightMapSize: number;
     static height_map_model_gen_count = 0;
-    
+
     constructor(disk_model: BasicModel, type: Terrain, radius: number, x: number, y: number, z: number) {
-        super( disk_model.mesh.name, Model_Type.BASIC, vec3.fromValues(x,y,z),vec3.fromValues(0,0,0), vec3.fromValues(radius,1,radius));
+        super(disk_model.mesh.name, Model_Type.BASIC, vec3.fromValues(x, y, z), vec3.fromValues(0, 0, 0), vec3.fromValues(radius, 1, radius));
         if (!disk_model.initialized) throw "DiskModel was not initialized";
         this.model = disk_model;
         this.radius = radius;
         this.type = type;
         this.initialized = false;
- 
+
     }
 
     init(gl: WebGL2RenderingContext) {
         this.generateHeightMapModels(gl);
         this.heightMapModel.init(gl);
         let corner = this.radius * Math.SQRT2 / 2;
-        let scale =vec3.fromValues(corner * 2 / this.heightMapSize,1,corner * 2 / this.heightMapSize);
+        let scale = vec3.fromValues(corner * 2 / this.heightMapSize, 1, corner * 2 / this.heightMapSize);
         let position = vec3.fromValues(this.position[0], this.position[1] + 0.0001, this.position[2]);
-        this.heightMapEntity = new Entity(this.heightMapModel.name,Model_Type.MESHLESS, position, this.forward, scale);
+        this.heightMapEntity = new Entity(this.heightMapModel.name, Model_Type.MESHLESS, position, this.forward, scale);
         Disk.height_map_model_gen_count++;
         this.initialized = true;
     }
 
-   
+
     private generateHeightMapModels(gl: WebGL2RenderingContext) {
         switch (this.type) {
             case Terrain.RED_ROCK:
@@ -98,7 +98,7 @@ export class Disk extends Entity{
                 verts[count++] = 0;
                 verts[count++] = 0;
                 verts[count++] = 0;
-               
+
 
             }
         }
@@ -160,7 +160,7 @@ export class Disk extends Entity{
 
         this.heightMapModel = new MeshlessModel(verts, indices, this.model.mesh.materialsByIndex[2]);
 
- 
+
     }
 
     private initRedRockHeightMap() {
@@ -368,56 +368,72 @@ export class Disk extends Entity{
     //     BasicModel.setMVPMatrices(model,view_matrix, projection_matrix);
     //     this.heightMapModel.draw(gl);
     // }
-    
-    public getSpeedFactor():number{
-        switch (this.type)
-        {
-            case Terrain.RED_ROCK: return 1.0;
-            case Terrain.LEAFY: return 0.5;
-            case Terrain.ICY: return 0.25;
-            case Terrain.SANDY: return 0.75;
-            case Terrain.GREY_ROCK: return 1.0;
+
+    public getSpeedFactor(): number {
+        switch (this.type) {
+            case Terrain.RED_ROCK:
+                return 1.0;
+            case Terrain.LEAFY:
+                return 0.5;
+            case Terrain.ICY:
+                return 0.25;
+            case Terrain.SANDY:
+                return 0.75;
+            case Terrain.GREY_ROCK:
+                return 1.0;
         }
         return 1.0;
     }
-    
-    public getAccelFactor():number{
-        switch (this.type)
-        {
-            case Terrain.RED_ROCK: return 1.0;
-            case Terrain.LEAFY: return 0.5;
-            case Terrain.ICY: return 0.25;
-            case Terrain.SANDY: return 0.25;
-            case Terrain.GREY_ROCK: return 1.0;
+
+    public getAccelFactor(): number {
+        switch (this.type) {
+            case Terrain.RED_ROCK:
+                return 1.0;
+            case Terrain.LEAFY:
+                return 0.5;
+            case Terrain.ICY:
+                return 0.25;
+            case Terrain.SANDY:
+                return 0.25;
+            case Terrain.GREY_ROCK:
+                return 1.0;
         }
         return 1.0;
     }
-    
-    public getFriction():number{
-        switch (this.type)
-        {
-            case Terrain.RED_ROCK: return 0.005;
-            case Terrain.LEAFY: return 0.0001;
-            case Terrain.ICY: return 0.5;
-            case Terrain.SANDY: return 0.2;
-            case Terrain.GREY_ROCK: return 0.005;
+
+    public getFriction(): number {
+        switch (this.type) {
+            case Terrain.RED_ROCK:
+                return 0.005;
+            case Terrain.LEAFY:
+                return 0.0001;
+            case Terrain.ICY:
+                return 0.5;
+            case Terrain.SANDY:
+                return 0.2;
+            case Terrain.GREY_ROCK:
+                return 0.005;
         }
         return 0.0001;
     }
-    
-    public getSlopeFactor():number{
-        switch (this.type)
-        {
-            case Terrain.RED_ROCK: return 0.4;
-            case Terrain.LEAFY: return 1.0;
-            case Terrain.ICY: return 0.2;
-            case Terrain.SANDY: return 0.2;
-            case Terrain.GREY_ROCK: return 0.4;
+
+    public getSlopeFactor(): number {
+        switch (this.type) {
+            case Terrain.RED_ROCK:
+                return 0.4;
+            case Terrain.LEAFY:
+                return 1.0;
+            case Terrain.ICY:
+                return 0.2;
+            case Terrain.SANDY:
+                return 0.2;
+            case Terrain.GREY_ROCK:
+                return 0.4;
         }
         return 1.0;
     }
-    
-    public getHeightAtPosition(x: number, z:number) : number {
+
+    public getHeightAtPosition(x: number, z: number): number {
 
         //get x,z within the height map centered on the bottom left corner
         let cx = (x - this.position[0]) * (this.heightMapSize / 2.0) / (this.radius * Math.SQRT1_2) + (this.heightMapSize / 2.0);
@@ -437,32 +453,30 @@ export class Disk extends Entity{
         let p0 = vec3.create();
         let p1 = vec3.fromValues(ix, this.heightMap[ix][kz], kz);
         let p2 = vec3.fromValues(ix + 1, this.heightMap[ix + 1][kz + 1], kz + 1);
-        
+
         //Upper right triangle
-        if (fx > fz)
-        {
-            vec3.set(p0,ix + 1, this.heightMap[ix + 1][kz], kz)
-        } else
-        {
+        if (fx > fz) {
+            vec3.set(p0, ix + 1, this.heightMap[ix + 1][kz], kz)
+        } else {
             //Lower right triangle
-            vec3.set(p0,ix, this.heightMap[ix][kz + 1], kz + 1);
+            vec3.set(p0, ix, this.heightMap[ix][kz + 1], kz + 1);
         }
-   
+
         let height;
 
         //Non - Barycentric**
         //Vector3 normal = (p1 - p0).crossProduct(p2 - p0);
         //height = (-normal.x*ix - normal.z*kz + normal.dotProduct(p0)) / normal.y;
-     
+
         //Barycentric
-        let p = vec2.fromValues(cx,cz);
+        let p = vec2.fromValues(cx, cz);
         let p00 = vec2.fromValues(p0[0], p0[2]);
         let p11 = vec2.fromValues(p1[0], p1[2]);
         let p22 = vec2.fromValues(p2[0], p2[2]);
 
-        let weights:vec3 = MathHelper.barycentric(p, p00, p11, p22);
+        let weights: vec3 = MathHelper.barycentric(p, p00, p11, p22);
         height = weights[0] * p0[1] + weights[1] * p1[1] + weights[2] * p2[1];
-   
+
         return height;
     }
 }

@@ -6,8 +6,6 @@ import {Shader} from '../../shader';
 import {BasicModelShader} from "../../basicmodelshader";
 
 
-
-
 export class BasicModel {
     VAO: WebGLVertexArrayObject;
     mesh: Mesh;
@@ -18,9 +16,9 @@ export class BasicModel {
     static EMPTY_TEXTURE: WebGLTexture;
 
     public readonly radius: number;
-    public readonly half_height:number;
-    
-    constructor(mesh: Mesh, radius:number = 1, half_height:number = 1) {
+    public readonly half_height: number;
+
+    constructor(mesh: Mesh, radius: number = 1, half_height: number = 1) {
         this.mesh = mesh;
         this.radius = radius;
         this.half_height = half_height;
@@ -29,8 +27,8 @@ export class BasicModel {
     }
 
     static initWithShader(gl: WebGL2RenderingContext, shader: BasicModelShader) {
-        this.shader= shader;
-    
+        this.shader = shader;
+
         shader.use();
         gl.bindAttribLocation(shader.ID, 0, "a_vertex");
         gl.bindAttribLocation(shader.ID, 1, "a_tex_coord");
@@ -45,10 +43,8 @@ export class BasicModel {
         const pixel = new Uint8Array([0, 0, 0, 255]);  // black
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, 1, 1, 0, gl.RGB, gl.UNSIGNED_BYTE, pixel);
 
-        
 
     }
-
 
 
     static use(gl: WebGL2RenderingContext) {
@@ -131,7 +127,7 @@ export class BasicModel {
         return texture_id;
 
     }
-    
+
     draw(gl: WebGL2RenderingContext) {
         this.activateBuffers(gl);
 
@@ -146,36 +142,18 @@ export class BasicModel {
         gl.bindVertexArray(null);
     }
 
-    // draw(gl:WebGL2RenderingContext){
-    //     gl.bindVertexArray(this.VAO);
-    //     gl.activeTexture(gl.TEXTURE0);
-    //     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.mesh.indexBuffer);
-    //
-    //
-    //     this.textures.forEach((texture,index) =>{
-    //         let is = this.mesh.vertexBuffer.itemSize;
-    //         let submesh = this.mesh.submesh[index];
-    //         let byteSize = 2;
-    //         gl.bindTexture(gl.TEXTURE_2D, texture);
-    //         gl.drawElements(gl.TRIANGLES, this.mesh.indexBuffer.numItems, gl.UNSIGNED_SHORT,submesh.offset * is * byteSize);
-    //     });
-    //
-    //     gl.bindVertexArray(null);
-    // }
-
-    activateBuffers(gl: WebGL2RenderingContext){
+    activateBuffers(gl: WebGL2RenderingContext) {
         gl.bindVertexArray(this.VAO);
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.mesh.indexBuffer);
     }
-    
+
     drawActivatedMaterial(gl: WebGL2RenderingContext, index: number) {
         let is = this.mesh.vertexBuffer.itemSize;
         let submesh = this.mesh.submesh[index];
         let byteSize = 2;
         gl.drawElements(gl.TRIANGLES, is * submesh.numItems, gl.UNSIGNED_SHORT, submesh.offset * is * byteSize);
-       
-    }
 
+    }
 
     activateMaterial(gl: WebGL2RenderingContext, index: number) {
         if (this.mesh.materialsByIndex[index].isTextureActive[0] && this.mesh.materialsByIndex[index].mapTransparency.texture_id) {
@@ -204,7 +182,6 @@ export class BasicModel {
             gl.bindTexture(gl.TEXTURE_2D, this.mesh.materialsByIndex[index].mapSpecularExponent.texture_id);
         }
 
-        
         BasicModel.shader.setFloat(BasicModel.shader.uniforms.material_transparency, this.mesh.materialsByIndex[index].transparency);
         BasicModel.shader.setVec3(BasicModel.shader.uniforms.material_ambient_colour, this.mesh.materialsByIndex[index].ambient);
         BasicModel.shader.setVec3(BasicModel.shader.uniforms.material_diffuse_colour, this.mesh.materialsByIndex[index].diffuse);
@@ -212,7 +189,6 @@ export class BasicModel {
         BasicModel.shader.setVec3(BasicModel.shader.uniforms.material_emissive_colour, this.mesh.materialsByIndex[index].emissive);
         BasicModel.shader.setFloat(BasicModel.shader.uniforms.material_shininess, this.mesh.materialsByIndex[index].specularExponent);
         BasicModel.shader.setIntV(BasicModel.shader.uniforms.material_is_texture_active, this.mesh.materialsByIndex[index].isTextureActive);
-
 
     }
 

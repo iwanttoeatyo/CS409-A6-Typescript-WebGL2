@@ -40,33 +40,33 @@ export class Camera {
         this.updateCameraVectors();
     }
 
-    public getViewMatrix() : mat4 {
+    public getViewMatrix(): mat4 {
         let forward = vec3.create();
         vec3.add(forward, this.position, this.front);
-        
+
         let look = mat4.create();
         mat4.lookAt(look, this.position, forward, this.up);
         return look;
     }
-    
-    lookAt(pos: vec3){
+
+    public lookAt(pos: vec3): void {
         let a = vec3.create();
         vec3.subtract(a, pos, this.position);
-        vec3.normalize(a,a);
+        vec3.normalize(a, a);
         this.front = a;
     }
-    
-    getInverseViewMatrix(){
+
+    public getInverseViewMatrix(): mat4 {
         let forward = vec3.create();
         vec3.add(forward, this.position, this.front);
 
         let look = mat4.create();
         mat4.lookAt(look, this.position, forward, this.up);
-        mat4.invert(look,look);
+        mat4.invert(look, look);
         return look;
     }
 
-    processKeyboard(direction: Camera_Movement, deltaTime: number) {
+    public processKeyboard(direction: Camera_Movement, deltaTime: number): void {
         let velocity: number = this.movementSpeed * deltaTime;
         let a = this.front;
         let b = this.right;
@@ -94,7 +94,7 @@ export class Camera {
     }
 
     //TODO Change calculation to move camera position up and down and keep same target on player
-    processMouseMovement(forward:vec3,pos:vec3, xOffset: number, yOffset: number, constrainPitch: boolean = true) {
+    public processMouseMovement(forward: vec3, pos: vec3, xOffset: number, yOffset: number, constrainPitch: boolean = true): void {
         xOffset *= this.mouseSensitivity;
         yOffset *= this.mouseSensitivity;
 
@@ -102,33 +102,32 @@ export class Camera {
         this.pitch += yOffset;
 
         let yawConstrainAmount = 0;
-        
+
         //Makes Camera lock behind player
         let a = Math.atan2(forward[0], forward[2]);
         a += Math.PI;
-        a *= 360/(2*Math.PI);
+        a *= 360 / (2 * Math.PI);
         a = 360 - a - 90;
         if (constrainPitch) {
             if (this.pitch > 20) this.pitch = 20;
             if (this.pitch < -20) this.pitch = -20;
-            if(this.yaw > a+ yawConstrainAmount) this.yaw = a + yawConstrainAmount;
-            if(this.yaw < a - yawConstrainAmount) this.yaw = a - yawConstrainAmount;
+            if (this.yaw > a + yawConstrainAmount) this.yaw = a + yawConstrainAmount;
+            if (this.yaw < a - yawConstrainAmount) this.yaw = a - yawConstrainAmount;
         }
-        
+
 
         this.updateCameraVectors();
     }
 
 
-    private updateCameraVectors() {
-   
-        let x  = Math.cos(glMatrix.toRadian(this.yaw)) * Math.cos(glMatrix.toRadian(this.pitch));
+    private updateCameraVectors(): void {
+        let x = Math.cos(glMatrix.toRadian(this.yaw)) * Math.cos(glMatrix.toRadian(this.pitch));
         let y = Math.sin(glMatrix.toRadian(this.pitch));
         let z = Math.sin(glMatrix.toRadian(this.yaw)) * Math.cos(glMatrix.toRadian(this.pitch));
-        let newFront: vec3 = vec3.fromValues(x,y,z);
+        let newFront: vec3 = vec3.fromValues(x, y, z);
         vec3.normalize(newFront, newFront);
         this.front = newFront;
-  
+
         let cross: vec3 = vec3.create();
         vec3.normalize(cross, vec3.cross(cross, this.front, this.worldUp));
         this.right = cross;
@@ -136,8 +135,8 @@ export class Camera {
         vec3.normalize(cross2, vec3.cross(cross2, this.right, this.front));
         this.up = cross2;
     }
-    
-    
+
+
 }
 
  

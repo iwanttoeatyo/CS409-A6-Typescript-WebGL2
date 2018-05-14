@@ -39,9 +39,7 @@ export class Player extends Entity {
         Player.model.rotation_offset = -Math.PI / 2;
         Player.model.init(gl);
         
-        
         this.reset(world);
-
     }
 
 

@@ -10,8 +10,8 @@ export namespace global {
         let loading = document.getElementById("loading-text");
         loading.innerText = text + "...";
     }
-    
-    export function resetMousePosition(): void{
+
+    export function resetMousePosition(): void {
         mouse_x_total = 0;
         mouse_y_total = 0;
     }

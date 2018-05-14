@@ -5,27 +5,23 @@ import {PickupManager} from "./pickupmanager";
 import {Camera} from "./camera";
 import {glMatrix, mat4, vec3} from "gl-matrix";
 import {BasicModel} from "./entities/models/basicmodel";
-import {Renderer} from "./Renderer";
+import {Renderer} from "./renderer";
 import * as assert from "assert";
 import {BasicModelShader} from "./basicmodelshader";
 import {Shader} from "./shader";
 
 
 let OBJ = require("./lib/OBJ/index.js");
-let gl:WebGL2RenderingContext = global.gl;
+let gl: WebGL2RenderingContext = global.gl;
 
-let g_keys:Array<boolean> = global.keys;
-let g_mouse_keys:Array<boolean> = global.mouse_keys;
-
+let g_keys: Array<boolean> = global.keys;
+let g_mouse_keys: Array<boolean> = global.mouse_keys;
 
 let shader: Shader;
 let basicModelShader: BasicModelShader;
 let basicModelRenderer: Renderer;
 
-const PLAYER_ORIGIN = vec3.fromValues(0, 0, 0);
-const PLAYER_FORWARD = vec3.fromValues(1, 0, 0);
 const PLAYER_CAMERA_OFFSET = vec3.fromValues(0, 0.8, 0);
-
 
 export class Game {
     readonly ROD_FILENAME: string = "/assets/models/environment/rod/Rod";
@@ -51,13 +47,13 @@ export class Game {
     static maps: Array<string>;
 
     constructor() {
-     //   if (!this.assets_loaded) throw "Game loadAssets must be called before constructor.";
+        //   if (!this.assets_loaded) throw "Game loadAssets must be called before constructor.";
         gl = gl || global.gl;
     }
 
-    public async init(): Promise<void>{
+    public async init(): Promise<void> {
         await this.loadAssets();
-        
+
         await global.updateProgressText("Initializing world");
 
         this.ring_model.init(gl);
@@ -65,7 +61,7 @@ export class Game {
         this.skybox_model.init(gl);
 
         let w = Date.now();
-        this.world = new World(gl, Game.maps[this.current_map]);
+        this.world = new World(gl, Game.maps[this.current_map++]);
         console.log("world gen time: " + (Date.now() - w) / 1000 + "s");
 
         this.pickup_manager = new PickupManager(this.world, this.rod_model, this.ring_model);
@@ -74,12 +70,13 @@ export class Game {
 
         this.initShaders();
         this.initRenderer();
+        this.addAllGameEntitiesToRenderer();
 
 
     }
 
     private initShaders(): void {
- 
+
         shader = new Shader(gl, require("../src/shaders/basic.vert"), require("../src/shaders/basic.frag"));
         // instancedShader = await new Shader(gl, require('../src/shaders/instanced.vert'), require("../src/shaders/instanced.frag"));
         basicModelShader = new BasicModelShader(gl, require('../src/shaders/basicmodel.vert'), require("../src/shaders/basicmodelmanylights.frag"));
@@ -115,7 +112,7 @@ export class Game {
         basicModelRenderer = new Renderer();
         basicModelRenderer.init(basicModelShader);
         basicModelRenderer.addBasicModel(Player.model);
-        basicModelRenderer.addEntityToRenderList(this.player);
+
         basicModelRenderer.addBasicModel(this.world.diskA_model);
         basicModelRenderer.addBasicModel(this.world.diskB_model);
         basicModelRenderer.addBasicModel(this.world.diskC_model);
@@ -123,6 +120,13 @@ export class Game {
         basicModelRenderer.addBasicModel(this.world.diskE_model);
         basicModelRenderer.addBasicModel(this.ring_model);
         basicModelRenderer.addBasicModel(this.rod_model);
+
+
+    }
+
+    private addAllGameEntitiesToRenderer(): void {
+        basicModelRenderer.removeAllEntities();
+        basicModelRenderer.addEntityToRenderList(this.player);
 
         this.world.disks.forEach(disk => {
             assert(disk.initialized);
@@ -132,18 +136,25 @@ export class Game {
         });
 
         this.pickup_manager.rings.forEach(ring => {
-            basicModelRenderer.addEntityToRenderList(ring);
+            if (!ring.picked_up)
+                basicModelRenderer.addEntityToRenderList(ring);
         });
         this.pickup_manager.rods.forEach(rod => {
-            basicModelRenderer.addEntityToRenderList(rod);
+            if (!rod.picked_up)
+                basicModelRenderer.addEntityToRenderList(rod);
         });
     }
 
     public update(delta_ms: number): void {
 
-        if(g_keys[9])
+        if (g_keys[77]) {
             this.destroyIntoNewWorld();
-        
+            this.addAllGameEntitiesToRenderer();
+            g_keys[77] = false;
+
+        }
+
+
         //Movement
         if (g_keys[40] || g_keys[83]) {
             //     camera.processKeyboard(Camera_Movement.BACKWARD, delta_ms);
@@ -184,7 +195,7 @@ export class Game {
         this.player.rotate(-global.mouse_x_total / 600);
         this.player_camera.processMouseMovement(this.player.forward, this.player.position, global.mouse_x_total, -global.mouse_y_total, true);
         global.resetMousePosition();
- 
+
 
         //Set height to world height
         let height = this.world.getHeightAtCirclePosition(this.player.position[0], this.player.position[2], Player.model.radius);
@@ -221,14 +232,14 @@ export class Game {
 
         basicModelShader.use();
         basicModelShader.setVec3(basicModelShader.uniforms.camera_pos, this.active_camera.position);
-        
+
         let model = mat4.create();
 
         //Draw Skybox
         gl.disable(gl.DEPTH_TEST);
         mat4.translate(model, model, this.active_camera.position);
-        
-        basicModelShader.setMVPMatrices(model,view_matrix,projection_matrix);
+
+        basicModelShader.setMVPMatrices(model, view_matrix, projection_matrix);
         this.skybox_model.draw(gl);
         gl.enable(gl.DEPTH_TEST);
 
@@ -239,12 +250,13 @@ export class Game {
 
 
     public destroyIntoNewWorld(): void {
-        this.world.destroy();
-        this.world.init(gl, Game.maps[this.current_map]);
-
         if (this.current_map >= Game.maps.length) this.current_map = 0;
 
-        this.pickup_manager.init();
+        this.world.destroy();
+        this.world.init(gl, Game.maps[this.current_map++]);
+
+        this.pickup_manager.init(this.world);
+        this.player.reset(this.world);
     }
 
 
@@ -277,7 +289,7 @@ export class Game {
         let end = Date.now();
         console.log("asset download time: " + (end - start) / 1000 + "s");
 
- 
+
     }
 
 
@@ -306,7 +318,7 @@ export class Game {
         let context = require.context("../../assets/worlds/maps/", true, /\.txt$/);
         context.keys().forEach(key =>
             Game.maps.push(context(key)));
-        
+
 
     }
 

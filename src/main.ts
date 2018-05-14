@@ -36,7 +36,7 @@ export class Main {
 
         //Done loading
         this.initPointerLock();
-        
+
         MainLoop.setBegin(this.begin.bind(this))
             .setUpdate(this.update.bind(this))
             .setDraw(this.draw.bind(this))

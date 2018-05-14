@@ -74,6 +74,10 @@ export class Renderer {
 
     }
 
+    public removeAllEntities(): void {
+        this.entities = new Map<string, Entity>();
+    }
+
     prepareBasicModelShader(gl: WebGL2RenderingContext) {
         this.basicModelShader.use();
         gl.enable(gl.DEPTH_TEST);
@@ -147,7 +151,7 @@ export class Renderer {
                     for (let i = 0; i < entities_to_draw.length; i++) {//
                         let model_matrix = mat4.create();
                         let q = quat.create();
-                        quat.rotateY(q, q, Math.atan2(entities_to_draw[i].forward[0], entities_to_draw[i].forward[2]) + model.rotation_offset );
+                        quat.rotateY(q, q, Math.atan2(entities_to_draw[i].forward[0], entities_to_draw[i].forward[2]) + model.rotation_offset);
                         mat4.fromRotationTranslationScale(model_matrix, q, entities_to_draw[i].position, entities_to_draw[i].scalar);
                         //Set matrices in shader
                         this.basicModelShader.setMVPMatrices(model_matrix, view_matrix, projection_matrix);
@@ -200,7 +204,7 @@ export class Renderer {
                 for (let i = 0; i < entities_to_draw.length; i++) {
                     let model_matrix = mat4.create();
                     let q = quat.create();
-                    quat.rotateY(q, q, Math.atan2(entities_to_draw[i].forward[0], entities_to_draw[i].forward[2]) + model.rotation_offset );
+                    quat.rotateY(q, q, Math.atan2(entities_to_draw[i].forward[0], entities_to_draw[i].forward[2]) + model.rotation_offset);
                     mat4.fromRotationTranslationScale(model_matrix, q, entities_to_draw[i].position, entities_to_draw[i].scalar);
                     //Set matrices in shader
                     this.basicModelShader.setMVPMatrices(model_matrix, view_matrix, projection_matrix);

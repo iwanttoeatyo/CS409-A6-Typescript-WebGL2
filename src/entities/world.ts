@@ -60,6 +60,7 @@ export class World {
     }
 
     public init(gl: WebGL2RenderingContext, world_data: string): void {
+        let w = Date.now();
         const lines = world_data.split('\n');
 
         if (lines[0].indexOf("version 1") == -1) console.warn("Can't read Disk World File");
@@ -102,6 +103,7 @@ export class World {
             d.init(gl);
             this.disks.push(d);
         }
+        console.log("world gen time: " + (Date.now() - w) / 1000 + "s");
     }
 
     public destroy(): void {
@@ -130,6 +132,7 @@ export class World {
     }
 
     public getRandomDiskPosition(): vec3 {
+        if (this.disks.length === 0) throw "There are no disks???";
         let i = Random.randi(this.disks.length - 1);
         return this.disks[i].position;
     }
