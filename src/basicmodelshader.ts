@@ -25,11 +25,11 @@ class Uniforms {
     material_is_texture_active: WebGLUniformLocation;
 };
 
-export class BasicModelShader extends  Shader{
-    uniforms:Uniforms;
-    
+export class BasicModelShader extends Shader {
+    public uniforms: Uniforms;
+
     constructor(gl: WebGL2RenderingContext, vertexSourceCode: string, fragmentSourceCode: string) {
-        super(gl, vertexSourceCode,fragmentSourceCode);
+        super(gl, vertexSourceCode, fragmentSourceCode);
 
         this.uniforms = new Uniforms();
         this.uniforms.model_matrix = this.getUniformLocation("model_matrix");
@@ -54,84 +54,12 @@ export class BasicModelShader extends  Shader{
         this.uniforms.material_is_texture_active = this.getUniformLocation("material.is_texture_active");
     }
 
-    use() {
-        this.gl.useProgram(this.ID);
+    public setMVPMatrices(model: mat4, view: mat4, projection: mat4) {
+        let mvp_matrix = mat4.create();
+        mat4.mul(mvp_matrix, view, model);
+        mat4.mul(mvp_matrix, projection, mvp_matrix);
+        this.setMat4(this.uniforms.model_matrix, model);
+        //  BasicModel.shader.setMat4(BasicModel.uniforms.view_matrix, view);
+        this.setMat4(this.uniforms.model_view_projection_matrix, mvp_matrix);
     }
-
-    setBoolByName(name: string, value: boolean) {
-        this.gl.uniform1i(this.getUniformLocation(name), value ? 1 : 0);
-    }
-
-    setBool(id: number | WebGLUniformLocation, value: boolean) {
-        this.gl.uniform1i(id, value ? 1 : 0);
-    }
-
-    setInt(id: number | WebGLUniformLocation, value: number) {
-        this.gl.uniform1i(id, value);
-    }
-    setIntByName(name: string, value: number) {
-        this.gl.uniform1i(this.getUniformLocation(name), value);
-    }
-
-
-    setIntV(id: number | WebGLUniformLocation, value: number[]) {
-        this.gl.uniform1iv(id, value);
-    }
-
-    setIntVByName(name: string, value: number[]) {
-        this.gl.uniform1iv(this.getUniformLocation(name), value);
-    }
-    
-    setFloat(id: number | WebGLUniformLocation, value: number) {
-        this.gl.uniform1f(id, value);
-    }
-    setFloatByName(name: string, value: number) {
-        this.gl.uniform1f(this.getUniformLocation(name), value);
-    }
-
-    getUniformLocation(name: string) {
-        var a = this.gl.getUniformLocation(this.ID, name);
-        return a;
-    }
-
-    setMat4(id: number | WebGLUniformLocation, matrix: mat4 | number[]) {
-        this.gl.uniformMatrix4fv(id, false, matrix);
-    }
-
-    setMat4ByName(name: string, matrix: mat4 | number[]) {
-        this.gl.uniformMatrix4fv(this.getUniformLocation(name), false, matrix);
-    }
-    
-    setVec3(id: number | WebGLUniformLocation, vec: vec3| number[]) {
-        this.gl.uniform3fv(id, vec);
-    }
-    
-    setVec3ByName (name: string, vec: vec3| number[]) {
-        this.gl.uniform3fv(this.getUniformLocation(name), vec);
-    }
-    
-    setVec4(id: number | WebGLUniformLocation, vec: vec4| number[]){
-        this.gl.uniform4fv(id, vec);
-    }
-
-    setVec4ByName(name: string, vec: vec4| number[]){
-        this.gl.uniform4fv(this.getUniformLocation(name), vec);
-    }
-
-}
-
-function getShader(gl: WebGL2RenderingContext, sourceCode, type) {
-    let shader: WebGLShader;
-    shader = gl.createShader(type);
-
-
-    gl.shaderSource(shader,sourceCode);
-
-    gl.compileShader(shader);
-
-    if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        alert(gl.getShaderInfoLog(shader));
-        return null;
-    }
-    return shader;
 }

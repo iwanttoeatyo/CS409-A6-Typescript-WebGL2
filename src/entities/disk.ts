@@ -1,4 +1,3 @@
-import {DiskModel} from "./models/diskmodel";
 import {mat4, vec2, vec3} from "gl-matrix";
 import {BasicModel} from "./models/basicmodel";
 import {MeshlessModel} from "./models/meshlessmodel";
@@ -15,11 +14,15 @@ export enum Terrain {
     GREY_ROCK = 4
 }
 
-
+const RED_ROCK_SIZE = 16;
+const LEAFY_SIZE = 32;
+const ICY_SIZE = 48;
+const SANDY_SIZE = 64;
+const GREY_ROCK_SIZE = 80;
 
 export class Disk extends Entity{
     initialized : boolean;
-    diskModel: DiskModel;
+    model: BasicModel;
     heightMapModel: MeshlessModel;
     heightMapEntity:Entity;
     heightMap: number[][];
@@ -28,10 +31,10 @@ export class Disk extends Entity{
     heightMapSize: number;
     static height_map_model_gen_count = 0;
     
-    constructor(diskModel: DiskModel, type: Terrain, radius: number, x: number, y: number, z: number) {
-        super( diskModel.mesh.name, Model_Type.BASIC, vec3.fromValues(x,y,z),vec3.fromValues(0,0,0), vec3.fromValues(radius,1,radius));
-        if (!diskModel.initialized) throw "DiskModel was not initialized";
-        this.diskModel = diskModel;
+    constructor(disk_model: BasicModel, type: Terrain, radius: number, x: number, y: number, z: number) {
+        super( disk_model.mesh.name, Model_Type.BASIC, vec3.fromValues(x,y,z),vec3.fromValues(0,0,0), vec3.fromValues(radius,1,radius));
+        if (!disk_model.initialized) throw "DiskModel was not initialized";
+        this.model = disk_model;
         this.radius = radius;
         this.type = type;
         this.initialized = false;
@@ -53,23 +56,23 @@ export class Disk extends Entity{
     private generateHeightMapModels(gl: WebGL2RenderingContext) {
         switch (this.type) {
             case Terrain.RED_ROCK:
-                this.heightMapSize = 16;
+                this.heightMapSize = RED_ROCK_SIZE;
                 this.initRedRockHeightMap();
                 break;
             case Terrain.LEAFY:
-                this.heightMapSize = 32;
+                this.heightMapSize = LEAFY_SIZE;
                 this.initLeafyHeightMap();
                 break;
             case Terrain.ICY:
-                this.heightMapSize = 48;
+                this.heightMapSize = ICY_SIZE;
                 this.initIcyHeightMap();
                 break;
             case Terrain.SANDY:
-                this.heightMapSize = 64;
+                this.heightMapSize = SANDY_SIZE;
                 this.initSandyHeightMap();
                 break;
             case Terrain.GREY_ROCK:
-                this.heightMapSize = 80;
+                this.heightMapSize = GREY_ROCK_SIZE;
                 this.initGreyRockHeightMap();
                 break;
         }
@@ -85,7 +88,7 @@ export class Disk extends Entity{
             for (let z = 0; z < this.heightMapSize + 1; z++) {
                 //Position
                 verts[count++] = x - (this.heightMapSize / 2);
-                verts[count++] = this.heightMap[x][z];
+                verts[count++] = this.heightMap[x][z] + 0.00001;
                 verts[count++] = z - (this.heightMapSize / 2);
 
                 //Texture coords
@@ -155,7 +158,7 @@ export class Disk extends Entity{
             verts[i3 + 7] += norm[2];
         }
 
-        this.heightMapModel = new MeshlessModel(verts, indices, this.diskModel.mesh.materialsByIndex[2]);
+        this.heightMapModel = new MeshlessModel(verts, indices, this.model.mesh.materialsByIndex[2]);
 
  
     }
@@ -338,33 +341,33 @@ export class Disk extends Entity{
     }
 
 
-    draw(gl: WebGL2RenderingContext, view_matrix: mat4, projection_matrix: mat4) {
-        this.drawDiskModel(gl, view_matrix, projection_matrix);
-        this.drawHeightMapModel(gl, view_matrix, projection_matrix);
-    }
-
-    drawDiskModel(gl: WebGL2RenderingContext, view_matrix: mat4, projection_matrix: mat4) {
-        let model = mat4.create();
-        //Center the squares in the disk
-        let pos = vec3.fromValues(this.position[0], this.position[1], this.position[2]);
-        mat4.translate(model, model, pos);
-        mat4.scale(model, model, vec3.fromValues(this.radius, 1, this.radius));
-        BasicModel.setMVPMatrices(model,view_matrix, projection_matrix);
-        this.diskModel.draw(gl);
-    }
-
-    drawHeightMapModel(gl: WebGL2RenderingContext, view_matrix: mat4, projection_matrix: mat4) {
-
-        let model = mat4.create();
-        //Center the squares in the disk
-        let pos = vec3.fromValues(this.position[0], this.position[1], this.position[2]);
-        let corner = this.radius * Math.SQRT2 / 2;
-        pos[1] += 0.00001;
-        mat4.translate(model, model, pos);
-        mat4.scale(model, model, vec3.fromValues(corner * 2 / this.heightMapSize, 1, corner * 2 / this.heightMapSize));
-        BasicModel.setMVPMatrices(model,view_matrix, projection_matrix);
-        this.heightMapModel.draw(gl);
-    }
+    // draw(gl: WebGL2RenderingContext, view_matrix: mat4, projection_matrix: mat4) {
+    //     this.drawDiskModel(gl, view_matrix, projection_matrix);
+    //     this.drawHeightMapModel(gl, view_matrix, projection_matrix);
+    // }
+    //
+    // drawDiskModel(gl: WebGL2RenderingContext, view_matrix: mat4, projection_matrix: mat4) {
+    //     let model = mat4.create();
+    //     //Center the squares in the disk
+    //     let pos = vec3.fromValues(this.position[0], this.position[1], this.position[2]);
+    //     mat4.translate(model, model, pos);
+    //     mat4.scale(model, model, vec3.fromValues(this.radius, 1, this.radius));
+    //     BasicModel.setMVPMatrices(model,view_matrix, projection_matrix);
+    //     this.model.draw(gl);
+    // }
+    //
+    // drawHeightMapModel(gl: WebGL2RenderingContext, view_matrix: mat4, projection_matrix: mat4) {
+    //
+    //     let model = mat4.create();
+    //     //Center the squares in the disk
+    //     let pos = vec3.fromValues(this.position[0], this.position[1], this.position[2]);
+    //     let corner = this.radius * Math.SQRT2 / 2;
+    //     pos[1] += 0.00001;
+    //     mat4.translate(model, model, pos);
+    //     mat4.scale(model, model, vec3.fromValues(corner * 2 / this.heightMapSize, 1, corner * 2 / this.heightMapSize));
+    //     BasicModel.setMVPMatrices(model,view_matrix, projection_matrix);
+    //     this.heightMapModel.draw(gl);
+    // }
     
     public getSpeedFactor():number{
         switch (this.type)
@@ -374,6 +377,42 @@ export class Disk extends Entity{
             case Terrain.ICY: return 0.25;
             case Terrain.SANDY: return 0.75;
             case Terrain.GREY_ROCK: return 1.0;
+        }
+        return 1.0;
+    }
+    
+    public getAccelFactor():number{
+        switch (this.type)
+        {
+            case Terrain.RED_ROCK: return 1.0;
+            case Terrain.LEAFY: return 0.5;
+            case Terrain.ICY: return 0.25;
+            case Terrain.SANDY: return 0.25;
+            case Terrain.GREY_ROCK: return 1.0;
+        }
+        return 1.0;
+    }
+    
+    public getFriction():number{
+        switch (this.type)
+        {
+            case Terrain.RED_ROCK: return 0.005;
+            case Terrain.LEAFY: return 0.0001;
+            case Terrain.ICY: return 0.5;
+            case Terrain.SANDY: return 0.2;
+            case Terrain.GREY_ROCK: return 0.005;
+        }
+        return 0.0001;
+    }
+    
+    public getSlopeFactor():number{
+        switch (this.type)
+        {
+            case Terrain.RED_ROCK: return 0.4;
+            case Terrain.LEAFY: return 1.0;
+            case Terrain.ICY: return 0.2;
+            case Terrain.SANDY: return 0.2;
+            case Terrain.GREY_ROCK: return 0.4;
         }
         return 1.0;
     }

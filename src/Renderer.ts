@@ -2,7 +2,7 @@ import {BasicModel} from "./entities/models/basicmodel";
 import {Material} from './lib/OBJ/index.js';
 import {Mesh} from './lib/OBJ/index.js';
 import {Entity, Model_Type} from "./entities/entity";
-import {mat4, vec3} from "gl-matrix";
+import {mat4, quat, vec3} from "gl-matrix";
 import {BasicModelShader} from "./basicmodelshader";
 import {MeshlessModel} from "./entities/models/meshlessmodel";
 import {World} from "./entities/world";
@@ -33,9 +33,9 @@ export class Renderer {
         }
 
         for (var key in model.mesh.materialNames) {
-         
+
             if (this.materials.get(model.mesh.materialNames[key]) === undefined) {
-                if( model.mesh.materialsByIndex[key] === undefined) throw "Missing material on model";
+                if (model.mesh.materialsByIndex[key] === undefined) throw "Missing material on model";
                 this.materials.set(model.mesh.materialNames[key], model.mesh.materialsByIndex[key]);
             }
         }
@@ -69,9 +69,9 @@ export class Renderer {
 
     }
 
-    public removeEntity(entity: Entity){
-            this.entities.delete(entity.id);
-        
+    public removeEntity(entity: Entity) {
+        this.entities.delete(entity.id);
+
     }
 
     prepareBasicModelShader(gl: WebGL2RenderingContext) {
@@ -79,17 +79,17 @@ export class Renderer {
         gl.enable(gl.DEPTH_TEST);
 
         gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, BasicModel.emptyTexture);
+        gl.bindTexture(gl.TEXTURE_2D, BasicModel.EMPTY_TEXTURE);
         gl.activeTexture(gl.TEXTURE1);
-        gl.bindTexture(gl.TEXTURE_2D, BasicModel.emptyTexture);
+        gl.bindTexture(gl.TEXTURE_2D, BasicModel.EMPTY_TEXTURE);
         gl.activeTexture(gl.TEXTURE2);
-        gl.bindTexture(gl.TEXTURE_2D, BasicModel.emptyTexture);
+        gl.bindTexture(gl.TEXTURE_2D, BasicModel.EMPTY_TEXTURE);
         gl.activeTexture(gl.TEXTURE3);
-        gl.bindTexture(gl.TEXTURE_2D, BasicModel.emptyTexture);
+        gl.bindTexture(gl.TEXTURE_2D, BasicModel.EMPTY_TEXTURE);
         gl.activeTexture(gl.TEXTURE4);
-        gl.bindTexture(gl.TEXTURE_2D, BasicModel.emptyTexture);
+        gl.bindTexture(gl.TEXTURE_2D, BasicModel.EMPTY_TEXTURE);
         gl.activeTexture(gl.TEXTURE5);
-        gl.bindTexture(gl.TEXTURE_2D, BasicModel.emptyTexture);
+        gl.bindTexture(gl.TEXTURE_2D, BasicModel.EMPTY_TEXTURE);
 
         this.basicModelShader.setBool(this.basicModelShader.uniforms.tween_enabled, false);
         this.basicModelShader.setInt(this.basicModelShader.uniforms.material_transparency_texture, 0);
@@ -146,17 +146,13 @@ export class Renderer {
 
                     for (let i = 0; i < entities_to_draw.length; i++) {//
                         let model_matrix = mat4.create();
-                        //Move player model to its position
-                        mat4.translate(model_matrix, model_matrix, entities_to_draw[i].position);
-                        //Rotate model to face away from camera
-                        mat4.rotateY(model_matrix, model_matrix, Math.atan2(entities_to_draw[i].forward[0] + model.rotation_offset[0], entities_to_draw[i].forward[2]) + model.rotation_offset[2]);
-                        
-                        //Scale
-                        mat4.scale(model_matrix, model_matrix, entities_to_draw[i].scalar);
+                        let q = quat.create();
+                        quat.rotateY(q, q, Math.atan2(entities_to_draw[i].forward[0], entities_to_draw[i].forward[2]) + model.rotation_offset );
+                        mat4.fromRotationTranslationScale(model_matrix, q, entities_to_draw[i].position, entities_to_draw[i].scalar);
                         //Set matrices in shader
-                        BasicModel.setMVPMatrices(model_matrix, view_matrix, projection_matrix);
+                        this.basicModelShader.setMVPMatrices(model_matrix, view_matrix, projection_matrix);
                         model.drawActivatedMaterial(gl);
-             
+
 
                     }
                 }
@@ -166,6 +162,7 @@ export class Renderer {
 
     private renderBasicModels(gl: WebGL2RenderingContext, view_matrix: mat4, projection_matrix: mat4) {
 
+        //Find list of materials that have meshes to draw
         let mat_list = [];
         for (const [key, model] of this.models.entries()) {
             for (const i in model.mesh.materialNames) {
@@ -174,19 +171,14 @@ export class Renderer {
                 }
             }
         }
+
+        //For each material draw all of the meshes that use it
         for (let j = 0; j < mat_list.length; j++) {
-             for (const [key, model] of this.models.entries()) {
-                let skip = true;
-                let mat_id = 0;
-                 for (const i in model.mesh.materialNames) {
-                    if (model.mesh.materialsByIndex[i] && model.mesh.materialsByIndex[i].name == mat_list[j]) {
-                        model.activateMaterial(gl, Number(i));
-                        mat_id = Number(i);
-                        skip = false;
-                        break;
-                    }
-                }
-                if (skip) continue;
+            let activated = false;
+            for (const [key, model] of this.models.entries()) {
+
+                //This model doesn't have this material
+                if (model.mesh.materialIndices[mat_list[j]] === undefined) continue;
 
                 let entities_to_draw = [];
                 for (const [key, entity] of this.entities.entries()) {
@@ -194,24 +186,29 @@ export class Renderer {
                         entities_to_draw.push(entity);
                     }
                 }
-                if (entities_to_draw.length > 0) {
-                    model.activateBuffers(gl);
-                    
-                    for (let i = 0; i < entities_to_draw.length; i++) {
-                        let model_matrix = mat4.create();
-                        //Move player model to its position
-                        mat4.translate(model_matrix, model_matrix, entities_to_draw[i].position);
-                        //Rotate model to face away from camera
-                        mat4.rotateY(model_matrix, model_matrix, Math.atan2(entities_to_draw[i].forward[0] + model.rotation_offset[0], entities_to_draw[i].forward[2]) + model.rotation_offset[2]);
-                        //Scale
-                        mat4.scale(model_matrix, model_matrix, entities_to_draw[i].scalar);
-                        //Set matrices in shader
-                        BasicModel.setMVPMatrices(model_matrix, view_matrix, projection_matrix);
-                        //Draw triangle list
-                        model.drawActivatedMaterial(gl, mat_id);
-                   
-                    }
+                if (entities_to_draw.length == 0) continue;
+
+                //Find the correct material and activate it
+                let mat_id = model.mesh.materialIndices[mat_list[j]];
+
+                if (!activated) {
+                    model.activateMaterial(gl, mat_id);
+                    activated = true;
                 }
+                model.activateBuffers(gl);
+
+                for (let i = 0; i < entities_to_draw.length; i++) {
+                    let model_matrix = mat4.create();
+                    let q = quat.create();
+                    quat.rotateY(q, q, Math.atan2(entities_to_draw[i].forward[0], entities_to_draw[i].forward[2]) + model.rotation_offset );
+                    mat4.fromRotationTranslationScale(model_matrix, q, entities_to_draw[i].position, entities_to_draw[i].scalar);
+                    //Set matrices in shader
+                    this.basicModelShader.setMVPMatrices(model_matrix, view_matrix, projection_matrix);
+                    //Draw triangle list
+                    model.drawActivatedMaterial(gl, mat_id);
+
+                }
+
 
             }
 
@@ -219,7 +216,6 @@ export class Renderer {
         }
 
 
-       
     }
 
 }

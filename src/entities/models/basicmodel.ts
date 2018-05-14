@@ -12,15 +12,20 @@ export class BasicModel {
     VAO: WebGLVertexArrayObject;
     mesh: Mesh;
     initialized: Boolean;
-    rotation_offset: vec3;
+    rotation_offset: number;
     textures: Array<WebGLTexture>;
     static shader: BasicModelShader;
-    static emptyTexture: WebGLTexture;
+    static EMPTY_TEXTURE: WebGLTexture;
 
-    constructor(mesh: Mesh) {
+    public readonly radius: number;
+    public readonly half_height:number;
+    
+    constructor(mesh: Mesh, radius:number = 1, half_height:number = 1) {
         this.mesh = mesh;
+        this.radius = radius;
+        this.half_height = half_height;
         this.initialized = false;
-        this.rotation_offset = vec3.fromValues(0, 0, 0);
+        this.rotation_offset = 0;
     }
 
     static initWithShader(gl: WebGL2RenderingContext, shader: BasicModelShader) {
@@ -34,9 +39,9 @@ export class BasicModel {
         // gl.bindAttribLocation(shader.ID, 4, "a_normal1");
 
         gl.bindVertexArray(null);
-        BasicModel.emptyTexture = gl.createTexture();
+        BasicModel.EMPTY_TEXTURE = gl.createTexture();
         gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, BasicModel.emptyTexture);
+        gl.bindTexture(gl.TEXTURE_2D, BasicModel.EMPTY_TEXTURE);
         const pixel = new Uint8Array([0, 0, 0, 255]);  // black
         gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, 1, 1, 0, gl.RGB, gl.UNSIGNED_BYTE, pixel);
 
@@ -44,14 +49,7 @@ export class BasicModel {
 
     }
 
-    static setMVPMatrices(model: mat4, view: mat4, projection: mat4) {
-        let mvp_matrix = mat4.create();
-        mat4.mul(mvp_matrix, view, model);
-        mat4.mul(mvp_matrix, projection, mvp_matrix);
-        this.shader.setMat4(this.shader.uniforms.model_matrix, model);
-        //  BasicModel.shader.setMat4(BasicModel.uniforms.view_matrix, view);
-        this.shader.setMat4(this.shader.uniforms.model_view_projection_matrix, mvp_matrix);
-    }
+
 
     static use(gl: WebGL2RenderingContext) {
 
@@ -117,19 +115,6 @@ export class BasicModel {
 
     }
 
-    initTexture(gl: WebGL2RenderingContext, texture_num: number, flip: boolean = true) {
-
-        if (!this.mesh.materialsByIndex[texture_num]) return false;
-        if (this.mesh.materialsByIndex[texture_num].mapDiffuse.texture.complete) {
-            this.loadTexture(gl, texture_num, this.mesh.materialsByIndex[texture_num].mapDiffuse.texture);
-        } else {
-            this.mesh.materialsByIndex[texture_num].mapDiffuse.texture.addEventListener('load', () => {
-                this.loadTexture(gl, texture_num, this.mesh.materialsByIndex[texture_num].mapDiffuse.texture);
-            });
-        }
-        return true
-    }
-
     loadTexture(gl: WebGL2RenderingContext, texture_num: number, texture: any, flip: boolean = true) {
         let texture_id = gl.createTexture();
         gl.activeTexture(gl.TEXTURE0);
@@ -146,12 +131,6 @@ export class BasicModel {
         return texture_id;
 
     }
-
-    setTexture(texture: WebGLTexture, texture_num: number) {
-        this.textures[texture_num] = texture;
-    }
-
-    
     
     draw(gl: WebGL2RenderingContext) {
         this.activateBuffers(gl);
@@ -166,6 +145,23 @@ export class BasicModel {
 
         gl.bindVertexArray(null);
     }
+
+    // draw(gl:WebGL2RenderingContext){
+    //     gl.bindVertexArray(this.VAO);
+    //     gl.activeTexture(gl.TEXTURE0);
+    //     gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.mesh.indexBuffer);
+    //
+    //
+    //     this.textures.forEach((texture,index) =>{
+    //         let is = this.mesh.vertexBuffer.itemSize;
+    //         let submesh = this.mesh.submesh[index];
+    //         let byteSize = 2;
+    //         gl.bindTexture(gl.TEXTURE_2D, texture);
+    //         gl.drawElements(gl.TRIANGLES, this.mesh.indexBuffer.numItems, gl.UNSIGNED_SHORT,submesh.offset * is * byteSize);
+    //     });
+    //
+    //     gl.bindVertexArray(null);
+    // }
 
     activateBuffers(gl: WebGL2RenderingContext){
         gl.bindVertexArray(this.VAO);
@@ -208,7 +204,7 @@ export class BasicModel {
             gl.bindTexture(gl.TEXTURE_2D, this.mesh.materialsByIndex[index].mapSpecularExponent.texture_id);
         }
 
-
+        
         BasicModel.shader.setFloat(BasicModel.shader.uniforms.material_transparency, this.mesh.materialsByIndex[index].transparency);
         BasicModel.shader.setVec3(BasicModel.shader.uniforms.material_ambient_colour, this.mesh.materialsByIndex[index].ambient);
         BasicModel.shader.setVec3(BasicModel.shader.uniforms.material_diffuse_colour, this.mesh.materialsByIndex[index].diffuse);

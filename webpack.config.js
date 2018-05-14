@@ -4,7 +4,7 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 const ImageminPlugin = require('imagemin-webpack-plugin').default;
 const UglifyJsPlugin = require("uglifyjs-webpack-plugin");
 
-let PROD = (process.env.NODE_ENV.trim() === 'production');
+let PROD = (process.env.NODE_ENV === 'production');
 
 module.exports = {
 	entry: './src/main.ts',

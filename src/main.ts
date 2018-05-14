@@ -1,31 +1,24 @@
 import {Game} from "./game";
+import {global} from "./globals";
 
 let MainLoop = require('./lib/MainLoop/mainloop.js');
 
+
 let is_mobile;
 let document = window.document;
+let gl: WebGL2RenderingContext = global.gl;
 
-export var gl:WebGL2RenderingContext;
-export var canvas:HTMLCanvasElement;
-export var keys:boolean[];
-export var mouseKeys:boolean[];
-export var mouseXTotal:number;
-export var mouseYTotal:number;
-
-let fpsCounter = document.getElementById('fpscounter');
+let fps_element = document.getElementById('fpscounter');
 let score_element = document.getElementById('score');
+
 
 export class Main {
     game: Game;
 
 
     constructor() {
-        canvas = <HTMLCanvasElement> document.getElementById("canvas");
+        global.canvas = <HTMLCanvasElement> document.getElementById("canvas");
         this.initGL();
-        keys  = [];
-        mouseKeys = [];
-        mouseXTotal  = 0;
-        mouseYTotal  = 0;
 
         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
             is_mobile = true;
@@ -34,35 +27,28 @@ export class Main {
         this.init();
     }
 
-    public async init(): Promise<void>{
-        await Game.loadAssets();
+    public async init(): Promise<void> {
         this.game = new Game();
+        await this.game.init();
 
         let loading = document.getElementById("loading-container");
         loading.remove();
 
         //Done loading
         this.initPointerLock();
+        
+        MainLoop.setBegin(this.begin.bind(this))
+            .setUpdate(this.update.bind(this))
+            .setDraw(this.draw.bind(this))
+            .setEnd(this.end.bind(this))
+            .start();
 
-        //Wait ms so images can load to prevent texture warnings
-        setTimeout(h => {
-            MainLoop.setBegin(this.begin.bind(this))
-                .setUpdate(this.update.bind(this))
-                .setDraw(this.draw.bind(this))
-                .setEnd(this.end.bind(this))
-                .start();
-
-        }, 0);
-    }
-  
-    public static async updateProgress(text: string) {
-        let loading = document.getElementById("loading-text");
-        loading.innerText = text + "...";
     }
 
     private initGL() {
         try {
-            gl = <WebGL2RenderingContext> canvas.getContext("webgl2");
+            global.gl = <WebGL2RenderingContext> global.canvas.getContext("webgl2");
+            gl = global.gl;
         } catch (e) {
             throw "GL init error:\n" + e;
         }
@@ -88,10 +74,7 @@ export class Main {
      */
     private update(delta_s: number) {
         let delta_ms = delta_s / 1000.0;
-
-
         this.game.update(delta_ms);
-
     }
 
     /**
@@ -112,12 +95,10 @@ export class Main {
     private draw(interpolationPercentage): void {
         this.game.draw();
         this.resize();
-        
-
     }
 
     private end(fps, panic): void {
-        fpsCounter.textContent = Math.round(fps) + ' FPS';
+        fps_element.textContent = Math.round(fps) + ' FPS';
         score_element.textContent = 'Score: ' + this.game.getScore();
         if (panic) {
             let discardedTime = Math.round(MainLoop.resetFrameDelta());
@@ -131,24 +112,21 @@ export class Main {
     }
 
     private resize(): void {
-        let min = Math.min(window.innerHeight, window.innerWidth);
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-
+        global.canvas.width = window.innerWidth;
+        global.canvas.height = window.innerHeight;
         gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     }
 
-
     private initPointerLock(): void {
-        let _canvas: any = canvas;
+        let _canvas: any = global.canvas;
         // Start by going fullscreen with the element.  Current implementations
         // require the element to be in fullscreen before requesting pointer
         // lock--something that will likely change in the future.
-        canvas.requestFullscreen = canvas.requestFullscreen ||
+        _canvas.requestFullscreen = _canvas.requestFullscreen ||
             _canvas.mozRequestFullscreen ||
             _canvas.mozRequestFullScreen || // Older API upper case 'S'.
-            canvas.webkitRequestFullscreen;
-        canvas.addEventListener('click', canvas.requestFullscreen, false);
+            _canvas.webkitRequestFullscreen;
+        _canvas.addEventListener('click', _canvas.requestFullscreen, false);
 
         document.addEventListener('fullscreenchange', this.fullscreenChange, false);
         document.addEventListener('mozfullscreenchange', this.fullscreenChange, false);
@@ -161,25 +139,25 @@ export class Main {
 
     private fullscreenChange = (e) => {
         let document: any = window.document;
-        let _canvas: any = canvas;
-        if (document.webkitFullscreenElement === canvas ||
-            document.mozFullscreenElement === canvas ||
-            document.mozFullScreenElement === canvas ||
-            document.fullscreenElement === canvas) { // Older API upper case 'S'.
+        let _canvas: any = global.canvas;
+        if (document.webkitFullscreenElement === _canvas ||
+            document.mozFullscreenElement === _canvas ||
+            document.mozFullScreenElement === _canvas ||
+            document.fullscreenElement === _canvas) { // Older API upper case 'S'.
             // Element is fullscreen, now we can request pointer lock
-            canvas.requestPointerLock = canvas.requestPointerLock ||
+            _canvas.requestPointerLock = _canvas.requestPointerLock ||
                 _canvas.mozRequestPointerLock ||
                 _canvas.webkitRequestPointerLock;
-            canvas.requestPointerLock();
+            _canvas.requestPointerLock();
         }
     };
 
     private pointerLockChange = (e) => {
 
         let document: any = window.document;
-        if (document.pointerLockElement === canvas ||
-            document.mozPointerLockElement === canvas ||
-            document.webkitPointerLockElement === canvas) {
+        if (document.pointerLockElement === global.canvas ||
+            document.mozPointerLockElement === global.canvas ||
+            document.webkitPointerLockElement === global.canvas) {
             document.addEventListener("mousemove", this.moveCallback, false);
         }
         else {
@@ -196,34 +174,29 @@ export class Main {
             e.mozMovementY ||
             e.webkitMovementY ||
             0;
-        mouseXTotal += movementX;
-        mouseYTotal += movementY;
+        global.mouse_x_total += movementX;
+        global.mouse_y_total += movementY;
 
     }
-    
-    public static resetMouse():void{
-        mouseYTotal = 0;
-        mouseXTotal = 0;
-    }
+
 
 }
 
 window.onkeydown = function (e) {
-    keys[e.keyCode] = true;
+    global.keys[e.keyCode] = true;
 };
 
 window.onkeyup = function (e) {
-    keys[e.keyCode] = false;
+    global.keys[e.keyCode] = false;
 };
 
 window.onmousedown = function (e) {
-    mouseKeys[e.which] = true;
+    global.mouse_keys[e.which] = true;
 };
 
 window.onmouseup = function (e) {
-    mouseKeys[e.which] = false;
+    global.mouse_keys[e.which] = false;
 };
-
 
 
 new Main();

@@ -1,7 +1,6 @@
-import {Skybox} from "./entities/skybox";
 import {Player, Player_Movement} from "./entities/player";
 import {World} from "./entities/world";
-import {canvas, gl, keys, Main, mouseKeys, mouseXTotal, mouseYTotal} from "./main";
+import {global} from "./globals";
 import {PickupManager} from "./pickupmanager";
 import {Camera} from "./camera";
 import {glMatrix, mat4, vec3} from "gl-matrix";
@@ -10,10 +9,13 @@ import {Renderer} from "./Renderer";
 import * as assert from "assert";
 import {BasicModelShader} from "./basicmodelshader";
 import {Shader} from "./shader";
-import {SkyboxModel} from "./entities/models/skyboxmodel";
 
 
 let OBJ = require("./lib/OBJ/index.js");
+let gl:WebGL2RenderingContext = global.gl;
+
+let g_keys:Array<boolean> = global.keys;
+let g_mouse_keys:Array<boolean> = global.mouse_keys;
 
 
 let shader: Shader;
@@ -22,21 +24,18 @@ let basicModelRenderer: Renderer;
 
 const PLAYER_ORIGIN = vec3.fromValues(0, 0, 0);
 const PLAYER_FORWARD = vec3.fromValues(1, 0, 0);
-const PLAYER_CAMERA_OFFSET = vec3.fromValues(0, Player.half_height, 0);
-
+const PLAYER_CAMERA_OFFSET = vec3.fromValues(0, 0.8, 0);
 
 
 export class Game {
-    static assets_loaded: boolean;
+    readonly ROD_FILENAME: string = "/assets/models/environment/rod/Rod";
+    readonly RING_FILENAME: string = "/assets/models/environment/ring/Ring";
+    readonly SKYBOX_FILENAME: string = "/assets/models/environment/skybox/Skybox";
+    readonly MAPS_FOLDER: string = "../../assets/worlds/maps/";
 
-    static readonly ROD_FILENAME: string = "/assets/models/environment/rod/Rod";
-    static readonly RING_FILENAME: string = "/assets/models/environment/ring/Ring";
-    static readonly SKYBOX_FILENAME: string = "/assets/models/environment/skybox/Skybox";
-    static readonly MAPS_FOLDER: string = "../../assets/worlds/maps/";
-
-    static rod_model: BasicModel;
-    static ring_model: BasicModel;
-    static skybox_model: BasicModel;
+    private rod_model: BasicModel;
+    private ring_model: BasicModel;
+    private skybox_model: BasicModel;
 
     private world: World;
     private player: Player;
@@ -52,33 +51,32 @@ export class Game {
     static maps: Array<string>;
 
     constructor() {
-        if (!Game.assets_loaded) throw "Game loadAssets must be called before constructor.";
-     
+     //   if (!this.assets_loaded) throw "Game loadAssets must be called before constructor.";
+        gl = gl || global.gl;
+    }
+
+    public async init(): Promise<void>{
+        await this.loadAssets();
         
-        Main.updateProgress("Initializing world");
-        
-        Game.ring_model.init(gl);
-        Game.rod_model.init(gl);
-        Game.skybox_model.init(gl);
-        
-        this.world = new World(gl, Game.maps[this.current_map]);
+        await global.updateProgressText("Initializing world");
+
+        this.ring_model.init(gl);
+        this.rod_model.init(gl);
+        this.skybox_model.init(gl);
 
         let w = Date.now();
-
+        this.world = new World(gl, Game.maps[this.current_map]);
         console.log("world gen time: " + (Date.now() - w) / 1000 + "s");
 
-        this.pickup_manager = new PickupManager(this.world, Game.rod_model, Game.ring_model);
-
-        this.player = new Player(gl, PLAYER_ORIGIN);
-
-        
+        this.pickup_manager = new PickupManager(this.world, this.rod_model, this.ring_model);
+        this.player = new Player(gl, this.world);
+        this.overview_camera.lookAt(vec3.fromValues(0, 0, 0));
 
         this.initShaders();
         this.initRenderer();
 
-        this.overview_camera.lookAt(vec3.fromValues(0, 0, 0));
-    }
 
+    }
 
     private initShaders(): void {
  
@@ -88,7 +86,7 @@ export class Game {
 
         shader.use();
         shader.setIntByName("texture1", 0);
-        shader.setFloatByName("ambient", 1.6);
+        shader.setFloatByName("ambient", 1.4);
 
         //Init lighting
         basicModelShader.use();
@@ -96,7 +94,7 @@ export class Game {
         // directional light
         basicModelShader.setBoolByName("lights[0].is_enabled", true);
         basicModelShader.setVec4ByName("lights[0].position", [0.34, 0.83, 0.44, 0.0]);
-        basicModelShader.setVec3ByName("lights[0].ambient", [1.6, 1.6, 1.6]);
+        basicModelShader.setVec3ByName("lights[0].ambient", [1.8, 1.8, 1.8]);
         basicModelShader.setVec3ByName("lights[0].diffuse", [1.2, 1.2, 1.2]);
         basicModelShader.setVec3ByName("lights[0].specular", [0.0, 0.0, 0.0]);
 
@@ -118,13 +116,13 @@ export class Game {
         basicModelRenderer.init(basicModelShader);
         basicModelRenderer.addBasicModel(Player.model);
         basicModelRenderer.addEntityToRenderList(this.player);
-        basicModelRenderer.addBasicModel(this.world.diskAModel);
-        basicModelRenderer.addBasicModel(this.world.diskBModel);
-        basicModelRenderer.addBasicModel(this.world.diskCModel);
-        basicModelRenderer.addBasicModel(this.world.diskDModel);
-        basicModelRenderer.addBasicModel(this.world.diskEModel);
-        basicModelRenderer.addBasicModel(Game.ring_model);
-        basicModelRenderer.addBasicModel(Game.rod_model);
+        basicModelRenderer.addBasicModel(this.world.diskA_model);
+        basicModelRenderer.addBasicModel(this.world.diskB_model);
+        basicModelRenderer.addBasicModel(this.world.diskC_model);
+        basicModelRenderer.addBasicModel(this.world.diskD_model);
+        basicModelRenderer.addBasicModel(this.world.diskE_model);
+        basicModelRenderer.addBasicModel(this.ring_model);
+        basicModelRenderer.addBasicModel(this.rod_model);
 
         this.world.disks.forEach(disk => {
             assert(disk.initialized);
@@ -143,57 +141,59 @@ export class Game {
 
     public update(delta_ms: number): void {
 
+        if(g_keys[9])
+            this.destroyIntoNewWorld();
+        
         //Movement
-        if (keys[40] || keys[83]) {
+        if (g_keys[40] || g_keys[83]) {
             //     camera.processKeyboard(Camera_Movement.BACKWARD, delta_ms);
             this.player.move(Player_Movement.BACKWARD, delta_ms);
-        } else if ((keys[38] || keys[87]) || (mouseKeys[1] && mouseKeys[3])) {
+        } else if ((g_keys[38] || g_keys[87]) || (g_mouse_keys[1] && g_mouse_keys[3])) {
             //     camera.processKeyboard(Camera_Movement.FORWARD, delta_ms);
             this.player.move(Player_Movement.FORWARD, delta_ms);
         }
-        if (keys[65]) {
+        if (g_keys[65]) {
             //   camera.processKeyboard(Camera_Movement.LEFT, delta_ms);
             this.player.move(Player_Movement.LEFT, delta_ms);
-        } else if (keys[68]) {
+        } else if (g_keys[68]) {
             //   camera.processKeyboard(Camera_Movement.RIGHT, delta_ms);
             this.player.move(Player_Movement.RIGHT, delta_ms);
         }
 
         //Turning
-        if (keys[37])
+        if (g_keys[37])
             this.player.rotate(delta_ms);
 
-        if (keys[39])
+        if (g_keys[39])
             this.player.rotate(-delta_ms);
 
 
         //R to reset
-        if (keys[82]) {
-            vec3.copy(this.player.position, PLAYER_ORIGIN);
-            vec3.copy(this.player.forward, PLAYER_FORWARD);
+        if (g_keys[82]) {
+            this.player.reset(this.world);
         }
 
         //O to switch to overview camera
-        if (keys[79]) {
+        if (g_keys[79]) {
             this.active_camera = this.overview_camera;
         } else {
             this.active_camera = this.player_camera;
         }
 
         //Mouse rotate
-        this.player.rotate(-mouseXTotal / 600);
-        this.player_camera.processMouseMovement(this.player.forward, this.player.position, mouseXTotal, -mouseYTotal, true);
-        Main.resetMouse();
+        this.player.rotate(-global.mouse_x_total / 600);
+        this.player_camera.processMouseMovement(this.player.forward, this.player.position, global.mouse_x_total, -global.mouse_y_total, true);
+        global.resetMousePosition();
  
 
         //Set height to world height
-        let height = this.world.getHeightAtCirclePosition(this.player.position[0], this.player.position[2], Player.radius);
-        this.player.position[1] = height + Player.half_height;
+        let height = this.world.getHeightAtCirclePosition(this.player.position[0], this.player.position[2], Player.model.radius);
+        this.player.position[1] = height + Player.model.half_height;
 
         this.world.update(delta_ms);
         this.pickup_manager.update(delta_ms);
 
-        this.pickup_manager.checkForPickupsCylinderIntersection(this.player.position, Player.radius, Player.half_height, basicModelRenderer);
+        this.pickup_manager.checkForPickupsCylinderIntersection(this.player.position, Player.model.radius, Player.model.half_height, basicModelRenderer);
 
         //console.log(this.player.position[0] + ", " + this.player.position[1] + ", " + this.player.position[2] );
 
@@ -213,41 +213,32 @@ export class Game {
     public draw(): void {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
-
         //Setup view and projection
         let projection_matrix = mat4.create();
         mat4.identity(projection_matrix);
         let view_matrix = this.active_camera.getViewMatrix();
-        mat4.perspective(projection_matrix, glMatrix.toRadian(80), canvas.clientWidth / canvas.clientHeight, 0.1, 2000);
+        mat4.perspective(projection_matrix, glMatrix.toRadian(80), global.canvas.clientWidth / global.canvas.clientHeight, 0.1, 2000);
 
+        basicModelShader.use();
+        basicModelShader.setVec3(basicModelShader.uniforms.camera_pos, this.active_camera.position);
+        
         let model = mat4.create();
 
         //Draw Skybox
         gl.disable(gl.DEPTH_TEST);
-        shader.use();
         mat4.translate(model, model, this.active_camera.position);
-
-
-        shader.setMat4ByName("model", model);
-        let viewProjection = mat4.create();
-        viewProjection = mat4.multiply(viewProjection, projection_matrix, view_matrix);
-        shader.setMat4ByName("viewProjection", viewProjection);
-        Game.skybox_model.draw(gl);
-
-
-        basicModelShader.use();
-        basicModelShader.setVec3(basicModelShader.uniforms.camera_pos, this.active_camera.position);
-
-        // //Draw Disk
+        
+        basicModelShader.setMVPMatrices(model,view_matrix,projection_matrix);
+        this.skybox_model.draw(gl);
         gl.enable(gl.DEPTH_TEST);
-        // this.world.draw(gl, view_matrix, projection_matrix);
 
+        //Draw all entities in renderer
         basicModelRenderer.render(gl, view_matrix, projection_matrix);
         // this.player.draw(gl, view_matrix, projection_matrix);
     }
 
 
-    public destroyIntoNewWorld(gl: WebGL2RenderingContext): void {
+    public destroyIntoNewWorld(): void {
         this.world.destroy();
         this.world.init(gl, Game.maps[this.current_map]);
 
@@ -270,34 +261,34 @@ export class Game {
 
     }
 
-    public static async loadAssets(): Promise<void> {
+    private async loadAssets(): Promise<void> {
         let start = Date.now();
 
-        await Main.updateProgress("Downloading world");
+        await global.updateProgressText("Downloading world");
         await World.loadAssets();
         await this.loadWorldData();
-        await Main.updateProgress("Downloading pickups");
+        await global.updateProgressText("Downloading pickups");
         await this.loadPickupModels();
-        await Main.updateProgress("Downloading skybox");
+        await global.updateProgressText("Downloading skybox");
         await this.loadSkybox();
-        await Main.updateProgress("Downloading player");
+        await global.updateProgressText("Downloading player");
         await Player.load();
 
         let end = Date.now();
         console.log("asset download time: " + (end - start) / 1000 + "s");
 
-        Game.assets_loaded = true;
+ 
     }
 
 
-    public static async loadPickupModels(): Promise<void> {
+    private async loadPickupModels(): Promise<void> {
         let mesh = await OBJ.downloadModels(
             [{
                 name: 'Ring',
                 obj: this.RING_FILENAME + ".obj",
                 mtl: this.RING_FILENAME + ".mtl"
             }]);
-        Game.ring_model = new BasicModel(mesh.Ring);
+        this.ring_model = new BasicModel(mesh.Ring);
 
         mesh = await OBJ.downloadModels(
             [{
@@ -305,13 +296,12 @@ export class Game {
                 obj: this.ROD_FILENAME + ".obj",
                 mtl: this.ROD_FILENAME + ".mtl"
             }]);
-        Game.rod_model = new BasicModel(mesh.Rod);
+        this.rod_model = new BasicModel(mesh.Rod);
 
         return;
     }
 
-    public static async loadWorldData(): Promise<void> {
-        let folder: string = this.MAPS_FOLDER;
+    private async loadWorldData(): Promise<void> {
         Game.maps = [];
         let context = require.context("../../assets/worlds/maps/", true, /\.txt$/);
         context.keys().forEach(key =>
@@ -320,14 +310,14 @@ export class Game {
 
     }
 
-    public static async loadSkybox(): Promise<void> {
+    private async loadSkybox(): Promise<void> {
         let mesh = await OBJ.downloadModels(
             [{
                 name: 'Skybox',
                 obj: this.SKYBOX_FILENAME + ".obj",
                 mtl: this.SKYBOX_FILENAME + ".mtl"
             }]);
-        Game.skybox_model = new SkyboxModel(mesh.Skybox);
+        this.skybox_model = new BasicModel(mesh.Skybox);
         return
     }
 }

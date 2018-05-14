@@ -16,7 +16,7 @@ export class MeshlessModel {
     texture: WebGLTexture;
     material: Material;
     stride: number;
-    rotation_offset: vec3;
+    rotation_offset: number;
     
     constructor(data:Float32Array, indices:Uint16Array, mat: Material) {
         this.data = data;
@@ -24,7 +24,7 @@ export class MeshlessModel {
         this.stride = 8;
         this.name = "height_map_model_" + Disk.height_map_model_gen_count;
         this.material = mat;
-        this.rotation_offset = vec3.fromValues(0, 0, 0);
+        this.rotation_offset = 0;
     }
 
     init(gl: WebGL2RenderingContext) {
