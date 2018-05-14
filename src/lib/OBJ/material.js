@@ -95,35 +95,24 @@ export class Material {
 
 
 	updateActiveTextures(){
-		if(this.mapTransparency != null)
-			this.isTextureActive[0] = true;
-		else
-			this.isTextureActive[0] = false;
-
-		if(this.mapEmissive != null)
-			this.isTextureActive[1] = true;
-		else
-			this.isTextureActive[1] = false;
-
-		if(this.mapAmbient != null)
-			this.isTextureActive[2] = true;
-		else
-			this.isTextureActive[2] = false;
-
-		if(this.mapDiffuse != null)
-			this.isTextureActive[3] = true;
-		else
-			this.isTextureActive[3] = false;
-
-		if(this.mapSpecular != null)
-			this.isTextureActive[4] = true;
-		else
-			this.isTextureActive[4] = false;
-
-		if(this.mapSpecularExponent != null)
-			this.isTextureActive[5] = true;
-		else
-			this.isTextureActive[5] = false;
+		if(this.illumination === 0){
+			this.emissive[0] = Math.min(this.emissive[0] + this.diffuse[0] + this.ambient[0], 1.0);
+			this.emissive[1] = Math.min(this.emissive[1] + this.diffuse[1] + this.ambient[1], 1.0);
+			this.emissive[2] = Math.min(this.emissive[2] + this.diffuse[2] + this.ambient[2], 1.0);
+			
+			this.mapEmissive = this.mapAmbient || this.mapDiffuse || this.mapEmissive;
+			this.diffuse = [0,0,0];
+			this.ambient = [0,0,0];
+			this.mapDiffuse = null;
+			this.mapAmbient = null;
+		}
+		
+		this.isTextureActive[0] = this.mapTransparency != null;
+		this.isTextureActive[1] = this.mapEmissive != null;
+		this.isTextureActive[2] = this.mapAmbient != null;
+		this.isTextureActive[3] = this.mapDiffuse != null;
+		this.isTextureActive[4] = this.mapSpecular != null;
+		this.isTextureActive[5] = this.mapSpecularExponent != null;
 	}
 }
 
@@ -132,6 +121,7 @@ export class Material {
  * http://paulbourke.net/dataformats/mtl/
  */
 export class MaterialLibrary {
+
 	/**
 	 * Constructs the Material Parser
 	 * @param {String} mtlData the MTL file contents
@@ -139,11 +129,11 @@ export class MaterialLibrary {
 	constructor(mtlData) {
 		this.data = mtlData;
 		this.currentMaterial = null;
-		this.materials = {};
+		this.materials = [];
 
 		this.parse();
 		
-		for (var key in this.materials) {
+		for (let key in this.materials) {
 			this.materials[key].updateActiveTextures();
 		}
 		
