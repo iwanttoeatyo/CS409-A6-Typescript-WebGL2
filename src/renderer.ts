@@ -205,7 +205,7 @@ export class Renderer {
                     let model_matrix = mat4.create();
                     let q = quat.create();
                     quat.rotateY(q, q, Math.atan2(entities_to_draw[i].forward[0], entities_to_draw[i].forward[2]) + model.rotation_offset);
-                    mat4.fromRotationTranslationScale(model_matrix, q, entities_to_draw[i].position, entities_to_draw[i].scalar);
+                    mat4.fromRotationTranslationScale(model_matrix, q, vec3.add(vec3.create(),entities_to_draw[i].position,vec3.fromValues(0,model.half_height,0)), entities_to_draw[i].scalar);
                     //Set matrices in shader
                     this.basicModelShader.setMVPMatrices(model_matrix, view_matrix, projection_matrix);
                     //Draw triangle list

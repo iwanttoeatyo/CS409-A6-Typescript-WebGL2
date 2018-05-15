@@ -32,7 +32,7 @@ export class Ring extends Entity {
         vec3.sub(direction, this.target_position, this.position);
         vec3.normalize(direction, direction);
 
-        let speed_factor = this.world.getSpeedFactorAtPosition(this.position[0], this.position[2]);
+        let speed_factor = this.world.getSpeedFactorAtPosition(this.position[0], this.position[2]) / 1000;
         let distance = Ring.speed * delta_time_ms * speed_factor;
 
         vec3.scaleAndAdd(this.position, this.position, direction, distance);

@@ -69,11 +69,11 @@ export class Main {
 
 
     /**
-     * @param {Number} delta_s
-     *   The amount of time since the last update, in seconds.
+     * @param {Number} delta_ms
+     *   The amount of time since the last update, in milliseconds.
      */
-    private update(delta_s: number) {
-        let delta_ms = delta_s / 1000.0;
+    private update(delta_ms: number) {
+
         this.game.update(delta_ms);
     }
 

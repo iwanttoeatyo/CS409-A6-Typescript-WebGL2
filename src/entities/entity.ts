@@ -34,5 +34,10 @@ export class Entity {
         this.model_type = model_type;
     }
 
+    public getRight(): vec3{
+        let r = vec3.create();
+        vec3.cross(r,this.forward,this.up);
+        return r;
+    }
 
 }

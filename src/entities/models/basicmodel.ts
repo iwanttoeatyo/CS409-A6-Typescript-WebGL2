@@ -18,7 +18,7 @@ export class BasicModel {
     public readonly radius: number;
     public readonly half_height: number;
 
-    constructor(mesh: Mesh, radius: number = 1, half_height: number = 1) {
+    constructor(mesh: Mesh, radius: number = 0, half_height: number = 0) {
         this.mesh = mesh;
         this.radius = radius;
         this.half_height = half_height;

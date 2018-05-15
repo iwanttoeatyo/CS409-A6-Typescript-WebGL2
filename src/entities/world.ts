@@ -152,6 +152,43 @@ export class World {
         return 0.0;
     }
 
+    public getSlopeFactorAtPosition(x: number, z: number): number {
+        for (let disk of this.disks) {
+            if (Collision.circleIntersection(x, z, 0, disk.position[0], disk.position[2], disk.radius))
+                return disk.getSlopeFactor();
+        }
+        return 0.0001;
+    }
+
+    public getFrictionAtPosition(x: number, z: number): number {
+        for (let disk of this.disks) {
+            if (Collision.circleIntersection(x, z, 0, disk.position[0], disk.position[2], disk.radius))
+                return disk.getFriction();
+        }
+        return 0.0001;
+    }
+
+    public isOnDisk(x: number, z: number, r: number = 0): boolean {
+        for (let disk of this.disks) {
+            if (Collision.circleIntersection(x, z, r, disk.position[0], disk.position[2], disk.radius))
+                return true;
+        }
+    }
+
+    public isCylinderCollisionWithDisk(pos: vec3, r: number, half_height: number): boolean {
+        for (let disk of this.disks) {
+            if (Collision.circleIntersection(pos[0], pos[2], r, disk.position[0], disk.position[2], disk.radius)) {
+                let height = this.getHeightAtPointPosition(pos[0], pos[2]);
+
+                //If position is below heightmap it is inside
+                if (pos[1] - half_height <= height) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
 
     public static async loadAssets(): Promise<void> {
         this.world_meshes = await this.loadWorldMeshes();

@@ -21,7 +21,7 @@ let shader: Shader;
 let basicModelShader: BasicModelShader;
 let basicModelRenderer: Renderer;
 
-const PLAYER_CAMERA_OFFSET = vec3.fromValues(0, 0.8, 0);
+const PLAYER_CAMERA_OFFSET = vec3.fromValues(0, 1.6, 0);
 
 export class Game {
     readonly ROD_FILENAME: string = "/assets/models/environment/rod/Rod";
@@ -154,30 +154,31 @@ export class Game {
 
         }
 
+        let speed_factor = this.world.getSpeedFactorAtPosition(this.player.position[0], this.player.position[2], Player.model.radius);
 
         //Movement
         if (g_keys[40] || g_keys[83]) {
-            //     camera.processKeyboard(Camera_Movement.BACKWARD, delta_ms);
-            this.player.move(Player_Movement.BACKWARD, delta_ms);
+            this.player.accelerateBackward(delta_ms, speed_factor);
         } else if ((g_keys[38] || g_keys[87]) || (g_mouse_keys[1] && g_mouse_keys[3])) {
-            //     camera.processKeyboard(Camera_Movement.FORWARD, delta_ms);
-            this.player.move(Player_Movement.FORWARD, delta_ms);
+            this.player.accelerateForward(delta_ms, speed_factor);
         }
         if (g_keys[65]) {
-            //   camera.processKeyboard(Camera_Movement.LEFT, delta_ms);
-            this.player.move(Player_Movement.LEFT, delta_ms);
+            this.player.accelerateLeft(delta_ms, speed_factor);
         } else if (g_keys[68]) {
-            //   camera.processKeyboard(Camera_Movement.RIGHT, delta_ms);
-            this.player.move(Player_Movement.RIGHT, delta_ms);
+            this.player.accelerateRight(delta_ms, speed_factor);
         }
 
         //Turning
         if (g_keys[37])
-            this.player.rotate(delta_ms);
+            this.player.turnLeft(delta_ms);
 
         if (g_keys[39])
-            this.player.rotate(-delta_ms);
+            this.player.turnRight(delta_ms);
 
+        if(g_keys[32])
+            this.player.jump();
+        
+        this.player.update(this.world,delta_ms);
 
         //R to reset
         if (g_keys[82]) {
@@ -196,10 +197,6 @@ export class Game {
         this.player_camera.processMouseMovement(this.player.forward, this.player.position, global.mouse_x_total, -global.mouse_y_total, true);
         global.resetMousePosition();
 
-
-        //Set height to world height
-        let height = this.world.getHeightAtCirclePosition(this.player.position[0], this.player.position[2], Player.model.radius);
-        this.player.position[1] = height + Player.model.half_height;
 
         this.world.update(delta_ms);
         this.pickup_manager.update(delta_ms);
@@ -265,11 +262,11 @@ export class Game {
     }
 
     public doDemo(delta_ms: number): void {
-        this.player.move(Player_Movement.FORWARD, delta_ms / 2);
+        let speed_factor = this.world.getSpeedFactorAtPosition(this.player.position[0], this.player.position[2], Player.model.radius);
+        
+        this.player.accelerateForward(delta_ms / 2,speed_factor);
+        this.player.rotate(delta_ms / 5);
 
-        this.player.rotate(delta_ms / 6);
-        this.player_camera.front[0] = this.player.forward[0];
-        this.player_camera.front[2] = this.player.forward[2];
 
     }
 
