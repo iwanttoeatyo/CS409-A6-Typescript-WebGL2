@@ -219,12 +219,12 @@ export class PlayerModel {
             }
             ]);
 
+        let root = window.location.href.substr(0, window.location.href.lastIndexOf("/"));
 
-        let data = await (await fetch(window.location.href.lastIndexOf("/") + this.PLAYER_FOLDER + 'cbabe.mtl')).text();
+        let data = await (await fetch(root + this.PLAYER_FOLDER + 'cbabe.mtl')).text();
         let mat = new MaterialLibrary(data);
 
-        await OBJ.downloadMtlTextures(mat,
-            window.location.href.substr(0, window.location.href.lastIndexOf("/")) + this.PLAYER_FOLDER);
+        await OBJ.downloadMtlTextures(mat,root + this.PLAYER_FOLDER);
 
         mesh.cbabe_stand.addMaterialLibrary(mat);
         mesh.cbabe_jump.addMaterialLibrary(mat);
