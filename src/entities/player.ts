@@ -1,10 +1,11 @@
-import {mat4, vec2, vec3} from "gl-matrix";
+import {mat4, quat, vec2, vec3} from "gl-matrix";
 
-import {PlayerModel} from "./models/playermodel";
+import {Player_State, PlayerModel} from "./models/playermodel";
 import {Entity, Model_Type} from "./entity";
 import {World} from "./world";
 import {MathHelper} from "../mathhelper";
 import vec2_rotate = MathHelper.vec2_rotate;
+import * as assert from "assert";
 
 
 let OBJ = require("../lib/OBJ/index.js");
@@ -28,24 +29,36 @@ export enum Player_Movement {
 }
 
 export class Player extends Entity {
-    static readonly PLAYER_FILENAME: string = "/assets/models/actors/cbabe/cbabe";
-    static model: PlayerModel;
-    static loaded: boolean;
+
+    public model: PlayerModel;
+    public loaded: boolean;
 
 
     private velocity: vec3;
     private jumping: boolean;
 
 
-    constructor(gl: WebGL2RenderingContext, world: World) {
-        if (!Player.loaded) throw "Player load must be called before constructor";
-        super(Player.model.mesh.name, Model_Type.BASIC);
-        Player.model.rotation_offset = -Math.PI / 2;
-        Player.model.init(gl);
-
-        this.reset(world);
+    constructor() {
+        super("player", Model_Type.ANIMATED);
     }
+    
 
+    
+    public draw(gl:WebGL2RenderingContext, view_matrix:mat4, proj_matrix:mat4, camera_pos:vec3){
+        assert(this.loaded);
+        
+        let model_matrix = mat4.create();
+        let q = quat.create();
+        quat.rotateY(q, q, Math.atan2(this.forward[0], this.forward[2]) - Math.PI/2);
+        mat4.fromRotationTranslation(model_matrix, q, vec3.add(vec3.create(),this.position,vec3.fromValues(0, 0.8,0)));
+        
+        this.model.draw(gl,model_matrix,view_matrix,proj_matrix,camera_pos);
+    }
+    
+    public updateAnimation(delta_ms:number):void{
+        this.model.updateAnimation(delta_ms);
+    }
+    
     public update(world: World, delta_time_ms: number): void {
         let delta_time_s = delta_time_ms / 1000;
 
@@ -53,18 +66,19 @@ export class Player extends Entity {
         let new_pos = vec3.clone(this.velocity);
         vec3.scaleAndAdd(new_pos, old_pos, new_pos, delta_time_s);
 
-        let height = world.getHeightAtCirclePosition(new_pos[0], new_pos[2], Player.model.radius);
+        let height = world.getHeightAtCirclePosition(new_pos[0], new_pos[2], this.model.radius);
 
         if (this.jumping) {
 
             let gravity = vec3.fromValues(0, -9.8, 0);
             vec3.scaleAndAdd(this.velocity, this.velocity, gravity, delta_time_s);
 
-            if (world.isCylinderCollisionWithDisk(vec3.add(vec3.create(), new_pos, PLAYER_OFFSET), Player.model.radius, Player.model.half_height)) {
+            if (world.isCylinderCollisionWithDisk(vec3.add(vec3.create(), new_pos, PLAYER_OFFSET), this.model.radius, this.model.half_height)) {
 
-                if (world.isCylinderCollisionWithDisk(vec3.add(vec3.create(), old_pos, PLAYER_OFFSET), Player.model.radius, Player.model.half_height)) {
+                if (world.isCylinderCollisionWithDisk(vec3.add(vec3.create(), old_pos, PLAYER_OFFSET), this.model.radius, this.model.half_height)) {
                     //Collided from above disk. stop falling
                     this.jumping = false;
+                    this.model.setState(Player_State.Standing);
                     this.velocity[1] = 0;
                     new_pos[1] = height;
                 } else {
@@ -77,7 +91,7 @@ export class Player extends Entity {
         } else {
             //Not jumping
 
-            if (world.isOnDisk(new_pos[0], new_pos[2], Player.model.radius)) {
+            if (world.isOnDisk(new_pos[0], new_pos[2], this.model.radius)) {
                 //Not Falling
                 new_pos[1] = height;
                 this.velocity[1] = 0;
@@ -118,6 +132,7 @@ export class Player extends Entity {
             } else {
                 //Start Falling
                 this.jumping = true;
+                this.model.setState(Player_State.Falling);
             }
         }
 
@@ -140,11 +155,9 @@ export class Player extends Entity {
 
     public jump(): void {
         if (this.jumping) return;
-        let new_vel: vec3 = vec3.clone(this.forward);
-        vec3.scale(new_vel, new_vel, JUMP_FORWARD_SPEED);
-        vec3.add(new_vel,new_vel, vec3.fromValues(0,JUMP_UP_SPEED,0));
+        vec3.scaleAndAdd(this.velocity,vec3.fromValues(0,JUMP_UP_SPEED,0), this.forward,JUMP_FORWARD_SPEED);
+        this.model.setState(Player_State.Jumping);        
         this.jumping = true;
-        vec3.copy(this.velocity,new_vel);
     }
 
     rotate(angle: number): void {
@@ -156,6 +169,7 @@ export class Player extends Entity {
         let accel = vec3.clone(this.forward);
         vec3.scale(accel, accel, ACCEL_FORWARD * delta_time_ms / 1000 * speed_factor);
         this.addAcceleration(accel);
+        this.transitionAnimationTo(Player_State.Running);
     }
 
     public accelerateBackward(delta_time_ms: number, speed_factor: number): void {
@@ -163,6 +177,7 @@ export class Player extends Entity {
         vec3.negate(accel, accel);
         vec3.scale(accel, accel, ACCEL_FORWARD * delta_time_ms / 1000 * speed_factor);
         this.addAcceleration(accel);
+        this.transitionAnimationTo(Player_State.Reversing);
     }
 
     public accelerateLeft(delta_time_ms: number, speed_factor: number): void {
@@ -170,12 +185,14 @@ export class Player extends Entity {
         vec3.negate(accel, accel);
         vec3.scale(accel, accel, ACCEL * delta_time_ms / 1000 * speed_factor);
         this.addAcceleration(accel);
+        this.transitionAnimationTo(Player_State.Strafing);
     }
 
     public accelerateRight(delta_time_ms: number, speed_factor: number): void {
         let accel = this.getRight();
         vec3.scale(accel, accel, ACCEL * delta_time_ms / 1000 * speed_factor);
         this.addAcceleration(accel);
+        this.transitionAnimationTo(Player_State.Strafing);
     }
 
     public turnLeft(delta_time_ms: number): void {
@@ -187,18 +204,16 @@ export class Player extends Entity {
         let amount = TURNING_DEGREES * delta_time_ms / 1000;
         vec3.rotateY(this.forward, this.forward, this.up, -amount);
     }
+    
+    public transitionAnimationTo(state:Player_State): void{
+        if(!this.jumping)
+            this.model.setState(state);
+    }
 
-    static async load(): Promise<void> {
-        let mesh = await OBJ.downloadModels(
-            [{
-                name: 'cbabe',
-                obj: this.PLAYER_FILENAME + "_stand.obj",
-                mtl: this.PLAYER_FILENAME + ".mtl"
-            }]);
-
-        Player.model = new PlayerModel(mesh.cbabe);
-
-        Player.loaded = true;
+    public async loadAssets(): Promise<void> {
+        this.model = new PlayerModel();
+        await this.model.load();
+        this.loaded = true;
         return;
     }
 

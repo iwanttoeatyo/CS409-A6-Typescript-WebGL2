@@ -54,12 +54,13 @@ export class BasicModelShader extends Shader {
         this.uniforms.material_is_texture_active = this.getUniformLocation("material.is_texture_active");
     }
 
-    public setMVPMatrices(model: mat4, view: mat4, projection: mat4): void {
+    public setMVPMatrices(model: mat4, view: mat4, projection: mat4, camera_pos:vec3 = vec3.fromValues(0,0,0)): void {
         let mvp_matrix = mat4.create();
         mat4.mul(mvp_matrix, view, model);
         mat4.mul(mvp_matrix, projection, mvp_matrix);
         this.setMat4(this.uniforms.model_matrix, model);
         //  BasicModel.shader.setMat4(BasicModel.uniforms.view_matrix, view);
         this.setMat4(this.uniforms.model_view_projection_matrix, mvp_matrix);
+        this.setVec3(this.uniforms.camera_pos, camera_pos);
     }
 }

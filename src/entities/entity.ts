@@ -3,7 +3,8 @@ import {Guid} from "../lib/guid/guid";
 
 export enum Model_Type {
     BASIC = 0,
-    MESHLESS = 1
+    MESHLESS = 1,
+    ANIMATED = 2
 }
 
 

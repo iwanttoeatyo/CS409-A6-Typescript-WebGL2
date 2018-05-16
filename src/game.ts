@@ -9,6 +9,7 @@ import {Renderer} from "./renderer";
 import * as assert from "assert";
 import {BasicModelShader} from "./basicmodelshader";
 import {Shader} from "./shader";
+import {Player_State} from "./entities/models/playermodel";
 
 
 let OBJ = require("./lib/OBJ/index.js");
@@ -52,6 +53,7 @@ export class Game {
     }
 
     public async init(): Promise<void> {
+        this.player = new Player();
         await this.loadAssets();
 
         await global.updateProgressText("Initializing world");
@@ -65,7 +67,7 @@ export class Game {
         console.log("world gen time: " + (Date.now() - w) / 1000 + "s");
 
         this.pickup_manager = new PickupManager(this.world, this.rod_model, this.ring_model);
-        this.player = new Player(gl, this.world);
+        this.player.reset(this.world);
         this.overview_camera.lookAt(vec3.fromValues(0, 0, 0));
 
         this.initShaders();
@@ -111,7 +113,7 @@ export class Game {
 
         basicModelRenderer = new Renderer();
         basicModelRenderer.init(basicModelShader);
-        basicModelRenderer.addBasicModel(Player.model);
+        //basicModelRenderer.addBasicModel(Player.model);
 
         basicModelRenderer.addBasicModel(this.world.diskA_model);
         basicModelRenderer.addBasicModel(this.world.diskB_model);
@@ -126,7 +128,7 @@ export class Game {
 
     private addAllGameEntitiesToRenderer(): void {
         basicModelRenderer.removeAllEntities();
-        basicModelRenderer.addEntityToRenderList(this.player);
+        //basicModelRenderer.addEntityToRenderList(this.player);
 
         this.world.disks.forEach(disk => {
             assert(disk.initialized);
@@ -144,6 +146,10 @@ export class Game {
                 basicModelRenderer.addEntityToRenderList(rod);
         });
     }
+    
+    public updateAnimations(delta_ms:number):void{
+        this.player.updateAnimation(delta_ms);
+    }
 
     public update(delta_ms: number): void {
 
@@ -154,19 +160,28 @@ export class Game {
 
         }
 
-        let speed_factor = this.world.getSpeedFactorAtPosition(this.player.position[0], this.player.position[2], Player.model.radius);
+        let speed_factor = this.world.getSpeedFactorAtPosition(this.player.position[0], this.player.position[2], this.player.model.radius);
 
         //Movement
+        let moved = false;
+        
         if (g_keys[40] || g_keys[83]) {
             this.player.accelerateBackward(delta_ms, speed_factor);
+            moved = true;
         } else if ((g_keys[38] || g_keys[87]) || (g_mouse_keys[1] && g_mouse_keys[3])) {
             this.player.accelerateForward(delta_ms, speed_factor);
+            moved = true;
         }
         if (g_keys[65]) {
             this.player.accelerateLeft(delta_ms, speed_factor);
+            moved = true;
         } else if (g_keys[68]) {
             this.player.accelerateRight(delta_ms, speed_factor);
+            moved = true;
         }
+        
+        if(!moved)
+            this.player.transitionAnimationTo(Player_State.Standing);
 
         //Turning
         if (g_keys[37])
@@ -201,7 +216,7 @@ export class Game {
         this.world.update(delta_ms);
         this.pickup_manager.update(delta_ms);
 
-        this.pickup_manager.checkForPickupsCylinderIntersection(this.player.position, Player.model.radius, Player.model.half_height, basicModelRenderer);
+        this.pickup_manager.checkForPickupsCylinderIntersection(this.player.position, this.player.model.radius, this.player.model.half_height, basicModelRenderer);
 
         //console.log(this.player.position[0] + ", " + this.player.position[1] + ", " + this.player.position[2] );
 
@@ -221,6 +236,7 @@ export class Game {
     public draw(): void {
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
 
+        let camera = vec3.clone(this.active_camera.position);
         //Setup view and projection
         let projection_matrix = mat4.create();
         mat4.identity(projection_matrix);
@@ -242,7 +258,7 @@ export class Game {
 
         //Draw all entities in renderer
         basicModelRenderer.render(gl, view_matrix, projection_matrix);
-        // this.player.draw(gl, view_matrix, projection_matrix);
+        this.player.draw(gl, view_matrix, projection_matrix,camera);
     }
 
 
@@ -262,7 +278,7 @@ export class Game {
     }
 
     public doDemo(delta_ms: number): void {
-        let speed_factor = this.world.getSpeedFactorAtPosition(this.player.position[0], this.player.position[2], Player.model.radius);
+        let speed_factor = this.world.getSpeedFactorAtPosition(this.player.position[0], this.player.position[2], this.player.model.radius);
         
         this.player.accelerateForward(delta_ms / 2,speed_factor);
         this.player.rotate(delta_ms / 5);
@@ -281,7 +297,7 @@ export class Game {
         await global.updateProgressText("Downloading skybox");
         await this.loadSkybox();
         await global.updateProgressText("Downloading player");
-        await Player.load();
+        await this.player.loadAssets();
 
         let end = Date.now();
         console.log("asset download time: " + (end - start) / 1000 + "s");

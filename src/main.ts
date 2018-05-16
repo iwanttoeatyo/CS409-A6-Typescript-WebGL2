@@ -80,11 +80,13 @@ export class Main {
     /**
      * Called once per frame before update and draw
      */
-    private begin(timestamp: number, delta_s: number): void {
-        let delta_ms = delta_s / 1000;
+    private begin(timestamp: number, delta_ms: number): void {
+
 
         if (is_mobile)
             this.doDemo(delta_ms);
+        
+        this.game.updateAnimations(delta_ms);
     }
 
 
