@@ -220,7 +220,7 @@ export class PlayerModel {
             ]);
 
 
-        let data = await (await fetch(this.PLAYER_FOLDER + 'cbabe.mtl')).text();
+        let data = await (await fetch(window.location.href.lastIndexOf("/") + this.PLAYER_FOLDER + 'cbabe.mtl')).text();
         let mat = new MaterialLibrary(data);
 
         await OBJ.downloadMtlTextures(mat,
