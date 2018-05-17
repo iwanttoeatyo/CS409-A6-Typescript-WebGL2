@@ -6,6 +6,7 @@ import {World} from "./world";
 import {MathHelper} from "../mathhelper";
 import vec2_rotate = MathHelper.vec2_rotate;
 import * as assert from "assert";
+import {BasicModelShader} from "../basicmodelshader";
 
 
 let OBJ = require("../lib/OBJ/index.js");
@@ -44,7 +45,7 @@ export class Player extends Entity {
     
 
     
-    public draw(gl:WebGL2RenderingContext, view_matrix:mat4, proj_matrix:mat4, camera_pos:vec3){
+    public draw(gl:WebGL2RenderingContext, shader:BasicModelShader, view_matrix:mat4, proj_matrix:mat4, camera_pos:vec3){
         assert(this.loaded);
         
         let model_matrix = mat4.create();
@@ -52,7 +53,7 @@ export class Player extends Entity {
         quat.rotateY(q, q, Math.atan2(this.forward[0], this.forward[2]) - Math.PI/2);
         mat4.fromRotationTranslation(model_matrix, q, vec3.add(vec3.create(),this.position,vec3.fromValues(0, 0.8,0)));
         
-        this.model.draw(gl,model_matrix,view_matrix,proj_matrix,camera_pos);
+        this.model.draw(gl,shader,model_matrix,view_matrix,proj_matrix,camera_pos);
     }
     
     public updateAnimation(delta_ms:number):void{

@@ -131,6 +131,16 @@ export class World {
         return 1.0;
     }
 
+    public getAccelFactorAtPosition(x: number, z: number, radius: number = 0): number {
+        for (let i = 0; i < this.disks.length; i++) {
+            if (Collision.circleIntersection(x, z, radius, this.disks[i].position[0], this.disks[i].position[2], this.disks[i].radius))
+                return this.disks[i].getAccelFactor();
+        }
+
+        //No collision with a disk
+        return 1.0;
+    }
+
     public getRandomDiskPosition(): vec3 {
         if (this.disks.length === 0) throw "There are no disks???";
         let i = Random.randi(this.disks.length - 1);

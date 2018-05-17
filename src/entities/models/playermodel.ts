@@ -5,6 +5,8 @@ import {global} from "../../globals";
 let OBJ = require("../../lib/OBJ/index.js");
 import {MaterialLibrary} from "../../lib/OBJ";
 import {mat4, vec3} from "gl-matrix";
+import {BasicModelShader} from "../../basicmodelshader";
+import {KeyframeInterpModel} from "./keyframeInterpModel";
 
 
 let gl = global.gl;
@@ -29,7 +31,7 @@ export enum Player_State {
 }
 
 interface Frame {
-    model: BasicModel;
+    model: KeyframeInterpModel;
     duration: number;
 
 }
@@ -100,9 +102,8 @@ export class PlayerModel {
         }
     }
 
-    public draw(gl: WebGL2RenderingContext, model_matrix: mat4, view_matrix: mat4, projection_matrix: mat4, camera_pos: vec3): void {
-        this.stand_model.activateMaterial(gl, 0);
-
+    public draw(gl: WebGL2RenderingContext, shader: BasicModelShader, model_matrix: mat4, view_matrix: mat4, projection_matrix: mat4, camera_pos: vec3): void {
+        this.stand_model.activateMaterial(gl, shader, 0);
 
         switch (this.state) {
             case Player_State.Running:
@@ -111,27 +112,24 @@ export class PlayerModel {
                 mat4.translate(model_matrix, model_matrix, vec3.fromValues(0, -0.035, 0));
         }
 
-        BasicModel.shader.setMVPMatrices(model_matrix, view_matrix, projection_matrix, camera_pos);
+        shader.setMVPMatrices(model_matrix, view_matrix, projection_matrix, camera_pos);
 
         switch (this.state) {
             case Player_State.Running:
             case Player_State.Strafing:
             case Player_State.Reversing: {
                 let tween = this.time_into_frame / this.run_frames[this.run_state].duration;
-                //this.run_frames[this.run_state.valueOf()].model.draw(gl,tween,model_matrix,view_matrix,projection_matrix);
-                this.run_frames[this.run_state].model.draw(gl);
-                //this.stand_model.draw(gl);
 
+                this.run_frames[this.run_state].model.draw(gl, shader, tween);
                 break;
             }
             case Player_State.Standing:
-                this.stand_model.draw(gl);
+                this.stand_model.draw(gl, shader);
                 break;
             case Player_State.Jumping:
             case Player_State.Falling:
-
-
-                this.jump_model.draw(gl);
+                this.jump_model.draw(gl, shader);
+                break;
         }
     }
 
@@ -224,7 +222,7 @@ export class PlayerModel {
         let data = await (await fetch(root + this.PLAYER_FOLDER + 'cbabe.mtl')).text();
         let mat = new MaterialLibrary(data);
 
-        await OBJ.downloadMtlTextures(mat,root + this.PLAYER_FOLDER);
+        await OBJ.downloadMtlTextures(mat, root + this.PLAYER_FOLDER);
 
         mesh.cbabe_stand.addMaterialLibrary(mat);
         mesh.cbabe_jump.addMaterialLibrary(mat);
@@ -236,13 +234,14 @@ export class PlayerModel {
         mesh.cbabe_run_loop4.addMaterialLibrary(mat);
         this.stand_model = new BasicModel(mesh.cbabe_stand);
         this.jump_model = new BasicModel(mesh.cbabe_jump);
-        this.run_frames[0].model = new BasicModel(mesh.cbabe_run_start);
-        this.run_frames[1].model = new BasicModel(mesh.cbabe_run_loop0);
-        this.run_frames[2].model = new BasicModel(mesh.cbabe_run_loop1);
-        this.run_frames[3].model = new BasicModel(mesh.cbabe_run_loop2);
-        this.run_frames[4].model = new BasicModel(mesh.cbabe_run_loop3);
-        this.run_frames[5].model = new BasicModel(mesh.cbabe_run_loop4);
-        this.run_frames[6].model = new BasicModel(mesh.cbabe_run_start);
+
+        this.run_frames[0].model = new KeyframeInterpModel(mesh.cbabe_run_start, mesh.cbabe_run_loop0);
+        this.run_frames[1].model = new KeyframeInterpModel(mesh.cbabe_run_loop0, mesh.cbabe_run_loop1);
+        this.run_frames[2].model = new KeyframeInterpModel(mesh.cbabe_run_loop1, mesh.cbabe_run_loop2);
+        this.run_frames[3].model = new KeyframeInterpModel(mesh.cbabe_run_loop2, mesh.cbabe_run_loop3);
+        this.run_frames[4].model = new KeyframeInterpModel(mesh.cbabe_run_loop3, mesh.cbabe_run_loop4);
+        this.run_frames[5].model = new KeyframeInterpModel(mesh.cbabe_run_loop4, mesh.cbabe_run_loop0);
+        this.run_frames[6].model = new KeyframeInterpModel(mesh.cbabe_run_loop0, mesh.cbabe_run_start);
 
         this.stand_model.init(gl);
         this.jump_model.init(gl);

@@ -36,7 +36,9 @@ export class Main {
 
         //Done loading
         this.initPointerLock();
-
+        
+        MainLoop.setSimulationTimestep(1000/60);
+        MainLoop.setMaxAllowedFPS(1000);
         MainLoop.setBegin(this.begin.bind(this))
             .setUpdate(this.update.bind(this))
             .setDraw(this.draw.bind(this))
@@ -73,20 +75,17 @@ export class Main {
      *   The amount of time since the last update, in milliseconds.
      */
     private update(delta_ms: number) {
-
+        if (is_mobile)
+            this.doDemo(delta_ms);
         this.game.update(delta_ms);
     }
 
     /**
-     * Called once per frame before update and draw
+     * @param {number} delta_ms: The amount of time since last begin call
+     * Called as fast as possible based on max allowed fps
      */
     private begin(timestamp: number, delta_ms: number): void {
-
-
-        if (is_mobile)
-            this.doDemo(delta_ms);
-        
-        this.game.updateAnimations(delta_ms);
+            this.game.updateAnimations(delta_ms);
     }
 
 

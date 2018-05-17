@@ -591,11 +591,13 @@
 		// last frame) because not all actually elapsed time is guaranteed to be
 		// simulated each frame. See the comments below for details.
 		frameDelta += timestamp - lastFrameTimeMs;
+		let loopDelta =  timestamp - lastFrameTimeMs;
 		lastFrameTimeMs = timestamp;
+		
 
 		// Run any updates that are not dependent on time in the simulation. See
 		// `MainLoop.setBegin()` for additional details on how to use this.
-		begin(timestamp, frameDelta);
+		begin(timestamp, loopDelta);
 
 		// Update the estimate of the frame rate, `fps`. Approximately every
 		// second, the number of frames that occurred in that second are included

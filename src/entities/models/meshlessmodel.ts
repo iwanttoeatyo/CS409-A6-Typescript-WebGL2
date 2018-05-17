@@ -2,6 +2,7 @@ import {Disk} from "../disk";
 import {Material} from '../../lib/OBJ';
 import {BasicModel} from "./basicmodel";
 import {vec3} from "gl-matrix";
+import {BasicModelShader} from "../../basicmodelshader";
 
 
 export class MeshlessModel {
@@ -56,7 +57,7 @@ export class MeshlessModel {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.index_buffer);
     }
 
-    activateMaterial(gl) {
+    activateMaterial(gl, shader:BasicModelShader) {
         if (this.material.isTextureActive[0] && this.material.mapTransparency.texture_id) {
             gl.activeTexture(gl.TEXTURE0);  // transparency
             gl.bindTexture(gl.TEXTURE_2D, this.material.mapTransparency.texture_id);
@@ -83,19 +84,19 @@ export class MeshlessModel {
             gl.bindTexture(gl.TEXTURE_2D, this.material.mapSpecularExponent.texture_id);
         }
 
-        BasicModel.shader.setFloat(BasicModel.shader.uniforms.material_transparency, this.material.transparency);
-        BasicModel.shader.setVec3(BasicModel.shader.uniforms.material_ambient_colour, this.material.ambient);
-        BasicModel.shader.setVec3(BasicModel.shader.uniforms.material_diffuse_colour, this.material.diffuse);
-        BasicModel.shader.setVec3(BasicModel.shader.uniforms.material_specular_colour, this.material.specular);
-        BasicModel.shader.setVec3(BasicModel.shader.uniforms.material_emissive_colour, this.material.emissive);
-        BasicModel.shader.setFloat(BasicModel.shader.uniforms.material_shininess, this.material.specularExponent);
-        BasicModel.shader.setIntV(BasicModel.shader.uniforms.material_is_texture_active, this.material.isTextureActive);
+        shader.setFloat(shader.uniforms.material_transparency, this.material.transparency);
+        shader.setVec3(shader.uniforms.material_ambient_colour, this.material.ambient);
+        shader.setVec3(shader.uniforms.material_diffuse_colour, this.material.diffuse);
+        shader.setVec3(shader.uniforms.material_specular_colour, this.material.specular);
+        shader.setVec3(shader.uniforms.material_emissive_colour, this.material.emissive);
+        shader.setFloat(shader.uniforms.material_shininess, this.material.specularExponent);
+        shader.setIntV(shader.uniforms.material_is_texture_active, this.material.isTextureActive);
 
     }
 
-    draw(gl: WebGL2RenderingContext) {
+    draw(gl: WebGL2RenderingContext, shader:BasicModelShader) {
         this.activateBuffers(gl);
-        this.activateMaterial(gl);
+        this.activateMaterial(gl, shader);
         this.drawActivatedMaterial(gl);
     }
 

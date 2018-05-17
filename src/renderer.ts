@@ -1,30 +1,44 @@
 import {BasicModel} from "./entities/models/basicmodel";
 import {Material} from './lib/OBJ/index.js';
-import {Mesh} from './lib/OBJ/index.js';
 import {Entity, Model_Type} from "./entities/entity";
 import {mat4, quat, vec3} from "gl-matrix";
 import {BasicModelShader} from "./basicmodelshader";
 import {MeshlessModel} from "./entities/models/meshlessmodel";
-import {World} from "./entities/world";
+import {global} from "./globals";
+
+let gl: WebGL2RenderingContext;
+
 
 export class Renderer {
-    models: Map<string, BasicModel>;
-    meshless_models: Map<string, MeshlessModel>;
-    materials: Map<string, Material>;
-    basicModelShader: BasicModelShader;
-    entities: Map<string, Entity>;
+    private models: Map<string, BasicModel>;
+    private meshless_models: Map<string, MeshlessModel>;
+    private materials: Map<string, Material>;
+    public shader: BasicModelShader;
+    private entities: Map<string, Entity>;
 
-    constructor() {
+    private readonly EMPTY_TEXTURE: WebGLTexture;
+
+    constructor(shader: BasicModelShader) {
         this.models = new Map<string, BasicModel>();
         this.materials = new Map<string, Material>();
         this.entities = new Map<string, Entity>();
         this.meshless_models = new Map<string, MeshlessModel>();
-    }
 
-    init(shader: BasicModelShader) {
-        this.basicModelShader = shader;
+        gl = global.gl;
+        this.shader = shader;
 
-
+        gl.bindAttribLocation(shader.ID, 0, "a_vertex");
+        gl.bindAttribLocation(shader.ID, 1, "a_tex_coord");
+        gl.bindAttribLocation(shader.ID, 2, "a_normal");
+        gl.bindAttribLocation(shader.ID, 3, "a_vertex1");
+        gl.bindAttribLocation(shader.ID, 4, "a_normal1");
+        
+        gl.bindVertexArray(null);
+        this.EMPTY_TEXTURE = gl.createTexture();
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.EMPTY_TEXTURE);
+        const pixel = new Uint8Array([0, 0, 0, 255]);  // black
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, 1, 1, 0, gl.RGB, gl.UNSIGNED_BYTE, pixel);
     }
 
     addBasicModel(model: BasicModel) {
@@ -79,31 +93,39 @@ export class Renderer {
     }
 
     prepareBasicModelShader(gl: WebGL2RenderingContext) {
-        this.basicModelShader.use();
+        this.shader.use();
         gl.enable(gl.DEPTH_TEST);
 
         gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, BasicModel.EMPTY_TEXTURE);
+        gl.bindTexture(gl.TEXTURE_2D, this.EMPTY_TEXTURE);
         gl.activeTexture(gl.TEXTURE1);
-        gl.bindTexture(gl.TEXTURE_2D, BasicModel.EMPTY_TEXTURE);
+        gl.bindTexture(gl.TEXTURE_2D, this.EMPTY_TEXTURE);
         gl.activeTexture(gl.TEXTURE2);
-        gl.bindTexture(gl.TEXTURE_2D, BasicModel.EMPTY_TEXTURE);
+        gl.bindTexture(gl.TEXTURE_2D, this.EMPTY_TEXTURE);
         gl.activeTexture(gl.TEXTURE3);
-        gl.bindTexture(gl.TEXTURE_2D, BasicModel.EMPTY_TEXTURE);
+        gl.bindTexture(gl.TEXTURE_2D, this.EMPTY_TEXTURE);
         gl.activeTexture(gl.TEXTURE4);
-        gl.bindTexture(gl.TEXTURE_2D, BasicModel.EMPTY_TEXTURE);
+        gl.bindTexture(gl.TEXTURE_2D, this.EMPTY_TEXTURE);
         gl.activeTexture(gl.TEXTURE5);
-        gl.bindTexture(gl.TEXTURE_2D, BasicModel.EMPTY_TEXTURE);
+        gl.bindTexture(gl.TEXTURE_2D, this.EMPTY_TEXTURE);
 
-        this.basicModelShader.setBool(this.basicModelShader.uniforms.tween_enabled, false);
-        this.basicModelShader.setInt(this.basicModelShader.uniforms.material_transparency_texture, 0);
-        this.basicModelShader.setInt(this.basicModelShader.uniforms.material_emission_texture, 1);
-        this.basicModelShader.setInt(this.basicModelShader.uniforms.material_ambient_texture, 2);
-        this.basicModelShader.setInt(this.basicModelShader.uniforms.material_diffuse_texture, 3);
-        this.basicModelShader.setInt(this.basicModelShader.uniforms.material_specular_texture, 4);
-        this.basicModelShader.setInt(this.basicModelShader.uniforms.material_shininess_texture, 5);
-        this.basicModelShader.setInt(this.basicModelShader.uniforms.material_transparency_channel, 0);
-        this.basicModelShader.setInt(this.basicModelShader.uniforms.material_shininess_channel, 0);
+        this.shader.setBool(this.shader.uniforms.tween_enabled, false);
+        this.shader.setInt(this.shader.uniforms.material_transparency_texture, 0);
+        this.shader.setInt(this.shader.uniforms.material_emission_texture, 1);
+        this.shader.setInt(this.shader.uniforms.material_ambient_texture, 2);
+        this.shader.setInt(this.shader.uniforms.material_diffuse_texture, 3);
+        this.shader.setInt(this.shader.uniforms.material_specular_texture, 4);
+        this.shader.setInt(this.shader.uniforms.material_shininess_texture, 5);
+        this.shader.setInt(this.shader.uniforms.material_transparency_channel, 0);
+        this.shader.setInt(this.shader.uniforms.material_shininess_channel, 0);
+    }
+
+    public use(): void {
+        this.shader.use();
+    }
+
+    public setMVPMatrices(model: mat4, view: mat4, projection: mat4, camera_pos: vec3 = vec3.fromValues(0, 0, 0)): void {
+        this.shader.setMVPMatrices(model, view, projection, camera_pos);
     }
 
     render(gl: WebGL2RenderingContext, view_matrix: mat4, projection_matrix: mat4) {
@@ -144,7 +166,7 @@ export class Renderer {
                     model.activateBuffers(gl);
                     //Activate the material
                     if (!activated) {
-                        model.activateMaterial(gl);
+                        model.activateMaterial(gl, this.shader);
                         activated = true;
                     }
 
@@ -154,7 +176,7 @@ export class Renderer {
                         quat.rotateY(q, q, Math.atan2(entities_to_draw[i].forward[0], entities_to_draw[i].forward[2]) + model.rotation_offset);
                         mat4.fromRotationTranslationScale(model_matrix, q, entities_to_draw[i].position, entities_to_draw[i].scalar);
                         //Set matrices in shader
-                        this.basicModelShader.setMVPMatrices(model_matrix, view_matrix, projection_matrix);
+                        this.shader.setMVPMatrices(model_matrix, view_matrix, projection_matrix);
                         model.drawActivatedMaterial(gl);
 
 
@@ -196,7 +218,7 @@ export class Renderer {
                 let mat_id = model.mesh.materialIndices[mat_list[j]];
 
                 if (!activated) {
-                    model.activateMaterial(gl, mat_id);
+                    model.activateMaterial(gl, this.shader, mat_id);
                     activated = true;
                 }
                 model.activateBuffers(gl);
@@ -205,9 +227,9 @@ export class Renderer {
                     let model_matrix = mat4.create();
                     let q = quat.create();
                     quat.rotateY(q, q, Math.atan2(entities_to_draw[i].forward[0], entities_to_draw[i].forward[2]) + model.rotation_offset);
-                    mat4.fromRotationTranslationScale(model_matrix, q, vec3.add(vec3.create(),entities_to_draw[i].position,vec3.fromValues(0,model.half_height,0)), entities_to_draw[i].scalar);
+                    mat4.fromRotationTranslationScale(model_matrix, q, vec3.add(vec3.create(), entities_to_draw[i].position, vec3.fromValues(0, model.half_height, 0)), entities_to_draw[i].scalar);
                     //Set matrices in shader
-                    this.basicModelShader.setMVPMatrices(model_matrix, view_matrix, projection_matrix);
+                    this.shader.setMVPMatrices(model_matrix, view_matrix, projection_matrix);
                     //Draw triangle list
                     model.drawActivatedMaterial(gl, mat_id);
 

@@ -18,9 +18,7 @@ let gl: WebGL2RenderingContext = global.gl;
 let g_keys: Array<boolean> = global.keys;
 let g_mouse_keys: Array<boolean> = global.mouse_keys;
 
-let shader: Shader;
-let basicModelShader: BasicModelShader;
-let basicModelRenderer: Renderer;
+let renderer: Renderer;
 
 const PLAYER_CAMERA_OFFSET = vec3.fromValues(0, 1.6, 0);
 
@@ -50,6 +48,7 @@ export class Game {
     constructor() {
         //   if (!this.assets_loaded) throw "Game loadAssets must be called before constructor.";
         gl = gl || global.gl;
+        assert(gl);
     }
 
     public async init(): Promise<void> {
@@ -70,80 +69,65 @@ export class Game {
         this.player.reset(this.world);
         this.overview_camera.lookAt(vec3.fromValues(0, 0, 0));
 
-        this.initShaders();
         this.initRenderer();
         this.addAllGameEntitiesToRenderer();
-
-
     }
 
-    private initShaders(): void {
-
-        shader = new Shader(gl, require("../src/shaders/basic.vert"), require("../src/shaders/basic.frag"));
-        // instancedShader = await new Shader(gl, require('../src/shaders/instanced.vert'), require("../src/shaders/instanced.frag"));
-        basicModelShader = new BasicModelShader(gl, require('../src/shaders/basicmodel.vert'), require("../src/shaders/basicmodelmanylights.frag"));
-
-        shader.use();
-        shader.setIntByName("texture1", 0);
-        shader.setFloatByName("ambient", 1.4);
-
-        //Init lighting
-        basicModelShader.use();
-
-        // directional light
-        basicModelShader.setBoolByName("lights[0].is_enabled", true);
-        basicModelShader.setVec4ByName("lights[0].position", [0.34, 0.83, 0.44, 0.0]);
-        basicModelShader.setVec3ByName("lights[0].ambient", [1.8, 1.8, 1.8]);
-        basicModelShader.setVec3ByName("lights[0].diffuse", [1.2, 1.2, 1.2]);
-        basicModelShader.setVec3ByName("lights[0].specular", [0.0, 0.0, 0.0]);
-
-        //Setup player point light
-        // basicModelShader.setBool("lights[1].is_enabled", true);
-        // basicModelShader.setVec4("lights[1].position", [this.player.position[0], this.player.position[1], this.player.position[2], 1.0]);
-        // basicModelShader.setVec3("lights[1].ambient", [0.05, 0.05, 0.05]);
-        // basicModelShader.setVec3("lights[1].diffuse", [0.1, 0.1, 0.1]);
-        // basicModelShader.setVec3("lights[1].specular", [0.0, 0.0, 0.0]);
-        // basicModelShader.setVec3("lights[1].attenuation", [0.4, 0.09, 0.032]);
-
-        BasicModel.initWithShader(gl, basicModelShader);
-
-    }
 
     private initRenderer(): void {
+        // instancedShader = await new Shader(gl, require('../src/shaders/instanced.vert'), require("../src/shaders/instanced.frag"));
+        let shader = new BasicModelShader(gl, require('../src/shaders/basicmodel.vert'), require("../src/shaders/basicmodelmanylights.frag"));
+        
+        renderer = new Renderer(shader);
+        global.renderer = renderer;
 
-        basicModelRenderer = new Renderer();
-        basicModelRenderer.init(basicModelShader);
         //basicModelRenderer.addBasicModel(Player.model);
 
-        basicModelRenderer.addBasicModel(this.world.diskA_model);
-        basicModelRenderer.addBasicModel(this.world.diskB_model);
-        basicModelRenderer.addBasicModel(this.world.diskC_model);
-        basicModelRenderer.addBasicModel(this.world.diskD_model);
-        basicModelRenderer.addBasicModel(this.world.diskE_model);
-        basicModelRenderer.addBasicModel(this.ring_model);
-        basicModelRenderer.addBasicModel(this.rod_model);
+        renderer.addBasicModel(this.world.diskA_model);
+        renderer.addBasicModel(this.world.diskB_model);
+        renderer.addBasicModel(this.world.diskC_model);
+        renderer.addBasicModel(this.world.diskD_model);
+        renderer.addBasicModel(this.world.diskE_model);
+        renderer.addBasicModel(this.ring_model);
+        renderer.addBasicModel(this.rod_model);
 
+        //Init lighting
+        shader.use();
 
+        // directional light
+        shader.setBoolByName("lights[0].is_enabled", true);
+        shader.setVec4ByName("lights[0].position", [0.34, 0.83, 0.44, 0.0]);
+        shader.setVec3ByName("lights[0].ambient", [1.8, 1.8, 1.8]);
+        shader.setVec3ByName("lights[0].diffuse", [1.2, 1.2, 1.2]);
+        shader.setVec3ByName("lights[0].specular", [0.0, 0.0, 0.0]);
+
+        //Setup player point light
+        // shader.setBool("lights[1].is_enabled", true);
+        // shader.setVec4("lights[1].position", [this.player.position[0], this.player.position[1], this.player.position[2], 1.0]);
+        // shader.setVec3("lights[1].ambient", [0.05, 0.05, 0.05]);
+        // shader.setVec3("lights[1].diffuse", [0.1, 0.1, 0.1]);
+        // shader.setVec3("lights[1].specular", [0.0, 0.0, 0.0]);
+        // shader.setVec3("lights[1].attenuation", [0.4, 0.09, 0.032]);
     }
 
     private addAllGameEntitiesToRenderer(): void {
-        basicModelRenderer.removeAllEntities();
+        renderer.removeAllEntities();
         //basicModelRenderer.addEntityToRenderList(this.player);
 
         this.world.disks.forEach(disk => {
             assert(disk.initialized);
-            basicModelRenderer.addEntityToRenderList(disk);
-            basicModelRenderer.addMeshlessModel(disk.heightMapModel);
-            basicModelRenderer.addEntityToRenderList(disk.heightMapEntity);
+            renderer.addEntityToRenderList(disk);
+            renderer.addMeshlessModel(disk.heightMapModel);
+            renderer.addEntityToRenderList(disk.heightMapEntity);
         });
 
         this.pickup_manager.rings.forEach(ring => {
             if (!ring.picked_up)
-                basicModelRenderer.addEntityToRenderList(ring);
+                renderer.addEntityToRenderList(ring);
         });
         this.pickup_manager.rods.forEach(rod => {
             if (!rod.picked_up)
-                basicModelRenderer.addEntityToRenderList(rod);
+                renderer.addEntityToRenderList(rod);
         });
     }
     
@@ -160,23 +144,23 @@ export class Game {
 
         }
 
-        let speed_factor = this.world.getSpeedFactorAtPosition(this.player.position[0], this.player.position[2], this.player.model.radius);
+        let accel_factor = this.world.getAccelFactorAtPosition(this.player.position[0], this.player.position[2], this.player.model.radius);
 
         //Movement
         let moved = false;
         
         if (g_keys[40] || g_keys[83]) {
-            this.player.accelerateBackward(delta_ms, speed_factor);
+            this.player.accelerateBackward(delta_ms, accel_factor);
             moved = true;
         } else if ((g_keys[38] || g_keys[87]) || (g_mouse_keys[1] && g_mouse_keys[3])) {
-            this.player.accelerateForward(delta_ms, speed_factor);
+            this.player.accelerateForward(delta_ms, accel_factor);
             moved = true;
         }
         if (g_keys[65]) {
-            this.player.accelerateLeft(delta_ms, speed_factor);
+            this.player.accelerateLeft(delta_ms, accel_factor);
             moved = true;
         } else if (g_keys[68]) {
-            this.player.accelerateRight(delta_ms, speed_factor);
+            this.player.accelerateRight(delta_ms, accel_factor);
             moved = true;
         }
         
@@ -216,7 +200,7 @@ export class Game {
         this.world.update(delta_ms);
         this.pickup_manager.update(delta_ms);
 
-        this.pickup_manager.checkForPickupsCylinderIntersection(this.player.position, this.player.model.radius, this.player.model.half_height, basicModelRenderer);
+        this.pickup_manager.checkForPickupsCylinderIntersection(this.player.position, this.player.model.radius, this.player.model.half_height, renderer);
 
         //console.log(this.player.position[0] + ", " + this.player.position[1] + ", " + this.player.position[2] );
 
@@ -243,22 +227,20 @@ export class Game {
         let view_matrix = this.active_camera.getViewMatrix();
         mat4.perspective(projection_matrix, glMatrix.toRadian(80), global.canvas.clientWidth / global.canvas.clientHeight, 0.1, 2000);
 
-        basicModelShader.use();
-        basicModelShader.setVec3(basicModelShader.uniforms.camera_pos, this.active_camera.position);
-
+        renderer.use();
         let model = mat4.create();
 
         //Draw Skybox
         gl.disable(gl.DEPTH_TEST);
         mat4.translate(model, model, this.active_camera.position);
 
-        basicModelShader.setMVPMatrices(model, view_matrix, projection_matrix);
-        this.skybox_model.draw(gl);
+        renderer.setMVPMatrices(model, view_matrix, projection_matrix, this.active_camera.position);
+        this.skybox_model.draw(gl,renderer.shader);
         gl.enable(gl.DEPTH_TEST);
 
         //Draw all entities in renderer
-        basicModelRenderer.render(gl, view_matrix, projection_matrix);
-        this.player.draw(gl, view_matrix, projection_matrix,camera);
+        renderer.render(gl, view_matrix, projection_matrix);
+        this.player.draw(gl, renderer.shader, view_matrix, projection_matrix,camera);
     }
 
 
@@ -278,7 +260,7 @@ export class Game {
     }
 
     public doDemo(delta_ms: number): void {
-        let speed_factor = this.world.getSpeedFactorAtPosition(this.player.position[0], this.player.position[2], this.player.model.radius);
+        let speed_factor = this.world.getAccelFactorAtPosition(this.player.position[0], this.player.position[2], this.player.model.radius);
         
         this.player.accelerateForward(delta_ms / 2,speed_factor);
         this.player.rotate(delta_ms / 5);

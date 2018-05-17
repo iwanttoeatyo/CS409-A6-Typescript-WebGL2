@@ -8,6 +8,7 @@ class Uniforms {
     model_view_projection_matrix: WebGLUniformLocation;
     camera_pos: WebGLUniformLocation;
     tween_enabled: WebGLUniformLocation;
+    tween_factor: WebGLUniformLocation;
     material_transparency_texture: WebGLUniformLocation;
     material_emission_texture: WebGLUniformLocation;
     material_ambient_texture: WebGLUniformLocation;
@@ -37,6 +38,7 @@ export class BasicModelShader extends Shader {
         this.uniforms.model_view_projection_matrix = this.getUniformLocation("model_view_projection_matrix");
         this.uniforms.camera_pos = this.getUniformLocation("camera_pos");
         this.uniforms.tween_enabled = this.getUniformLocation("tween_enabled");
+        this.uniforms.tween_factor = this.getUniformLocation("tween_factor");
         this.uniforms.material_transparency_texture = this.getUniformLocation("material.transparency_texture");
         this.uniforms.material_emission_texture = this.getUniformLocation("material.emission_texture");
         this.uniforms.material_ambient_texture = this.getUniformLocation("material.ambient_texture");
