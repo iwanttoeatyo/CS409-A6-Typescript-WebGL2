@@ -7,6 +7,7 @@ import {MathHelper} from "../mathhelper";
 import vec2_rotate = MathHelper.vec2_rotate;
 import * as assert from "assert";
 import {BasicModelShader} from "../basicmodelshader";
+import {Shader} from "../shader";
 
 
 let OBJ = require("../lib/OBJ/index.js");
@@ -45,7 +46,7 @@ export class Player extends Entity {
     
 
     
-    public draw(gl:WebGL2RenderingContext, shader:BasicModelShader, view_matrix:mat4, proj_matrix:mat4, camera_pos:vec3){
+    public draw(gl:WebGL2RenderingContext, shader:Shader, view_matrix:mat4, proj_matrix:mat4, camera_pos:vec3){
         assert(this.loaded);
         
         let model_matrix = mat4.create();

@@ -2,9 +2,10 @@ import {BasicModel} from "./entities/models/basicmodel";
 import {Material} from './lib/OBJ/index.js';
 import {Entity, Model_Type} from "./entities/entity";
 import {mat4, quat, vec3} from "gl-matrix";
-import {BasicModelShader} from "./basicmodelshader";
+import {Shader} from "./shader";
 import {MeshlessModel} from "./entities/models/meshlessmodel";
 import {global} from "./globals";
+import * as assert from "assert";
 
 let gl: WebGL2RenderingContext;
 
@@ -13,49 +14,41 @@ export class Renderer {
     private models: Map<string, BasicModel>;
     private meshless_models: Map<string, MeshlessModel>;
     private materials: Map<string, Material>;
-    public shader: BasicModelShader;
+    public shader: Shader;
     private entities: Map<string, Entity>;
 
-    private readonly EMPTY_TEXTURE: WebGLTexture;
 
-    constructor(shader: BasicModelShader) {
+
+    constructor(shader: Shader) {
         this.models = new Map<string, BasicModel>();
         this.materials = new Map<string, Material>();
         this.entities = new Map<string, Entity>();
         this.meshless_models = new Map<string, MeshlessModel>();
-
-        gl = global.gl;
-        this.shader = shader;
-
-        gl.bindAttribLocation(shader.ID, 0, "a_vertex");
-        gl.bindAttribLocation(shader.ID, 1, "a_tex_coord");
-        gl.bindAttribLocation(shader.ID, 2, "a_normal");
-        gl.bindAttribLocation(shader.ID, 3, "a_vertex1");
-        gl.bindAttribLocation(shader.ID, 4, "a_normal1");
         
-        gl.bindVertexArray(null);
-        this.EMPTY_TEXTURE = gl.createTexture();
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, this.EMPTY_TEXTURE);
-        const pixel = new Uint8Array([0, 0, 0, 255]);  // black
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, 1, 1, 0, gl.RGB, gl.UNSIGNED_BYTE, pixel);
+        gl = global.gl;
+        assert(gl);
+        this.shader = shader;
+    }
+    
+    public setShader(shader:Shader):void{
+        this.shader = shader;
     }
 
-    addBasicModel(model: BasicModel) {
+    public addBasicModel(model: BasicModel): void {
         if (this.models.get(model.mesh.name) === undefined) {
             this.models.set(model.mesh.name, model);
         }
 
-        for (var key in model.mesh.materialNames) {
-
-            if (this.materials.get(model.mesh.materialNames[key]) === undefined) {
-                if (model.mesh.materialsByIndex[key] === undefined) throw "Missing material on model";
-                this.materials.set(model.mesh.materialNames[key], model.mesh.materialsByIndex[key]);
-            }
+        for (let key in model.mesh.materialNames) {
+            if (model.mesh.materialNames.hasOwnProperty(key))
+                if (this.materials.get(model.mesh.materialNames[key]) === undefined) {
+                    if (model.mesh.materialsByIndex[key] === undefined) throw "Missing material on model";
+                    this.materials.set(model.mesh.materialNames[key], model.mesh.materialsByIndex[key]);
+                }
         }
     }
 
-    addMeshlessModel(model: MeshlessModel) {
+    public addMeshlessModel(model: MeshlessModel): void {
         if (this.meshless_models.get(model.name) === undefined) {
             this.meshless_models.set(model.name, model);
         }
@@ -66,7 +59,7 @@ export class Renderer {
 
     }
 
-    addEntityToRenderList(entity: Entity) {
+    public addEntityToRenderList(entity: Entity): void {
         if (this.entities.get(entity.id) === undefined) {
             this.entities.set(entity.id, entity);
         }
@@ -85,44 +78,16 @@ export class Renderer {
 
     public removeEntity(entity: Entity) {
         this.entities.delete(entity.id);
-
     }
 
     public removeAllEntities(): void {
         this.entities = new Map<string, Entity>();
     }
 
-    prepareBasicModelShader(gl: WebGL2RenderingContext) {
-        this.shader.use();
-        gl.enable(gl.DEPTH_TEST);
-
-        gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, this.EMPTY_TEXTURE);
-        gl.activeTexture(gl.TEXTURE1);
-        gl.bindTexture(gl.TEXTURE_2D, this.EMPTY_TEXTURE);
-        gl.activeTexture(gl.TEXTURE2);
-        gl.bindTexture(gl.TEXTURE_2D, this.EMPTY_TEXTURE);
-        gl.activeTexture(gl.TEXTURE3);
-        gl.bindTexture(gl.TEXTURE_2D, this.EMPTY_TEXTURE);
-        gl.activeTexture(gl.TEXTURE4);
-        gl.bindTexture(gl.TEXTURE_2D, this.EMPTY_TEXTURE);
-        gl.activeTexture(gl.TEXTURE5);
-        gl.bindTexture(gl.TEXTURE_2D, this.EMPTY_TEXTURE);
-
-        this.shader.setBool(this.shader.uniforms.tween_enabled, false);
-        this.shader.setInt(this.shader.uniforms.material_transparency_texture, 0);
-        this.shader.setInt(this.shader.uniforms.material_emission_texture, 1);
-        this.shader.setInt(this.shader.uniforms.material_ambient_texture, 2);
-        this.shader.setInt(this.shader.uniforms.material_diffuse_texture, 3);
-        this.shader.setInt(this.shader.uniforms.material_specular_texture, 4);
-        this.shader.setInt(this.shader.uniforms.material_shininess_texture, 5);
-        this.shader.setInt(this.shader.uniforms.material_transparency_channel, 0);
-        this.shader.setInt(this.shader.uniforms.material_shininess_channel, 0);
+    prepareShader(gl: WebGL2RenderingContext) {
+        this.shader.prepare(gl);
     }
 
-    public use(): void {
-        this.shader.use();
-    }
 
     public setMVPMatrices(model: mat4, view: mat4, projection: mat4, camera_pos: vec3 = vec3.fromValues(0, 0, 0)): void {
         this.shader.setMVPMatrices(model, view, projection, camera_pos);
@@ -130,7 +95,7 @@ export class Renderer {
 
     render(gl: WebGL2RenderingContext, view_matrix: mat4, projection_matrix: mat4) {
         //sort entities
-        this.prepareBasicModelShader(gl);
+        this.prepareShader(gl);
 
         this.renderMeshlessModels(gl, view_matrix, projection_matrix);
         this.renderBasicModels(gl, view_matrix, projection_matrix);
@@ -166,7 +131,7 @@ export class Renderer {
                     model.activateBuffers(gl);
                     //Activate the material
                     if (!activated) {
-                        model.activateMaterial(gl, this.shader);
+                        this.shader.activateMaterial(gl,model.material);
                         activated = true;
                     }
 
@@ -218,7 +183,7 @@ export class Renderer {
                 let mat_id = model.mesh.materialIndices[mat_list[j]];
 
                 if (!activated) {
-                    model.activateMaterial(gl, this.shader, mat_id);
+                    this.shader.activateMaterial(gl, model.mesh.materialsByIndex[mat_id]);
                     activated = true;
                 }
                 model.activateBuffers(gl);

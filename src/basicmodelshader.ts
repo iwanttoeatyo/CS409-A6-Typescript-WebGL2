@@ -1,12 +1,12 @@
 import {mat4, vec3, vec4} from "gl-matrix";
-import {Shader} from "./shader";
+import {Shader, Uniforms} from "./shader";
 import {BasicModel} from "./entities/models/basicmodel";
+import {Material} from "./lib/OBJ/"
 
-class Uniforms {
-    model_matrix: WebGLUniformLocation;
-    view_matrix: WebGLUniformLocation;
-    model_view_projection_matrix: WebGLUniformLocation;
-    camera_pos: WebGLUniformLocation;
+import {global} from "./globals";
+
+
+class BasicModelUniforms extends Uniforms {
     tween_enabled: WebGLUniformLocation;
     tween_factor: WebGLUniformLocation;
     material_transparency_texture: WebGLUniformLocation;
@@ -27,12 +27,13 @@ class Uniforms {
 };
 
 export class BasicModelShader extends Shader {
-    public uniforms: Uniforms;
+    public uniforms: BasicModelUniforms;
 
     constructor(gl: WebGL2RenderingContext, vertexSourceCode: string, fragmentSourceCode: string) {
         super(gl, vertexSourceCode, fragmentSourceCode);
+        this.use();
 
-        this.uniforms = new Uniforms();
+        this.uniforms = new BasicModelUniforms();
         this.uniforms.model_matrix = this.getUniformLocation("model_matrix");
         this.uniforms.view_matrix = this.getUniformLocation("view_matrix");
         this.uniforms.model_view_projection_matrix = this.getUniformLocation("model_view_projection_matrix");
@@ -54,15 +55,88 @@ export class BasicModelShader extends Shader {
         this.uniforms.material_emissive_colour = this.getUniformLocation("material.emission_colour");
         this.uniforms.material_shininess = this.getUniformLocation("material.shininess");
         this.uniforms.material_is_texture_active = this.getUniformLocation("material.is_texture_active");
+
+
+        gl.bindAttribLocation(this.ID, 0, "a_vertex");
+        gl.bindAttribLocation(this.ID, 1, "a_tex_coord");
+        gl.bindAttribLocation(this.ID, 2, "a_normal");
+        gl.bindAttribLocation(this.ID, 3, "a_vertex1");
+        gl.bindAttribLocation(this.ID, 4, "a_normal1");
+
+        this.setInt(this.uniforms.material_transparency_texture, 0);
+        this.setInt(this.uniforms.material_emission_texture, 1);
+        this.setInt(this.uniforms.material_ambient_texture, 2);
+        this.setInt(this.uniforms.material_diffuse_texture, 3);
+        this.setInt(this.uniforms.material_specular_texture, 4);
+        this.setInt(this.uniforms.material_shininess_texture, 5);
+        
+        if(!global.EMPTY_TEXTURE){
+            gl.bindVertexArray(null);
+            global.EMPTY_TEXTURE = gl.createTexture();
+            gl.activeTexture(gl.TEXTURE0);
+            gl.bindTexture(gl.TEXTURE_2D, global.EMPTY_TEXTURE);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+            gl.texParameteri(gl.TEXTURE_2D,   gl.TEXTURE_WRAP_T, gl.REPEAT);
+            const pixel = new Uint8Array([192, 192, 192, 255]);  // grey
+            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, 1, 1, 0, gl.RGB, gl.UNSIGNED_BYTE, pixel);
+
+        }
+
+    }
+    
+    prepare(gl:WebGL2RenderingContext):void{
+        this.use();
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, global.EMPTY_TEXTURE);
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, global.EMPTY_TEXTURE);
+        gl.activeTexture(gl.TEXTURE2);
+        gl.bindTexture(gl.TEXTURE_2D, global.EMPTY_TEXTURE);
+        gl.activeTexture(gl.TEXTURE3);
+        gl.bindTexture(gl.TEXTURE_2D, global.EMPTY_TEXTURE);
+        gl.activeTexture(gl.TEXTURE4);
+        gl.bindTexture(gl.TEXTURE_2D, global.EMPTY_TEXTURE);
+        gl.activeTexture(gl.TEXTURE5);
+        gl.bindTexture(gl.TEXTURE_2D, global.EMPTY_TEXTURE);
+
+        this.setBool(this.uniforms.tween_enabled, false);
     }
 
-    public setMVPMatrices(model: mat4, view: mat4, projection: mat4, camera_pos:vec3 = vec3.fromValues(0,0,0)): void {
-        let mvp_matrix = mat4.create();
-        mat4.mul(mvp_matrix, view, model);
-        mat4.mul(mvp_matrix, projection, mvp_matrix);
-        this.setMat4(this.uniforms.model_matrix, model);
-        //  BasicModel.shader.setMat4(BasicModel.uniforms.view_matrix, view);
-        this.setMat4(this.uniforms.model_view_projection_matrix, mvp_matrix);
-        this.setVec3(this.uniforms.camera_pos, camera_pos);
+    activateMaterial(gl:WebGL2RenderingContext, material:Material):void{
+        if (material.isTextureActive[0] && material.mapTransparency.texture_id) {
+            gl.activeTexture(gl.TEXTURE0);  // transparency
+            gl.bindTexture(gl.TEXTURE_2D, material.mapTransparency.texture_id);
+        }
+        if (material.isTextureActive[1] && material.mapEmissive.texture_id) {
+            gl.activeTexture(gl.TEXTURE1);  // emission
+            gl.bindTexture(gl.TEXTURE_2D, material.mapEmissive.texture_id);
+        }
+
+        if (material.isTextureActive[2] && material.mapAmbient.texture_id) {
+            gl.activeTexture(gl.TEXTURE2);  // ambient
+            gl.bindTexture(gl.TEXTURE_2D, material.mapAmbient.texture_id);
+        }
+        if (material.isTextureActive[3] && material.mapDiffuse.texture_id) {
+            gl.activeTexture(gl.TEXTURE3);  // diffuse
+            gl.bindTexture(gl.TEXTURE_2D, material.mapDiffuse.texture_id);
+        }
+        if (material.isTextureActive[4] && material.mapSpecular.texture_id) {
+            gl.activeTexture(gl.TEXTURE4);  // specular
+            gl.bindTexture(gl.TEXTURE_2D, material.mapSpecular.texture_id);
+        }
+        if (material.isTextureActive[5] && material.mapSpecularExponent.texture_id) {
+            gl.activeTexture(gl.TEXTURE5);  // shininess
+            gl.bindTexture(gl.TEXTURE_2D, material.mapSpecularExponent.texture_id);
+        }
+
+        this.setFloat(this.uniforms.material_transparency, material.transparency);
+        this.setVec3(this.uniforms.material_ambient_colour, material.ambient);
+        this.setVec3(this.uniforms.material_diffuse_colour, material.diffuse);
+        this.setVec3(this.uniforms.material_specular_colour, material.specular);
+        this.setVec3(this.uniforms.material_emissive_colour, material.emissive);
+        this.setInt(this.uniforms.material_transparency_channel, 0);
+        this.setInt(this.uniforms.material_shininess_channel, 0);
+        this.setFloat(this.uniforms.material_shininess, material.specularExponent);
+        this.setIntV(this.uniforms.material_is_texture_active, material.isTextureActive);
     }
 }

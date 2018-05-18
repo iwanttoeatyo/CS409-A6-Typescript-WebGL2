@@ -227,7 +227,7 @@ export class Game {
         let view_matrix = this.active_camera.getViewMatrix();
         mat4.perspective(projection_matrix, glMatrix.toRadian(80), global.canvas.clientWidth / global.canvas.clientHeight, 0.1, 2000);
 
-        renderer.use();
+        renderer.prepareShader(gl);
         let model = mat4.create();
 
         //Draw Skybox

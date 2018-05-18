@@ -5,6 +5,7 @@ import {Mesh, Material} from '../../lib/OBJ/index.js'
 import {BasicModelShader} from "../../basicmodelshader";
 import * as assert from "assert";
 import {MathHelper} from "../../mathhelper";
+import {Shader} from "../../shader";
 
 
 export class KeyframeInterpModel extends BasicModel{
@@ -30,7 +31,7 @@ export class KeyframeInterpModel extends BasicModel{
     }
 
 
-    public draw(gl: WebGL2RenderingContext, shader:BasicModelShader, tween:number = 0) {
+    public draw(gl: WebGL2RenderingContext, shader:Shader, tween:number = 0) {
         this.activateBuffers(gl);
  
         for(let s in this.mesh.materialsByIndex) {
@@ -47,10 +48,10 @@ export class KeyframeInterpModel extends BasicModel{
         gl.bindVertexArray(null);
     }
 
-    public setTweenFactor(shader:BasicModelShader, tween:number):void{
+    public setTweenFactor(shader:Shader, tween:number):void{
         tween = Math.max(0,Math.min(tween, 1));
-        shader.setBool(shader.uniforms.tween_enabled, true);
-        shader.setFloat(shader.uniforms.tween_factor, tween);
+        shader.setBoolByName("tween_enabled", true);
+        shader.setFloatByName("tween_factor", tween);
     }
 
  
