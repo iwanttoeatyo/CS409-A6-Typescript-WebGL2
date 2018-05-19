@@ -1,4 +1,4 @@
-import {Player, Player_Movement} from "./entities/player";
+import {Player} from "./entities/player";
 import {World} from "./entities/world";
 import {global} from "./globals";
 import {PickupManager} from "./pickupmanager";
@@ -8,7 +8,6 @@ import {BasicModel} from "./entities/models/basicmodel";
 import {Renderer} from "./renderer";
 import * as assert from "assert";
 import {BasicModelShader} from "./basicmodelshader";
-import {Shader} from "./shader";
 import {Player_State} from "./entities/models/playermodel";
 
 
@@ -77,7 +76,7 @@ export class Game {
     private initRenderer(): void {
         // instancedShader = await new Shader(gl, require('../src/shaders/instanced.vert'), require("../src/shaders/instanced.frag"));
         let shader = new BasicModelShader(gl, require('../src/shaders/basicmodel.vert'), require("../src/shaders/basicmodelmanylights.frag"));
-        
+
         renderer = new Renderer(shader);
         global.renderer = renderer;
 
@@ -130,8 +129,8 @@ export class Game {
                 renderer.addEntityToRenderList(rod);
         });
     }
-    
-    public updateAnimations(delta_ms:number):void{
+
+    public updateAnimations(delta_ms: number): void {
         this.player.updateAnimation(delta_ms);
     }
 
@@ -148,7 +147,7 @@ export class Game {
 
         //Movement
         let moved = false;
-        
+
         if (g_keys[40] || g_keys[83]) {
             this.player.accelerateBackward(delta_ms, accel_factor);
             moved = true;
@@ -163,8 +162,8 @@ export class Game {
             this.player.accelerateRight(delta_ms, accel_factor);
             moved = true;
         }
-        
-        if(!moved)
+
+        if (!moved)
             this.player.transitionAnimationTo(Player_State.Standing);
 
         //Turning
@@ -174,10 +173,10 @@ export class Game {
         if (g_keys[39])
             this.player.turnRight(delta_ms);
 
-        if(g_keys[32])
+        if (g_keys[32])
             this.player.jump();
-        
-        this.player.update(this.world,delta_ms);
+
+        this.player.update(this.world, delta_ms);
 
         //R to reset
         if (g_keys[82]) {
@@ -235,12 +234,13 @@ export class Game {
         mat4.translate(model, model, this.active_camera.position);
 
         renderer.setMVPMatrices(model, view_matrix, projection_matrix, this.active_camera.position);
-        this.skybox_model.draw(gl,renderer.shader);
+        this.skybox_model.draw(gl, renderer.shader);
         gl.enable(gl.DEPTH_TEST);
 
         //Draw all entities in renderer
         renderer.render(gl, view_matrix, projection_matrix);
-        this.player.draw(gl, renderer.shader, view_matrix, projection_matrix,camera);
+
+        this.player.draw(gl, renderer.shader, view_matrix, projection_matrix, camera);
     }
 
 
@@ -261,8 +261,8 @@ export class Game {
 
     public doDemo(delta_ms: number): void {
         let speed_factor = this.world.getAccelFactorAtPosition(this.player.position[0], this.player.position[2], this.player.model.radius);
-        
-        this.player.accelerateForward(delta_ms / 2,speed_factor);
+
+        this.player.accelerateForward(delta_ms / 2, speed_factor);
         this.player.rotate(delta_ms / 5);
 
 

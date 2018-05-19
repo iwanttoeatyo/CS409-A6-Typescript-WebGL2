@@ -25,7 +25,7 @@ export namespace MathHelper {
         return result;
     }
 
-    export function vec2_rotate (out: vec2, a: vec2, rad: number): vec2 {
+    export function vec2_rotate(out: vec2, a: vec2, rad: number): vec2 {
         let cos_angle = Math.cos(rad);
         let sin_angle = Math.sin(rad);
         out[0] = cos_angle * a[0] - sin_angle * a[1];

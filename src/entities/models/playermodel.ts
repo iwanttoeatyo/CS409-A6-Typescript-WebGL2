@@ -1,13 +1,11 @@
 import {BasicModel} from "./basicmodel";
-import {Mesh} from "../../lib/OBJ/index.js";
 import {global} from "../../globals";
-
-let OBJ = require("../../lib/OBJ/index.js");
 import {MaterialLibrary} from "../../lib/OBJ";
 import {mat4, vec3} from "gl-matrix";
-import {BasicModelShader} from "../../basicmodelshader";
 import {KeyframeInterpModel} from "./keyframeInterpModel";
 import {Shader} from "../../shader";
+
+let OBJ = require("../../lib/OBJ/index.js");
 
 
 let gl = global.gl;
@@ -104,7 +102,7 @@ export class PlayerModel {
     }
 
     public draw(gl: WebGL2RenderingContext, shader: Shader, model_matrix: mat4, view_matrix: mat4, projection_matrix: mat4, camera_pos: vec3): void {
-        this.stand_model.activateMaterial(gl, shader, 0);
+        //this.stand_model.activateMaterial(gl, shader, 0);
 
         switch (this.state) {
             case Player_State.Running:

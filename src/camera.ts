@@ -1,4 +1,4 @@
-import {vec3, glMatrix, mat4} from "gl-matrix";
+import {glMatrix, mat4, vec3} from "gl-matrix";
 
 const YAW: number = 90.0;
 const PITCH: number = 0.0;

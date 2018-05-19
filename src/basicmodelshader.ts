@@ -1,10 +1,6 @@
-import {mat4, vec3, vec4} from "gl-matrix";
 import {Shader, Uniforms} from "./shader";
-import {BasicModel} from "./entities/models/basicmodel";
 import {Material} from "./lib/OBJ/"
-
 import {global} from "./globals";
-
 
 class BasicModelUniforms extends Uniforms {
     tween_enabled: WebGLUniformLocation;
@@ -69,22 +65,22 @@ export class BasicModelShader extends Shader {
         this.setInt(this.uniforms.material_diffuse_texture, 3);
         this.setInt(this.uniforms.material_specular_texture, 4);
         this.setInt(this.uniforms.material_shininess_texture, 5);
-        
-        if(!global.EMPTY_TEXTURE){
+
+        if (!global.EMPTY_TEXTURE) {
             gl.bindVertexArray(null);
             global.EMPTY_TEXTURE = gl.createTexture();
             gl.activeTexture(gl.TEXTURE0);
             gl.bindTexture(gl.TEXTURE_2D, global.EMPTY_TEXTURE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-            gl.texParameteri(gl.TEXTURE_2D,   gl.TEXTURE_WRAP_T, gl.REPEAT);
+            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
             const pixel = new Uint8Array([192, 192, 192, 255]);  // grey
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, 1, 1, 0, gl.RGB, gl.UNSIGNED_BYTE, pixel);
 
         }
 
     }
-    
-    prepare(gl:WebGL2RenderingContext):void{
+
+    prepare(gl: WebGL2RenderingContext): void {
         this.use();
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, global.EMPTY_TEXTURE);
@@ -102,7 +98,7 @@ export class BasicModelShader extends Shader {
         this.setBool(this.uniforms.tween_enabled, false);
     }
 
-    activateMaterial(gl:WebGL2RenderingContext, material:Material):void{
+    activateMaterial(gl: WebGL2RenderingContext, material: Material): void {
         if (material.isTextureActive[0] && material.mapTransparency.texture_id) {
             gl.activeTexture(gl.TEXTURE0);  // transparency
             gl.bindTexture(gl.TEXTURE_2D, material.mapTransparency.texture_id);

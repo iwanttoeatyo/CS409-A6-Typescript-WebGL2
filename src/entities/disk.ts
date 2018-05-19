@@ -1,4 +1,4 @@
-import {mat4, vec2, vec3} from "gl-matrix";
+import {vec2, vec3} from "gl-matrix";
 import {BasicModel} from "./models/basicmodel";
 import {MeshlessModel} from "./models/meshlessmodel";
 import {Noisefield} from "../noisefield";

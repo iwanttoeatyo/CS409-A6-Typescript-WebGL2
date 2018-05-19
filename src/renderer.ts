@@ -18,19 +18,18 @@ export class Renderer {
     private entities: Map<string, Entity>;
 
 
-
     constructor(shader: Shader) {
         this.models = new Map<string, BasicModel>();
         this.materials = new Map<string, Material>();
         this.entities = new Map<string, Entity>();
         this.meshless_models = new Map<string, MeshlessModel>();
-        
+
         gl = global.gl;
         assert(gl);
         this.shader = shader;
     }
-    
-    public setShader(shader:Shader):void{
+
+    public setShader(shader: Shader): void {
         this.shader = shader;
     }
 
@@ -131,7 +130,7 @@ export class Renderer {
                     model.activateBuffers(gl);
                     //Activate the material
                     if (!activated) {
-                        this.shader.activateMaterial(gl,model.material);
+                        this.shader.activateMaterial(gl, model.material);
                         activated = true;
                     }
 

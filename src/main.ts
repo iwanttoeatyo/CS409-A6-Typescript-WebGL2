@@ -36,8 +36,8 @@ export class Main {
 
         //Done loading
         this.initPointerLock();
-        
-        MainLoop.setSimulationTimestep(1000/60);
+
+        MainLoop.setSimulationTimestep(1000 / 60);
         MainLoop.setMaxAllowedFPS(1000);
         MainLoop.setBegin(this.begin.bind(this))
             .setUpdate(this.update.bind(this))
@@ -86,7 +86,7 @@ export class Main {
      * Called as fast as possible based on max allowed fps
      */
     private begin(timestamp: number, delta_ms: number): void {
-            this.game.updateAnimations(delta_ms);
+        this.game.updateAnimations(delta_ms);
     }
 
 

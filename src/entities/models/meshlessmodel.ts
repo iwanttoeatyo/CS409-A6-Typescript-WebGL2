@@ -1,7 +1,5 @@
 import {Disk} from "../disk";
 import {Material} from '../../lib/OBJ';
-import {BasicModel} from "./basicmodel";
-import {vec3} from "gl-matrix";
 import {BasicModelShader} from "../../basicmodelshader";
 
 
@@ -57,7 +55,7 @@ export class MeshlessModel {
         gl.bindBuffer(gl.ELEMENT_ARRAY_BUFFER, this.index_buffer);
     }
 
-    activateMaterial(gl, shader:BasicModelShader) {
+    activateMaterial(gl, shader: BasicModelShader) {
         if (this.material.isTextureActive[0] && this.material.mapTransparency.texture_id) {
             gl.activeTexture(gl.TEXTURE0);  // transparency
             gl.bindTexture(gl.TEXTURE_2D, this.material.mapTransparency.texture_id);
@@ -94,7 +92,7 @@ export class MeshlessModel {
 
     }
 
-    draw(gl: WebGL2RenderingContext, shader:BasicModelShader) {
+    draw(gl: WebGL2RenderingContext, shader: BasicModelShader) {
         this.activateBuffers(gl);
         this.activateMaterial(gl, shader);
         this.drawActivatedMaterial(gl);

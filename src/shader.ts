@@ -1,7 +1,7 @@
 import {mat4, vec3, vec4} from "gl-matrix";
 import {Material} from "./lib/OBJ/";
 
-export class Uniforms{
+export class Uniforms {
     model_matrix: WebGLUniformLocation;
     view_matrix: WebGLUniformLocation;
     model_view_projection_matrix: WebGLUniformLocation;
@@ -12,8 +12,8 @@ export class Uniforms{
 export class Shader {
     ID: WebGLProgram;
     gl: WebGL2RenderingContext;
-    uniforms:Uniforms;
-    
+    uniforms: Uniforms;
+
     constructor(gl: WebGL2RenderingContext, vertexSourceCode: string, fragmentSourceCode: string) {
         this.gl = gl;
 
@@ -28,7 +28,7 @@ export class Shader {
         if (!gl.getProgramParameter(this.ID, gl.LINK_STATUS)) {
             alert("Could not initialize shaders");
         }
-        
+
         this.uniforms = new Uniforms();
         this.uniforms.model_matrix = this.getUniformLocation("model_matrix");
         this.uniforms.view_matrix = this.getUniformLocation("view_matrix");
@@ -40,16 +40,16 @@ export class Shader {
     public use(): void {
         this.gl.useProgram(this.ID);
     }
-    
-    public prepare(gl:WebGL2RenderingContext): void{
+
+    public prepare(gl: WebGL2RenderingContext): void {
         this.use();
     }
 
-    public activateMaterial(gl:WebGL2RenderingContext, material:Material):void{
-        
+    public activateMaterial(gl: WebGL2RenderingContext, material: Material): void {
+
     }
 
-    public setMVPMatrices(model: mat4, view: mat4, projection: mat4, camera_pos:vec3 = vec3.fromValues(0,0,0)): void {
+    public setMVPMatrices(model: mat4, view: mat4, projection: mat4, camera_pos: vec3 = vec3.fromValues(0, 0, 0)): void {
         let mvp_matrix = mat4.create();
         mat4.mul(mvp_matrix, view, model);
         mat4.mul(mvp_matrix, projection, mvp_matrix);
@@ -58,7 +58,7 @@ export class Shader {
         this.setMat4(this.uniforms.model_view_projection_matrix, mvp_matrix);
         this.setVec3(this.uniforms.camera_pos, camera_pos);
     }
-    
+
     public setBoolByName(name: string, value: boolean): void {
         this.gl.uniform1i(this.getUniformLocation(name), value ? 1 : 0);
     }

@@ -1,14 +1,11 @@
 import {Disk, Terrain} from "./disk";
-
-let OBJ = require("../lib/OBJ/index.js");
-import {Mesh} from "../lib/OBJ/index.js";
-import {MaterialLibrary} from "../lib/OBJ/index.js";
-
-import {mat4, vec3} from "gl-matrix";
+import {MaterialLibrary, Mesh} from "../lib/OBJ/index.js";
+import {vec3} from "gl-matrix";
 import {Collision} from "../collision";
 import {Random} from "../random";
-
 import {BasicModel} from "./models/basicmodel";
+
+let OBJ = require("../lib/OBJ/index.js");
 
 
 export interface WorldMeshes {

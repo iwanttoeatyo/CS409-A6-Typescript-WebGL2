@@ -1,6 +1,6 @@
 import {Entity, Model_Type} from "./entity";
 import {World} from "./world";
-import {glMatrix, vec3} from "gl-matrix";
+import {vec3} from "gl-matrix";
 import {BasicModel} from "./models/basicmodel";
 import {Collision} from "../collision";
 

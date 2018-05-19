@@ -4,10 +4,9 @@ import {Player_State, PlayerModel} from "./models/playermodel";
 import {Entity, Model_Type} from "./entity";
 import {World} from "./world";
 import {MathHelper} from "../mathhelper";
-import vec2_rotate = MathHelper.vec2_rotate;
 import * as assert from "assert";
-import {BasicModelShader} from "../basicmodelshader";
 import {Shader} from "../shader";
+import vec2_rotate = MathHelper.vec2_rotate;
 
 
 let OBJ = require("../lib/OBJ/index.js");
@@ -43,24 +42,23 @@ export class Player extends Entity {
     constructor() {
         super("player", Model_Type.ANIMATED);
     }
-    
 
-    
-    public draw(gl:WebGL2RenderingContext, shader:Shader, view_matrix:mat4, proj_matrix:mat4, camera_pos:vec3){
+
+    public draw(gl: WebGL2RenderingContext, shader: Shader, view_matrix: mat4, proj_matrix: mat4, camera_pos: vec3) {
         assert(this.loaded);
-        
+
         let model_matrix = mat4.create();
         let q = quat.create();
-        quat.rotateY(q, q, Math.atan2(this.forward[0], this.forward[2]) - Math.PI/2);
-        mat4.fromRotationTranslation(model_matrix, q, vec3.add(vec3.create(),this.position,vec3.fromValues(0, 0.8,0)));
-        
-        this.model.draw(gl,shader,model_matrix,view_matrix,proj_matrix,camera_pos);
+        quat.rotateY(q, q, Math.atan2(this.forward[0], this.forward[2]) - Math.PI / 2);
+        mat4.fromRotationTranslation(model_matrix, q, vec3.add(vec3.create(), this.position, vec3.fromValues(0, 0.8, 0)));
+
+        this.model.draw(gl, shader, model_matrix, view_matrix, proj_matrix, camera_pos);
     }
-    
-    public updateAnimation(delta_ms:number):void{
+
+    public updateAnimation(delta_ms: number): void {
         this.model.updateAnimation(delta_ms);
     }
-    
+
     public update(world: World, delta_time_ms: number): void {
         let delta_time_s = delta_time_ms / 1000;
 
@@ -115,7 +113,7 @@ export class Player extends Entity {
                     let dir = vec2.fromValues(1, 0);
                     vec2_rotate(dir, dir, Math.PI * 2 * (i / 60));
 
-                    let pos = vec3.fromValues(new_pos[0] + dir[0] * 0.01,0, new_pos[2] + dir[1] * 0.01);
+                    let pos = vec3.fromValues(new_pos[0] + dir[0] * 0.01, 0, new_pos[2] + dir[1] * 0.01);
                     let h = world.getHeightAtPointPosition(pos[0], pos[2]);
                     if (h < min_height) {
                         min_height = h;
@@ -157,8 +155,8 @@ export class Player extends Entity {
 
     public jump(): void {
         if (this.jumping) return;
-        vec3.scaleAndAdd(this.velocity,vec3.fromValues(0,JUMP_UP_SPEED,0), this.forward,JUMP_FORWARD_SPEED);
-        this.model.setState(Player_State.Jumping);        
+        vec3.scaleAndAdd(this.velocity, vec3.fromValues(0, JUMP_UP_SPEED, 0), this.forward, JUMP_FORWARD_SPEED);
+        this.model.setState(Player_State.Jumping);
         this.jumping = true;
     }
 
@@ -206,9 +204,9 @@ export class Player extends Entity {
         let amount = TURNING_DEGREES * delta_time_ms / 1000;
         vec3.rotateY(this.forward, this.forward, this.up, -amount);
     }
-    
-    public transitionAnimationTo(state:Player_State): void{
-        if(!this.jumping)
+
+    public transitionAnimationTo(state: Player_State): void {
+        if (!this.jumping)
             this.model.setState(state);
     }
 

@@ -8,8 +8,8 @@ export namespace global {
     export var mouse_x_total: number = 0;
     export var mouse_y_total: number = 0;
     export var renderer: Renderer;
-    
-    export var EMPTY_TEXTURE:WebGLTexture;
+
+    export var EMPTY_TEXTURE: WebGLTexture;
 
     export async function updateProgressText(text: string): Promise<void> {
         let loading = document.getElementById("loading-text");
