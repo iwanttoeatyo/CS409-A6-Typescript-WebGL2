@@ -75,7 +75,7 @@ void main()
 	if(material.is_texture_active[5]) shininess2       *=    shininess_on_texture;
 
 	vec3 basic_colour      = emission_surface;
-	vec4 seperate_specular = vec4(0.0, 0.0, 0.0, 0.0);
+	vec4 separate_specular = vec4(0.0, 0.0, 0.0, 0.0);
 
 	// calculate the effects of each light
 
@@ -92,49 +92,32 @@ void main()
 				light_direction_from = normalize(offset_position);
 				float light_distance = length(offset_position);
 				attenuation = 1.0 / (lights[i].attenuation.x +
-				                  lights[i].attenuation.y * light_distance +
-				                    lights[i].attenuation.z * light_distance * light_distance);
+				                     lights[i].attenuation.y * light_distance +
+				                     lights[i].attenuation.z * light_distance * light_distance);
 			}
 
 			//  Phong-Blinn shading
 
 			vec3 half_angle_direction = normalize(normalized_to_camera + light_direction_from);
-
-			float  ambient_intensity = attenuation;
+            
+            float ambient_intensity = attenuation;
 			float  diffuse_intensity = attenuation *     max(0.0, dot(normalized_normal, light_direction_from));
 			float specular_intensity = attenuation * pow(max(0.0, dot(normalized_normal, half_angle_direction)), shininess2);
 
 			basic_colour += ambient_surface * lights[i].ambient * ambient_intensity +
-			                diffuse_surface * lights[i].diffuse * diffuse_intensity;
-
-			vec3 specular_colour = specular_surface * lights[i].specular;
-//			if(is_seperate_specular)
-//			{
-//				float specular_max = max(max(specular_colour.r, specular_colour.g), specular_colour.b);
-//				if(specular_max > 0.0)
-//				{
-//					specular_intensity *= specular_max;
-//					specular_colour    /= specular_max;
-//
-//					seperate_specular = vec4(seperate_specular.rgb * seperate_specular.a +
-//					                         specular_colour       * specular_intensity,
-//					                         seperate_specular.a + specular_intensity);
-//				}
-//				// else no specular highlight
-//			}
-//			else
-				basic_colour += specular_colour * specular_intensity;
+			                diffuse_surface * lights[i].diffuse * diffuse_intensity + 
+                            specular_surface * lights[i].specular * specular_intensity;
 		}
 
 	// calculate the final colour
 
-	if(seperate_specular.a > 1.0)
-		seperate_specular.a = 1.0;
+	if(separate_specular.a > 1.0)
+		separate_specular.a = 1.0;
 
-	float basic_transparency = transparency2 * (1.0 - seperate_specular.a);
+	float basic_transparency = transparency2 * (1.0 - separate_specular.a);
 
-	if(basic_transparency + seperate_specular.a <= 0.0)
+	if(basic_transparency + separate_specular.a <= 0.0)
 		discard;
 
-	FragColor = vec4(basic_colour, basic_transparency) + seperate_specular;
+	FragColor = vec4(basic_colour, basic_transparency) + separate_specular;
 }
