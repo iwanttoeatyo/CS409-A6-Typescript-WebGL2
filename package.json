@@ -5,7 +5,7 @@
   "main": "index.html",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "watch": "webpack --progress --colors --watch",
+    "watch": "set NODE_ENV=production&& webpack --progress --colors --watch",
     "build": "set NODE_ENV=production&& webpack --progress --colors",
     "dev": "webpack-dev-server --content-base ./ --colors --hot --inline"
   },
@@ -19,17 +19,17 @@
     "@types/webgl2": "0.0.2"
   },
   "devDependencies": {
-    "@types/node": "^8.10.13",
+    "@types/node": "^8.10.17",
     "@types/webpack-env": "^1.13.6",
     "copy-webpack-plugin": "^4.5.1",
-    "gl-matrix": "^2.5.1",
+    "gl-matrix": "^2.6.1",
     "html-webpack-plugin": "^2.30.1",
     "imagemin-webpack-plugin": "^2.1.5",
     "raw-loader": "^0.5.1",
     "ts-loader": "^3.5.0",
     "typescript": "^2.8.3",
     "uglifyjs-webpack-plugin": "^1.2.5",
-    "webpack": "^3.11.0",
+    "webpack": "^3.12.0",
     "webpack-dev-server": "^2.11.2"
   }
 }
