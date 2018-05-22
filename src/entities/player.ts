@@ -3,7 +3,7 @@ import {mat4, quat, vec2, vec3} from "gl-matrix";
 import {Player_State, PlayerModel} from "./models/playermodel";
 import {Entity, Model_Type} from "./entity";
 import {World} from "./world";
-import {MathHelper} from "../mathhelper";
+import {MathHelper} from "../helpers/mathhelper";
 import * as assert from "assert";
 import {Shader} from "../shader";
 import vec2_rotate = MathHelper.vec2_rotate;

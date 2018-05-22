@@ -1,8 +1,8 @@
 import {Disk, Terrain} from "./disk";
 import {MaterialLibrary, Mesh} from "../lib/OBJ/index.js";
 import {vec3} from "gl-matrix";
-import {Collision} from "../collision";
-import {Random} from "../random";
+import {Collision} from "../helpers/collision";
+import {Random} from "../helpers/random";
 import {BasicModel} from "./models/basicmodel";
 
 let OBJ = require("../lib/OBJ/index.js");

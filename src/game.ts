@@ -3,12 +3,15 @@ import {World} from "./entities/world";
 import {global} from "./globals";
 import {PickupManager} from "./pickupmanager";
 import {Camera} from "./camera";
-import {glMatrix, mat4, vec3} from "gl-matrix";
+import {glMatrix, mat4, vec3, vec4} from "gl-matrix";
 import {BasicModel} from "./entities/models/basicmodel";
-import {Renderer} from "./renderer";
+import {Renderer} from "./renderers/renderer";
 import * as assert from "assert";
 import {BasicModelShader} from "./basicmodelshader";
 import {Player_State} from "./entities/models/playermodel";
+import {MovementGraph} from "./movementgraph";
+import {PointList} from "./renderers/linerenderer";
+import line_renderer = global.line_renderer;
 
 
 let OBJ = require("./lib/OBJ/index.js");
@@ -32,6 +35,8 @@ export class Game {
     private skybox_model: BasicModel;
 
     private world: World;
+    private world_graph: MovementGraph;
+    private world_graph_point_list:PointList;
     private player: Player;
     private pickup_manager: PickupManager;
 
@@ -62,6 +67,8 @@ export class Game {
 
         let w = Date.now();
         this.world = new World(gl, Game.maps[this.current_map++]);
+        this.world_graph = new MovementGraph(this.world.disks);
+        this.initWorldGraphPointLine();
         console.log("world gen time: " + (Date.now() - w) / 1000 + "s");
 
         this.pickup_manager = new PickupManager(this.world, this.rod_model, this.ring_model);
@@ -72,13 +79,35 @@ export class Game {
         this.addAllGameEntitiesToRenderer();
     }
 
+    private initWorldGraphPointLine():void{
+        let offset = vec3.fromValues(0, 0.2,0);
+        this.world_graph_point_list = new PointList();
+        this.world_graph_point_list.allocate(this.world_graph.getNodeLinkCount() * 2);
+        for(let node of this.world_graph.getNodeList()) {
+            for (let link of node.node_links) {
+                let color = vec4.fromValues(0.25 + link.weight / 50.0, 1.0 - link.weight / 150.0, 0.0, 1.0);
+                this.world_graph_point_list.pushRaw(vec3.add(vec3.create(), node.pos, offset), color);
+                this.world_graph_point_list.pushRaw(vec3.add(vec3.create(), this.world_graph.getNodeList()[link.dest_node_id].pos, offset), color);
+            }
+        }
+    }
+    
+    private displayMovementGraph(view_matrix:mat4, projection_matrix:mat4):void{
+        
+        if(this.active_camera === this.overview_camera)
+            gl.disable(gl.DEPTH_TEST);
+        let vp = mat4.multiply(mat4.create(), projection_matrix, view_matrix);
+        
+        global.line_renderer.drawPointList(this.world_graph_point_list, vp);
+        gl.enable(gl.DEPTH_TEST);
+        
+    }
 
     private initRenderer(): void {
         // instancedShader = await new Shader(gl, require('../src/shaders/instanced.vert'), require("../src/shaders/instanced.frag"));
-        let shader = new BasicModelShader(gl, require('../src/shaders/basicmodel.vert'), require("../src/shaders/basicmodelmanylights.frag"));
 
-        renderer = new Renderer(shader);
-        global.renderer = renderer;
+         renderer = global.renderer;
+         assert(renderer);
 
         //basicModelRenderer.addBasicModel(Player.model);
 
@@ -91,6 +120,7 @@ export class Game {
         renderer.addBasicModel(this.rod_model);
 
         //Init lighting
+        let shader = renderer.shader;
         shader.use();
 
         // directional light
@@ -241,6 +271,8 @@ export class Game {
         renderer.render(gl, view_matrix, projection_matrix);
 
         this.player.draw(gl, renderer.shader, view_matrix, projection_matrix, camera);
+        
+        this.displayMovementGraph(view_matrix,projection_matrix);
     }
 
 

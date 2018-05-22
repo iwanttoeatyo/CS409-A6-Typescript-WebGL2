@@ -3,8 +3,8 @@ import {Ring} from "./entities/ring";
 import {Rod} from "./entities/rod";
 import {World} from "./entities/world";
 import {vec3} from "gl-matrix";
-import {Collision} from "./collision";
-import {Renderer} from "./renderer";
+import {Collision} from "./helpers/collision";
+import {Renderer} from "./renderers/renderer";
 
 export class PickupManager {
     private rod_model: BasicModel;

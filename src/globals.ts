@@ -1,4 +1,5 @@
-import {Renderer} from "./renderer";
+import {Renderer} from "./renderers/renderer";
+import {LineRenderer} from "./renderers/linerenderer";
 
 export namespace global {
     export var gl: WebGL2RenderingContext;
@@ -8,6 +9,7 @@ export namespace global {
     export var mouse_x_total: number = 0;
     export var mouse_y_total: number = 0;
     export var renderer: Renderer;
+    export var line_renderer: LineRenderer;
 
     export var EMPTY_TEXTURE: WebGLTexture;
 

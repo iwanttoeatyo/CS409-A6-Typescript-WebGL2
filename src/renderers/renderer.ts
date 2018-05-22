@@ -1,10 +1,10 @@
-import {BasicModel} from "./entities/models/basicmodel";
-import {Material} from './lib/OBJ/index.js';
-import {Entity, Model_Type} from "./entities/entity";
+import {BasicModel} from "../entities/models/basicmodel";
+import {Material} from '../lib/OBJ/index.js';
+import {Entity, Model_Type} from "../entities/entity";
 import {mat4, quat, vec3} from "gl-matrix";
-import {Shader} from "./shader";
-import {MeshlessModel} from "./entities/models/meshlessmodel";
-import {global} from "./globals";
+import {Shader} from "../shader";
+import {MeshlessModel} from "../entities/models/meshlessmodel";
+import {global} from "../globals";
 import * as assert from "assert";
 
 let gl: WebGL2RenderingContext;

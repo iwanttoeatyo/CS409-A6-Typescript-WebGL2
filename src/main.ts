@@ -1,5 +1,8 @@
 import {Game} from "./game";
 import {global} from "./globals";
+import {BasicModelShader} from "./basicmodelshader";
+import {Renderer} from "./renderers/renderer";
+import {LineRenderer} from "./renderers/linerenderer";
 
 let MainLoop = require('./lib/MainLoop/mainloop.js');
 
@@ -28,6 +31,11 @@ export class Main {
     }
 
     public async init(): Promise<void> {
+
+        let shader = new BasicModelShader(gl, require('shaders/basicmodel.vert'), require("shaders/basicmodelmanylights.frag"));
+        global.renderer = new Renderer(shader);
+        global.line_renderer = new LineRenderer();
+        
         this.game = new Game();
         await this.game.init();
 
