@@ -11,6 +11,11 @@ export namespace global {
     export var renderer: Renderer;
     export var line_renderer: LineRenderer;
 
+    export var TIME_SCALE_COUNT: number = 10;
+    export var TIME_SCALES: number[] = [50.0, 20.0, 10.0, 4.0, 2.0, 1.0, 0.5, 0.25, 0.1, 0.05, 0.01];
+    export var time_scale_id: number = 5;
+
+
     export var EMPTY_TEXTURE: WebGLTexture;
 
     export async function updateProgressText(text: string): Promise<void> {

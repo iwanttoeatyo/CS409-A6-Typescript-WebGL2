@@ -3,6 +3,7 @@ import {global} from "./globals";
 import {BasicModelShader} from "./basicmodelshader";
 import {Renderer} from "./renderers/renderer";
 import {LineRenderer} from "./renderers/linerenderer";
+import keys = global.keys;
 
 let MainLoop = require('./lib/MainLoop/mainloop.js');
 
@@ -12,6 +13,7 @@ let document = window.document;
 let gl: WebGL2RenderingContext = global.gl;
 
 let fps_element = document.getElementById('fpscounter');
+let ups_element = document.getElementById('upscounter');
 let score_element = document.getElementById('score');
 
 
@@ -35,7 +37,7 @@ export class Main {
         let shader = new BasicModelShader(gl, require('shaders/basicmodel.vert'), require("shaders/basicmodelmanylights.frag"));
         global.renderer = new Renderer(shader);
         global.line_renderer = new LineRenderer();
-        
+
         this.game = new Game();
         await this.game.init();
 
@@ -94,7 +96,9 @@ export class Main {
      * Called as fast as possible based on max allowed fps
      */
     private begin(timestamp: number, delta_ms: number): void {
+        MainLoop.setTimeScale(global.TIME_SCALES[global.time_scale_id]);
         this.game.updateAnimations(delta_ms);
+
     }
 
 
@@ -107,8 +111,9 @@ export class Main {
         this.resize();
     }
 
-    private end(fps, panic): void {
+    private end(fps, ups, panic): void {
         fps_element.textContent = Math.round(fps) + ' FPS';
+        ups_element.textContent = Math.round(ups) + ' UPS';
         score_element.textContent = 'Score: ' + this.game.getScore();
         if (panic) {
             let discardedTime = Math.round(MainLoop.resetFrameDelta());
@@ -116,6 +121,27 @@ export class Main {
         }
     }
 
+    public static keyboard(key: number, is_down: boolean) {
+
+        if (is_down)
+            switch (key) {
+                case 107: {
+                    if (!keys[107]) {
+                        global.time_scale_id--;
+                        if (global.time_scale_id < 0) global.time_scale_id = 0;
+                    }
+                    break;
+                }
+                case 109: {
+                    if (!keys[109]) {
+                        global.time_scale_id++;
+                        if (global.time_scale_id > global.TIME_SCALE_COUNT) global.time_scale_id = global.TIME_SCALE_COUNT;
+                    }
+                    break;
+                }
+            }
+        keys[key] = is_down;
+    }
 
     private doDemo(delta_ms: number): void {
         this.game.doDemo(delta_ms);
@@ -193,11 +219,11 @@ export class Main {
 }
 
 window.onkeydown = function (e) {
-    global.keys[e.keyCode] = true;
-};
+    Main.keyboard(e.which || e.keyCode || 0, true);
+}
 
 window.onkeyup = function (e) {
-    global.keys[e.keyCode] = false;
+    Main.keyboard(e.which || e.keyCode || 0, false);
 };
 
 window.onmousedown = function (e) {

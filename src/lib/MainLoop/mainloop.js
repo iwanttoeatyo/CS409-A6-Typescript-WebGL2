@@ -10,6 +10,7 @@
 			// The cumulative amount of in-app time that hasn't been simulated yet.
 			// See the comments inside animate() for details.
 			frameDelta = 0,
+			time_scale = 1.0,
 
 			// The timestamp in milliseconds of the last time the main loop was run.
 			// Used to compute the time elapsed between frames.
@@ -17,6 +18,7 @@
 
 			// An exponential moving average of the frames per second.
 			fps = 60,
+			ups = 60,
 
 			// A factor that affects how heavily to weight more recent seconds'
 			// performance when calculating the average frames per second. Valid values
@@ -35,6 +37,7 @@
 			// The number of frames delivered since the last time the `fps` moving
 			// average was updated (i.e. since `lastFpsUpdate`).
 			framesSinceLastFpsUpdate = 0,
+			updatesSinceLastUpsUpdate = 0,
 
 			// The number of times update() is called in a given frame. This is only
 			// relevant inside of animate(), but a reference is held externally so that
@@ -233,6 +236,10 @@
 		 */
 		getMaxAllowedFPS: function() {
 			return 1000 / minFrameDelay;
+		},
+		
+		setTimeScale: function(_time_scale) {
+			time_scale = _time_scale;
 		},
 
 		/**
@@ -517,6 +524,7 @@
 					lastFrameTimeMs = timestamp;
 					lastFpsUpdate = timestamp;
 					framesSinceLastFpsUpdate = 0;
+					updatesSinceLastUpsUpdate = 0;
 
 					// Start the main loop.
 					rafHandle = requestAnimationFrame(animate);
@@ -590,8 +598,9 @@
 		// not-yet-simulated time (as opposed to just the time elapsed since the
 		// last frame) because not all actually elapsed time is guaranteed to be
 		// simulated each frame. See the comments below for details.
-		frameDelta += timestamp - lastFrameTimeMs;
 		let loopDelta =  timestamp - lastFrameTimeMs;
+		loopDelta *= time_scale;
+		frameDelta += loopDelta;
 		lastFrameTimeMs = timestamp;
 		
 
@@ -613,11 +622,14 @@
 					// second has likely passed since the last update.
 					fpsAlpha * framesSinceLastFpsUpdate * 1000 / (timestamp - lastFpsUpdate) +
 					(1 - fpsAlpha) * fps;
-
+			
+			ups = fpsAlpha * updatesSinceLastUpsUpdate * 1000 / (timestamp - lastFpsUpdate) + ( 1 - fpsAlpha) * ups;
 			// Reset the frame counter and last-updated timestamp since their
 			// latest values have now been incorporated into the FPS estimate.
 			lastFpsUpdate = timestamp;
+			
 			framesSinceLastFpsUpdate = 0;
+			updatesSinceLastUpsUpdate = 0;
 		}
 		// Count the current frame in the next frames-per-second update. This
 		// happens after the previous section because the previous section
@@ -687,6 +699,7 @@
 		numUpdateSteps = 0;
 		while (frameDelta >= simulationTimestep) {
 			update(simulationTimestep);
+			updatesSinceLastUpsUpdate++;
 			frameDelta -= simulationTimestep;
 
 			/*
@@ -741,7 +754,7 @@
 
 		// Run any updates that are not dependent on time in the simulation. See
 		// `MainLoop.setEnd()` for additional details on how to use this.
-		end(fps, panic);
+		end(fps, ups, panic);
 
 		panic = false;
 	}

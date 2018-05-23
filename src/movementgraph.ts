@@ -55,8 +55,8 @@ class QueueNode {
 }
 
 function compare(a: QueueNode, b: QueueNode) {
-    if (a.priority < b.priority) return -1;
-    if (a.priority > b.priority) return 1;
+    if (a.priority < b.priority) return 1;
+    if (a.priority > b.priority) return -1;
     return 0;
 }
 
@@ -154,8 +154,8 @@ export class MovementGraph {
 
         this.search_data[node_start_id].start.path_node = node_start_id;
         this.search_data[node_start_id].start.given_cost = 0;
-        this.search_data[node_start_id].start.priority = this.search_data[node_start_id].start.given_cost + this.search_data[node_start_id]
-            .start.heuristic;
+        this.search_data[node_start_id].start.priority = this.search_data[node_start_id].start.given_cost +
+            this.search_data[node_start_id].start.heuristic;
         queue_start.enqueue(new QueueNode(node_start_id, this.search_data[node_start_id].start.priority));
 
 
@@ -266,11 +266,11 @@ export class MovementGraph {
             this.search_data[node_start_id].start.heuristic;
         queue_start.enqueue(new QueueNode(node_start_id, this.search_data[node_start_id].start.priority));
 
-        this.search_data[node_end_id].start.path_node = node_end_id;
-        this.search_data[node_end_id].start.given_cost = 0;
-        this.search_data[node_end_id].start.priority = this.search_data[node_end_id].start.given_cost +
-            this.search_data[node_end_id].start.heuristic;
-        queue_start.enqueue(new QueueNode(node_end_id, this.search_data[node_end_id].start.priority));
+        this.search_data[node_end_id].end.path_node = node_end_id;
+        this.search_data[node_end_id].end.given_cost = 0;
+        this.search_data[node_end_id].end.priority = this.search_data[node_end_id].end.given_cost +
+            this.search_data[node_end_id].end.heuristic;
+        queue_end.enqueue(new QueueNode(node_end_id, this.search_data[node_end_id].end.priority));
 
 
         while (!queue_start.isEmpty() && !queue_end.isEmpty()) {
@@ -280,7 +280,7 @@ export class MovementGraph {
             if (!queue_start.isEmpty())
                 p1 = queue_start.peek().priority;
             if (!queue_end.isEmpty())
-                p2 = queue_start.peek().priority;
+                p2 = queue_end.peek().priority;
 
             let popped_from_start_queue: boolean;
             let curr_node_search_data: SearchData;
@@ -319,7 +319,7 @@ export class MovementGraph {
                 //If in closed set ignore because already evaluated
                 if (linked_node_search_data.visited) continue;
 
-                const g_score = linked_node_search_data.given_cost + link.weight;
+                const g_score = curr_node_search_data.given_cost + link.weight;
 
                 //If this path is a more optimal path
                 if (g_score < linked_node_search_data.given_cost) {
@@ -412,14 +412,14 @@ export class MovementGraph {
         let path = [];
 
         while (node_end_id != node_start_id) {
-            path.push(node_end_id);
+            path.unshift(node_end_id);
             node_end_id = this.search_data[node_end_id].start.path_node;
         }
         return path;
     };
 
     private getmmPath(node_start_id: number, node_meeting_id: number, node_end_id: number): number[] {
-        let path = []
+        let path = [];
 
         //Start at middle and go to start for path
         let curr_node = node_meeting_id;
@@ -450,14 +450,14 @@ export class MovementGraph {
 //Clears the search data
     private resetSearchData(): void {
         //Assign new array to not destroy the memorized search data
-        this.search_data = Array<NodeSearchData>(this.node_list.length).fill(new NodeSearchData());
+        this.search_data = Array.from({length:this.node_list.length}, u => (new NodeSearchData()));
     };
 
 //Clears the search data and updates all of the nodes with their heuristic data
 //based on the start and end nodes
     private resetSearchDataWithHeuristics(node_start_id: number, node_end_id: number): void {
         //Assign new array to not destroy the memorized search data
-        this.search_data = Array<NodeSearchData>(this.node_list.length).fill(new NodeSearchData());
+        this.resetSearchData();
 
         for (let [index, data] of this.search_data.entries()) {
             data.start.priority = data.start.heuristic = this.heuristicCostEstimate(index, node_end_id);

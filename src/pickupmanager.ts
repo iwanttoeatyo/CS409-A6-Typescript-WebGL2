@@ -5,6 +5,7 @@ import {World} from "./entities/world";
 import {vec3} from "gl-matrix";
 import {Collision} from "./helpers/collision";
 import {Renderer} from "./renderers/renderer";
+import {MovementGraph} from "./movementgraph";
 
 export class PickupManager {
     private rod_model: BasicModel;
@@ -16,14 +17,14 @@ export class PickupManager {
 
     private score: number;
 
-    public constructor(world: World, rod: BasicModel, ring: BasicModel) {
+    public constructor(world: World, world_graph:MovementGraph, rod: BasicModel, ring: BasicModel) {
 
         this.rod_model = rod;
         this.ring_model = ring;
-        this.init(world);
+        this.init(world, world_graph);
     };
 
-    public init(world: World): void {
+    public init(world: World, world_graph:MovementGraph): void {
         this.score = 0;
         this.rings = [];
         this.rods = [];
@@ -32,7 +33,7 @@ export class PickupManager {
             let pos: vec3 = vec3.clone(disk.position);
             pos[1] = world.getHeightAtPointPosition(pos[0], pos[2]);
             this.addRod(pos, disk.type + 1);
-            this.addRing(world, pos);
+            this.addRing(world, world_graph);
         })
     }
 
@@ -67,8 +68,8 @@ export class PickupManager {
         this.rods.push(new Rod(this.rod_model, position, value));
     }
 
-    public addRing(world: World, position: vec3): void {
-        this.rings.push(new Ring(this.rings.length, world, this.ring_model, position));
+    public addRing(world: World, world_graph:MovementGraph): void {
+        this.rings.push(new Ring(this.rings.length, world, world_graph, this.ring_model));
     }
 
     public getScore(): number {

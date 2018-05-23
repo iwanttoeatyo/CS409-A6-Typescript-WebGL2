@@ -41,7 +41,7 @@ export class Game {
     private pickup_manager: PickupManager;
 
     private player_camera: Camera = new Camera(vec3.fromValues(0, 1.6, 0), vec3.fromValues(0, 1, 0), 0);
-    private overview_camera: Camera = new Camera(vec3.fromValues(100, 200, 10), vec3.fromValues(0, 1, 0), 0, 0);
+    private overview_camera: Camera = new Camera(vec3.fromValues(100, 190, 10), vec3.fromValues(0, 1, 0), 0, 0);
     private active_camera: Camera = this.player_camera;
 
     private current_map: number = 0;
@@ -71,7 +71,7 @@ export class Game {
         this.initWorldGraphPointLine();
         console.log("world gen time: " + (Date.now() - w) / 1000 + "s");
 
-        this.pickup_manager = new PickupManager(this.world, this.rod_model, this.ring_model);
+        this.pickup_manager = new PickupManager(this.world,this.world_graph, this.rod_model, this.ring_model);
         this.player.reset(this.world);
         this.overview_camera.lookAt(vec3.fromValues(0, 0, 0));
 
@@ -82,12 +82,14 @@ export class Game {
     private initWorldGraphPointLine():void{
         let offset = vec3.fromValues(0, 0.2,0);
         this.world_graph_point_list = new PointList();
-        this.world_graph_point_list.allocate(this.world_graph.getNodeLinkCount() * 2);
+        this.world_graph_point_list.allocate(this.world_graph.getNodeLinkCount() * 2 * 2);
+        let temp_pos = vec3.create();
+        
         for(let node of this.world_graph.getNodeList()) {
             for (let link of node.node_links) {
                 let color = vec4.fromValues(0.25 + link.weight / 50.0, 1.0 - link.weight / 150.0, 0.0, 1.0);
-                this.world_graph_point_list.pushRaw(vec3.add(vec3.create(), node.pos, offset), color);
-                this.world_graph_point_list.pushRaw(vec3.add(vec3.create(), this.world_graph.getNodeList()[link.dest_node_id].pos, offset), color);
+                this.world_graph_point_list.pushRaw(vec3.add(temp_pos, node.pos, offset), color);
+                this.world_graph_point_list.pushRaw(vec3.add(temp_pos, this.world_graph.getNodeList()[link.dest_node_id].pos, offset), color);
             }
         }
     }
@@ -101,6 +103,38 @@ export class Game {
         global.line_renderer.drawPointList(this.world_graph_point_list, vp);
         gl.enable(gl.DEPTH_TEST);
         
+    }
+    
+    public displayRingZeroPath(view_matrix:mat4, projection_matrix:mat4):void{
+        
+        let ring = this.pickup_manager.rings[0];
+        let path = ring.path;
+        let offset = vec3.fromValues(0,1,0);
+        let node_list = this.world_graph.getNodeList();
+        
+        global.line_renderer.preAllocatePointLine(path.length * 2 + 6);
+        global.line_renderer.addLine(ring.position, vec3.add(vec3.create(),ring.position,offset), vec4.fromValues(1,1,1,1));
+        global.line_renderer.addLine(vec3.add(vec3.create(),ring.position,offset), vec3.add(vec3.create(),ring.target_position,offset), vec4.fromValues(1,1,1,1));
+        
+        if(path.length){
+            global.line_renderer.addLine(
+                vec3.add(vec3.create(),node_list[ring.target_node_id].pos, offset),
+                vec3.add(vec3.create(),node_list[path[0]].pos, offset),
+                vec4.fromValues(1,1,1,1)
+            );
+            
+            for(let i = 0; i < path.length - 1; i++){
+                global.line_renderer.addLine(
+                    vec3.add(vec3.create(),node_list[path[i]].pos, offset),
+                    vec3.add(vec3.create(),node_list[path[i+1]].pos, offset),
+                    vec4.fromValues(1,1,1,1)
+                )
+            }
+        }
+        gl.disable(gl.DEPTH_TEST);
+        let vp_matrix = mat4.mul(mat4.create(), projection_matrix, view_matrix);
+        global.line_renderer.drawAndClear(vp_matrix);
+        gl.enable(gl.DEPTH_TEST);
     }
 
     private initRenderer(): void {
@@ -273,6 +307,7 @@ export class Game {
         this.player.draw(gl, renderer.shader, view_matrix, projection_matrix, camera);
         
         this.displayMovementGraph(view_matrix,projection_matrix);
+        this.displayRingZeroPath(view_matrix,projection_matrix)
     }
 
 
@@ -281,8 +316,10 @@ export class Game {
 
         this.world.destroy();
         this.world.init(gl, Game.maps[this.current_map++]);
+        this.world_graph = new MovementGraph(this.world.disks);
+        this.initWorldGraphPointLine();
 
-        this.pickup_manager.init(this.world);
+        this.pickup_manager.init(this.world, this.world_graph);
         this.player.reset(this.world);
     }
 
