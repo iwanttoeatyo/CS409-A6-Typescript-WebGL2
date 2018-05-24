@@ -111,15 +111,14 @@ export class Ring extends Entity {
                 //Remember Ring Zeros search data for display later
                 if (this.index === 0) {
                     //Perform all the searches so we can record the visits required
-                  
-              
-                    this.path = this.world_graph.mmSearch(this.curr_node_id, rand);
-                    this.path = this.world_graph.aStarSearch(this.curr_node_id, rand);
+
                     this.path = this.world_graph.dijkstraSearch(this.curr_node_id, rand);
+                    this.path = this.world_graph.aStarSearch(this.curr_node_id, rand);
+                    this.path = this.world_graph.mmSearch(this.curr_node_id, rand);
                     this.world_graph.memorizeLastSearch();
                 } else {
                     //Get the path between these two nodes
-                    this.path = this.world_graph.dijkstraSearch(this.curr_node_id, rand);
+                    this.path = this.world_graph.mmSearch(this.curr_node_id, rand);
                 }
             }
             //Pop the node off the front and set it as the target

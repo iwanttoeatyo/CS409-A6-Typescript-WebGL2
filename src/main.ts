@@ -4,6 +4,7 @@ import {BasicModelShader} from "./basicmodelshader";
 import {Renderer} from "./renderers/renderer";
 import {LineRenderer} from "./renderers/linerenderer";
 import keys = global.keys;
+import {SphereRenderer} from "./renderers/sphererenderer";
 
 let MainLoop = require('./lib/MainLoop/mainloop.js');
 
@@ -37,6 +38,9 @@ export class Main {
         let shader = new BasicModelShader(gl, require('shaders/basicmodel.vert'), require("shaders/basicmodelmanylights.frag"));
         global.renderer = new Renderer(shader);
         global.line_renderer = new LineRenderer();
+        
+        global.sphere_renderer = new SphereRenderer();
+        await global.sphere_renderer.load();
 
         this.game = new Game();
         await this.game.init();

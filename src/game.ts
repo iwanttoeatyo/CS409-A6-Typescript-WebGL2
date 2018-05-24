@@ -36,7 +36,7 @@ export class Game {
 
     private world: World;
     private world_graph: MovementGraph;
-    private world_graph_point_list:PointList;
+    private world_graph_point_list: PointList;
     private player: Player;
     private pickup_manager: PickupManager;
 
@@ -71,7 +71,7 @@ export class Game {
         this.initWorldGraphPointLine();
         console.log("world gen time: " + (Date.now() - w) / 1000 + "s");
 
-        this.pickup_manager = new PickupManager(this.world,this.world_graph, this.rod_model, this.ring_model);
+        this.pickup_manager = new PickupManager(this.world, this.world_graph, this.rod_model, this.ring_model);
         this.player.reset(this.world);
         this.overview_camera.lookAt(vec3.fromValues(0, 0, 0));
 
@@ -79,13 +79,13 @@ export class Game {
         this.addAllGameEntitiesToRenderer();
     }
 
-    private initWorldGraphPointLine():void{
-        let offset = vec3.fromValues(0, 0.2,0);
+    private initWorldGraphPointLine(): void {
+        let offset = vec3.fromValues(0, 0.2, 0);
         this.world_graph_point_list = new PointList();
         this.world_graph_point_list.allocate(this.world_graph.getNodeLinkCount() * 2 * 2);
         let temp_pos = vec3.create();
-        
-        for(let node of this.world_graph.getNodeList()) {
+
+        for (let node of this.world_graph.getNodeList()) {
             for (let link of node.node_links) {
                 let color = vec4.fromValues(0.25 + link.weight / 50.0, 1.0 - link.weight / 150.0, 0.0, 1.0);
                 this.world_graph_point_list.pushRaw(vec3.add(temp_pos, node.pos, offset), color);
@@ -93,42 +93,43 @@ export class Game {
             }
         }
     }
-    
-    private displayMovementGraph(view_matrix:mat4, projection_matrix:mat4):void{
-        
-        if(this.active_camera === this.overview_camera)
+
+    private displayMovementGraph(view_matrix: mat4, projection_matrix: mat4): void {
+
+        if (this.active_camera === this.overview_camera)
             gl.disable(gl.DEPTH_TEST);
         let vp = mat4.multiply(mat4.create(), projection_matrix, view_matrix);
-        
+
         global.line_renderer.drawPointList(this.world_graph_point_list, vp);
         gl.enable(gl.DEPTH_TEST);
-        
+
     }
-    
-    public displayRingZeroPath(view_matrix:mat4, projection_matrix:mat4):void{
-        
+
+    public displayRingZeroPath(view_matrix: mat4, projection_matrix: mat4): void {
+
         let ring = this.pickup_manager.rings[0];
         let path = ring.path;
-        let offset = vec3.fromValues(0,1,0);
+        let offset = vec3.fromValues(0, 1, 0);
         let node_list = this.world_graph.getNodeList();
-        
+
         global.line_renderer.preAllocatePointLine(path.length * 2 + 6);
-        global.line_renderer.addLine(ring.position, vec3.add(vec3.create(),ring.position,offset), vec4.fromValues(1,1,1,1));
-        global.line_renderer.addLine(vec3.add(vec3.create(),ring.position,offset), vec3.add(vec3.create(),ring.target_position,offset), vec4.fromValues(1,1,1,1));
-        
-        if(path.length){
+        global.line_renderer.addLine(ring.position, vec3.add(vec3.create(), ring.position, offset), vec4.fromValues(1, 1, 1, 1));
+        global.line_renderer.addLine(vec3.add(vec3.create(), ring.position, offset), vec3.add(vec3.create(), ring.target_position, offset), vec4.fromValues(1, 1, 1, 1));
+
+        if (path.length) {
             global.line_renderer.addLine(
-                vec3.add(vec3.create(),node_list[ring.target_node_id].pos, offset),
-                vec3.add(vec3.create(),node_list[path[0]].pos, offset),
-                vec4.fromValues(1,1,1,1)
+                vec3.add(vec3.create(), node_list[ring.target_node_id].pos, offset),
+                vec3.add(vec3.create(), node_list[path[0]].pos, offset),
+                vec4.fromValues(1, 1, 1, 1)
             );
-            
-            for(let i = 0; i < path.length - 1; i++){
+
+            for (let i = 0; i < path.length - 1; i++) {
                 global.line_renderer.addLine(
-                    vec3.add(vec3.create(),node_list[path[i]].pos, offset),
-                    vec3.add(vec3.create(),node_list[path[i+1]].pos, offset),
-                    vec4.fromValues(1,1,1,1)
-                )
+                    vec3.add(vec3.create(), node_list[path[i]].pos, offset),
+                    vec3.add(vec3.create(), node_list[path[i + 1]].pos, offset),
+                    vec4.fromValues(1, 1, 1, 1)
+                );
+
             }
         }
         gl.disable(gl.DEPTH_TEST);
@@ -140,8 +141,8 @@ export class Game {
     private initRenderer(): void {
         // instancedShader = await new Shader(gl, require('../src/shaders/instanced.vert'), require("../src/shaders/instanced.frag"));
 
-         renderer = global.renderer;
-         assert(renderer);
+        renderer = global.renderer;
+        assert(renderer);
 
         //basicModelRenderer.addBasicModel(Player.model);
 
@@ -305,11 +306,88 @@ export class Game {
         renderer.render(gl, view_matrix, projection_matrix);
 
         this.player.draw(gl, renderer.shader, view_matrix, projection_matrix, camera);
-        
-        this.displayMovementGraph(view_matrix,projection_matrix);
-        this.displayRingZeroPath(view_matrix,projection_matrix)
+
+        this.displayMovementGraph(view_matrix, projection_matrix);
+
+        this.displaySearchPathSpheres(view_matrix, projection_matrix);
+        this.displayRingZeroPath(view_matrix, projection_matrix)
     }
 
+    public displaySearchPathSpheres(view_matrix: mat4, projection_matrix: mat4): void {
+
+        let search_data = this.world_graph.getMemorizedSearchData();
+        let start_node_id = 0;
+        let end_node_id = 0;
+        let meeting_node_id = 0;
+
+        if (search_data.length)
+            if (this.active_camera === this.overview_camera) {
+                let highest_priority_start = 0;
+                let lowest_priority_start = Number.MAX_VALUE;
+                let highest_priority_end = 0;
+                let lowest_priority_end = Number.MAX_VALUE;
+
+                for (let i = 0; i < search_data.length; i++) {
+                    let start_data = search_data[i].start;
+                    let end_data = search_data[i].end;
+                    if (start_data.visited && end_data.visited) 
+                        meeting_node_id = i;
+                    if (end_data.visited) {
+                        if (end_data.given_cost === 0) end_node_id = i;
+                        highest_priority_end = Math.max(end_data.priority, highest_priority_end);
+                        lowest_priority_end = Math.min(end_data.priority, lowest_priority_end);
+                    }
+                    if (start_data.visited) {
+                        if (start_data.given_cost === 0) start_node_id = i;
+                        highest_priority_start = Math.max(start_data.priority, highest_priority_start);
+                        lowest_priority_start = Math.min(start_data.priority, lowest_priority_start);
+                    }
+                }
+
+                highest_priority_start = search_data[meeting_node_id].start.priority;
+                highest_priority_end = search_data[meeting_node_id].end.priority;
+
+                let prio_start_diff = highest_priority_start - lowest_priority_start;
+                let prio_end_diff = highest_priority_end - lowest_priority_end;
+
+                for (let i = 0; i < search_data.length; i++) {
+                    let start_data = search_data[i].start;
+                    let end_data = search_data[i].end;
+
+                    //If not visited dont draw
+                    if (!start_data.visited && !end_data.visited) continue;
+
+                    let color = vec4.create();
+                    let scale = 1.5;
+
+                    if (i == start_node_id || i == end_node_id || i == meeting_node_id)
+                        scale = 3.0;
+
+                   
+                    if (start_data.visited) {
+                        let color_frac = 1.0 - (start_data.priority - lowest_priority_start) / prio_start_diff / 2.0;
+                        color = vec4.set(color, 0, color_frac, 1, 1,);
+                    } else if (end_data.visited) {
+                        let color_frac = 1.0 - (end_data.priority - lowest_priority_end) / prio_end_diff;
+                        color = vec4.set(color, 1, color_frac, 1, 1,);
+                    }
+                 
+
+                    //Set these colors for distinguished nodes
+                    if (i === start_node_id) vec4.set(color, 0, 1, 1, 1);
+                    if (i === meeting_node_id) vec4.set(color, 1, 1, 1, 1);
+                    if (i === end_node_id) vec4.set(color, 0.6, 0, 1, 1);
+
+                    //Draw
+                    let model = mat4.create();
+                    mat4.translate(model, model, this.world_graph.getNodeList()[i].pos);
+                    mat4.scale(model, model, vec3.fromValues(scale, scale, scale));
+
+                    global.sphere_renderer.draw(color, model, view_matrix, projection_matrix);
+                }
+            }
+
+    }
 
     public destroyIntoNewWorld(): void {
         if (this.current_map >= Game.maps.length) this.current_map = 0;
