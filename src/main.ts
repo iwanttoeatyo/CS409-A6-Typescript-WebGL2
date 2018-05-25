@@ -147,7 +147,7 @@ export class Main {
         keys[key] = is_down;
     }
 
-    private doDemo(delta_ms: number): void {
+    public doDemo(delta_ms: number): void {
         this.game.doDemo(delta_ms);
     }
 
@@ -239,5 +239,5 @@ window.onmouseup = function (e) {
 };
 
 
-new Main();
+let main = new Main();
 

@@ -28,7 +28,6 @@ export class Game {
     readonly ROD_FILENAME: string = "/assets/models/environment/rod/Rod";
     readonly RING_FILENAME: string = "/assets/models/environment/ring/Ring";
     readonly SKYBOX_FILENAME: string = "/assets/models/environment/skybox/Skybox";
-    readonly MAPS_FOLDER: string = "../../assets/worlds/maps/";
 
     private rod_model: BasicModel;
     private ring_model: BasicModel;
@@ -409,8 +408,8 @@ export class Game {
     public doDemo(delta_ms: number): void {
         let speed_factor = this.world.getAccelFactorAtPosition(this.player.position[0], this.player.position[2], this.player.model.radius);
 
-        this.player.accelerateForward(delta_ms / 2, speed_factor);
-        this.player.rotate(delta_ms / 5);
+       // this.player.accelerateForward(delta_ms / 2, speed_factor);
+        this.player.rotate(delta_ms / 5000);
 
 
     }
@@ -457,7 +456,7 @@ export class Game {
 
     private async loadWorldData(): Promise<void> {
         Game.maps = [];
-        let context = require.context("../../assets/worlds/maps/", true, /\.txt$/);
+        let context = require.context("assets/worlds/maps/", true, /\.txt$/);
         context.keys().forEach(key =>
             Game.maps.push(context(key)));
 
