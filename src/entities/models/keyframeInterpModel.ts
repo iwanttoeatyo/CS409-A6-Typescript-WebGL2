@@ -1,10 +1,9 @@
-import {BasicModel} from "./basicmodel";
-import {Mesh} from '../../lib/OBJ/index.js'
+import { BasicModel } from "./basicmodel";
+import { Mesh } from "../../lib/OBJ/index.js";
 import * as assert from "assert";
-import {Shader} from "../../shader";
+import { Shader } from "../../shader";
 
-let OBJ = require('../../lib/OBJ/index.js');
-
+let OBJ = require("../../lib/OBJ/index.js");
 
 export class KeyframeInterpModel extends BasicModel {
     mesh2: Mesh;
@@ -28,7 +27,6 @@ export class KeyframeInterpModel extends BasicModel {
         gl.vertexAttribPointer(4, 3, gl.FLOAT, false, 0, 0);
     }
 
-
     public draw(gl: WebGL2RenderingContext, shader: Shader, tween: number = 0) {
         this.activateBuffers(gl);
 
@@ -51,6 +49,4 @@ export class KeyframeInterpModel extends BasicModel {
         shader.setBoolByName("tween_enabled", true);
         shader.setFloatByName("tween_factor", tween);
     }
-
-
 }

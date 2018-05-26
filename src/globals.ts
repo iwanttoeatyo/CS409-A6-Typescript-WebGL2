@@ -1,6 +1,6 @@
-import {Renderer} from "./renderers/renderer";
-import {LineRenderer} from "./renderers/linerenderer";
-import {SphereRenderer} from "./renderers/sphererenderer";
+import { Renderer } from "./renderers/renderer";
+import { LineRenderer } from "./renderers/linerenderer";
+import { SphereRenderer } from "./renderers/sphererenderer";
 
 export namespace global {
     export var gl: WebGL2RenderingContext;
@@ -11,12 +11,11 @@ export namespace global {
     export var mouse_y_total: number = 0;
     export var renderer: Renderer;
     export var line_renderer: LineRenderer;
-    export var sphere_renderer:SphereRenderer;
+    export var sphere_renderer: SphereRenderer;
 
     export var TIME_SCALE_COUNT: number = 10;
     export var TIME_SCALES: number[] = [50.0, 20.0, 10.0, 4.0, 2.0, 1.0, 0.5, 0.25, 0.1, 0.05, 0.01];
     export var time_scale_id: number = 5;
-
 
     export var EMPTY_TEXTURE: WebGLTexture;
 
@@ -30,6 +29,3 @@ export namespace global {
         mouse_y_total = 0;
     }
 }
-
-
-

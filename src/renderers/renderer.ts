@@ -1,14 +1,13 @@
-import {BasicModel} from "../entities/models/basicmodel";
-import {Material} from '../lib/OBJ/index.js';
-import {Entity, Model_Type} from "../entities/entity";
-import {mat4, quat, vec3} from "gl-matrix";
-import {Shader} from "../shader";
-import {MeshlessModel} from "../entities/models/meshlessmodel";
-import {global} from "../globals";
+import { BasicModel } from "../entities/models/basicmodel";
+import { Material } from "../lib/OBJ/index.js";
+import { Entity, Model_Type } from "../entities/entity";
+import { mat4, quat, vec3 } from "gl-matrix";
+import { Shader } from "../shader";
+import { MeshlessModel } from "../entities/models/meshlessmodel";
+import { global } from "../globals";
 import * as assert from "assert";
 
 let gl: WebGL2RenderingContext;
-
 
 export class Renderer {
     private models: Map<string, BasicModel>;
@@ -16,7 +15,6 @@ export class Renderer {
     private materials: Map<string, Material>;
     public shader: Shader;
     private entities: Map<string, Entity>;
-
 
     constructor(shader: Shader) {
         this.models = new Map<string, BasicModel>();
@@ -55,7 +53,6 @@ export class Renderer {
         if (this.materials.get(model.material.name) === undefined) {
             this.materials.set(model.material.name, model.material);
         }
-
     }
 
     public addEntityToRenderList(entity: Entity): void {
@@ -69,10 +66,9 @@ export class Renderer {
             }
         } else if (entity.model_type == Model_Type.MESHLESS) {
             if (this.meshless_models.get(entity.mesh_name) === undefined) {
-                console.log("Meshless Model Missing: " + entity.mesh_name)
+                console.log("Meshless Model Missing: " + entity.mesh_name);
             }
         }
-
     }
 
     public removeEntity(entity: Entity) {
@@ -83,12 +79,21 @@ export class Renderer {
         this.entities = new Map<string, Entity>();
     }
 
+    public removeAllModels(): void {
+        this.meshless_models = new Map<string, MeshlessModel>();
+        this.models = new Map<string, BasicModel>();
+    }
+
     prepareShader(gl: WebGL2RenderingContext) {
         this.shader.prepare(gl);
     }
 
-
-    public setMVPMatrices(model: mat4, view: mat4, projection: mat4, camera_pos: vec3 = vec3.fromValues(0, 0, 0)): void {
+    public setMVPMatrices(
+        model: mat4,
+        view: mat4,
+        projection: mat4,
+        camera_pos: vec3 = vec3.fromValues(0, 0, 0)
+    ): void {
         this.shader.setMVPMatrices(model, view, projection, camera_pos);
     }
 
@@ -98,7 +103,6 @@ export class Renderer {
 
         this.renderMeshlessModels(gl, view_matrix, projection_matrix);
         this.renderBasicModels(gl, view_matrix, projection_matrix);
-
     }
 
     private renderMeshlessModels(gl: WebGL2RenderingContext, view_matrix: mat4, projection_matrix: mat4) {
@@ -134,16 +138,25 @@ export class Renderer {
                         activated = true;
                     }
 
-                    for (let i = 0; i < entities_to_draw.length; i++) {//
+                    for (let i = 0; i < entities_to_draw.length; i++) {
+                        //
                         let model_matrix = mat4.create();
                         let q = quat.create();
-                        quat.rotateY(q, q, Math.atan2(entities_to_draw[i].forward[0], entities_to_draw[i].forward[2]) + model.rotation_offset);
-                        mat4.fromRotationTranslationScale(model_matrix, q, entities_to_draw[i].position, entities_to_draw[i].scalar);
+                        quat.rotateY(
+                            q,
+                            q,
+                            Math.atan2(entities_to_draw[i].forward[0], entities_to_draw[i].forward[2]) +
+                                model.rotation_offset
+                        );
+                        mat4.fromRotationTranslationScale(
+                            model_matrix,
+                            q,
+                            entities_to_draw[i].position,
+                            entities_to_draw[i].scalar
+                        );
                         //Set matrices in shader
                         this.shader.setMVPMatrices(model_matrix, view_matrix, projection_matrix);
                         model.drawActivatedMaterial(gl);
-
-
                     }
                 }
             }
@@ -151,7 +164,6 @@ export class Renderer {
     }
 
     private renderBasicModels(gl: WebGL2RenderingContext, view_matrix: mat4, projection_matrix: mat4) {
-
         //Find list of materials that have meshes to draw
         let mat_list = [];
         for (const [key, model] of this.models.entries()) {
@@ -166,7 +178,6 @@ export class Renderer {
         for (let j = 0; j < mat_list.length; j++) {
             let activated = false;
             for (const [key, model] of this.models.entries()) {
-
                 //This model doesn't have this material
                 if (model.mesh.materialIndices[mat_list[j]] === undefined) continue;
 
@@ -190,22 +201,24 @@ export class Renderer {
                 for (let i = 0; i < entities_to_draw.length; i++) {
                     let model_matrix = mat4.create();
                     let q = quat.create();
-                    quat.rotateY(q, q, Math.atan2(entities_to_draw[i].forward[0], entities_to_draw[i].forward[2]) + model.rotation_offset);
-                    mat4.fromRotationTranslationScale(model_matrix, q, vec3.add(vec3.create(), entities_to_draw[i].position, vec3.fromValues(0, model.half_height, 0)), entities_to_draw[i].scalar);
+                    quat.rotateY(
+                        q,
+                        q,
+                        Math.atan2(entities_to_draw[i].forward[0], entities_to_draw[i].forward[2]) +
+                            model.rotation_offset
+                    );
+                    mat4.fromRotationTranslationScale(
+                        model_matrix,
+                        q,
+                        entities_to_draw[i].position,
+                        entities_to_draw[i].scalar
+                    );
                     //Set matrices in shader
                     this.shader.setMVPMatrices(model_matrix, view_matrix, projection_matrix);
                     //Draw triangle list
                     model.drawActivatedMaterial(gl, mat_id);
-
                 }
-
-
             }
-
-
         }
-
-
     }
-
 }

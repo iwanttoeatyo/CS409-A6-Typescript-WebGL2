@@ -1,4 +1,4 @@
-import {glMatrix, mat4, vec3} from "gl-matrix";
+import { glMatrix, mat4, vec3 } from "gl-matrix";
 
 const YAW: number = 90.0;
 const PITCH: number = 0.0;
@@ -27,7 +27,12 @@ export class Camera {
     mouseSensitivity: number;
     zoom: number;
 
-    constructor(pos: vec3 = vec3.fromValues(0, 0, 0), up: vec3 = vec3.fromValues(0, 1, 0), yaw: number = YAW, pitch: number = PITCH) {
+    constructor(
+        pos: vec3 = vec3.fromValues(0, 0, 0),
+        up: vec3 = vec3.fromValues(0, 1, 0),
+        yaw: number = YAW,
+        pitch: number = PITCH
+    ) {
         this.position = pos;
         this.front = vec3.fromValues(0, 0, -1);
         this.worldUp = up;
@@ -94,7 +99,13 @@ export class Camera {
     }
 
     //TODO Change calculation to move camera position up and down and keep same target on player
-    public processMouseMovement(forward: vec3, pos: vec3, xOffset: number, yOffset: number, constrainPitch: boolean = true): void {
+    public processMouseMovement(
+        forward: vec3,
+        pos: vec3,
+        xOffset: number,
+        yOffset: number,
+        constrainPitch: boolean = true
+    ): void {
         xOffset *= this.mouseSensitivity;
         yOffset *= this.mouseSensitivity;
 
@@ -115,10 +126,8 @@ export class Camera {
             if (this.yaw < a - yawConstrainAmount) this.yaw = a - yawConstrainAmount;
         }
 
-
         this.updateCameraVectors();
     }
-
 
     private updateCameraVectors(): void {
         let x = Math.cos(glMatrix.toRadian(this.yaw)) * Math.cos(glMatrix.toRadian(this.pitch));
@@ -135,8 +144,4 @@ export class Camera {
         vec3.normalize(cross2, vec3.cross(cross2, this.right, this.front));
         this.up = cross2;
     }
-
-
 }
-
- 

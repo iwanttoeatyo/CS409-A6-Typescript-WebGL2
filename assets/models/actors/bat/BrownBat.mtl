@@ -6,9 +6,8 @@
 # 
 
 newmtl brown_bat
-illum 2
-Ka 0.5 0.5 0.5
-Kd 1.0 1.0 1.0
-Ks 0.9 0.9 0.9
-Ns 64
+illum 1
+Ka 0.3 0.3 0.3
+Kd 0.7 0.7 0.7
 map_Kd BrownBat.jpg
+map_Ka BrownBat.jpg

@@ -1,12 +1,11 @@
-import {Disk, Terrain} from "./disk";
-import {MaterialLibrary, Mesh} from "../lib/OBJ/index.js";
-import {vec3} from "gl-matrix";
-import {Collision} from "../helpers/collision";
-import {Random} from "../helpers/random";
-import {BasicModel} from "./models/basicmodel";
+import { Disk, Terrain } from "./disk";
+import { MaterialLibrary, Mesh } from "../lib/OBJ/index.js";
+import { vec3 } from "gl-matrix";
+import { Collision } from "../helpers/collision";
+import { Random } from "../helpers/random";
+import { BasicModel } from "./models/basicmodel";
 
 let OBJ = require("../lib/OBJ/index.js");
-
 
 export interface WorldMeshes {
     DiskA: Mesh;
@@ -26,7 +25,6 @@ export class World {
     public readonly diskC_model: BasicModel;
     public readonly diskD_model: BasicModel;
     public readonly diskE_model: BasicModel;
-
 
     private world_radius: number;
 
@@ -58,7 +56,7 @@ export class World {
 
     public init(gl: WebGL2RenderingContext, world_data: string): void {
         let w = Date.now();
-        const lines = world_data.split('\n');
+        const lines = world_data.split("\n");
 
         if (lines[0].indexOf("version 1") == -1) console.warn("Can't read Disk World File");
 
@@ -74,23 +72,23 @@ export class World {
             let terrain: Terrain = null;
 
             switch (true) {
-                case (radius < 8):
+                case radius < 8:
                     model = this.diskA_model;
                     terrain = Terrain.RED_ROCK;
                     break;
-                case (radius <= 12):
+                case radius <= 12:
                     model = this.diskB_model;
                     terrain = Terrain.LEAFY;
                     break;
-                case(radius <= 20):
+                case radius <= 20:
                     model = this.diskC_model;
                     terrain = Terrain.ICY;
                     break;
-                case (radius <= 30):
+                case radius <= 30:
                     model = this.diskD_model;
                     terrain = Terrain.SANDY;
                     break;
-                case(radius > 30):
+                case radius > 30:
                     model = this.diskE_model;
                     terrain = Terrain.GREY_ROCK;
                     break;
@@ -105,12 +103,9 @@ export class World {
 
     public destroy(): void {
         this.disks = [];
-
     }
 
-    public update(delta_time_ms: number): void {
-
-    }
+    public update(delta_time_ms: number): void {}
 
     // public draw(gl: WebGL2RenderingContext, view_matrix: mat4, projection_matrix: mat4): void {
     //     this.disks.forEach(disk => {
@@ -120,7 +115,16 @@ export class World {
 
     public getSpeedFactorAtPosition(x: number, z: number, radius: number = 0): number {
         for (let i = 0; i < this.disks.length; i++) {
-            if (Collision.circleIntersection(x, z, radius, this.disks[i].position[0], this.disks[i].position[2], this.disks[i].radius))
+            if (
+                Collision.circleIntersection(
+                    x,
+                    z,
+                    radius,
+                    this.disks[i].position[0],
+                    this.disks[i].position[2],
+                    this.disks[i].radius
+                )
+            )
                 return this.disks[i].getSpeedFactor();
         }
 
@@ -130,7 +134,16 @@ export class World {
 
     public getAccelFactorAtPosition(x: number, z: number, radius: number = 0): number {
         for (let i = 0; i < this.disks.length; i++) {
-            if (Collision.circleIntersection(x, z, radius, this.disks[i].position[0], this.disks[i].position[2], this.disks[i].radius))
+            if (
+                Collision.circleIntersection(
+                    x,
+                    z,
+                    radius,
+                    this.disks[i].position[0],
+                    this.disks[i].position[2],
+                    this.disks[i].radius
+                )
+            )
                 return this.disks[i].getAccelFactor();
         }
 
@@ -144,16 +157,30 @@ export class World {
         return this.disks[i].position;
     }
 
+    public getRandomXZPosition(): vec3 {
+        let r = Math.sqrt(Random.randf(0, 1)) * this.world_radius;
+        let t = Random.randf(0, Math.PI * 2);
+        return vec3.fromValues(r * Math.cos(t), 15.0, r * Math.sin(t));
+    }
+
     public getHeightAtPointPosition(x: number, z: number): number {
         return this.getHeightAtCirclePosition(x, z, 0);
     }
 
     public getHeightAtCirclePosition(x: number, z: number, r: number): number {
         for (let i = 0; i < this.disks.length; i++) {
-            if (Collision.circleIntersection(x, z, r, this.disks[i].position[0], this.disks[i].position[2], this.disks[i].radius)) {
+            if (
+                Collision.circleIntersection(
+                    x,
+                    z,
+                    r,
+                    this.disks[i].position[0],
+                    this.disks[i].position[2],
+                    this.disks[i].radius
+                )
+            ) {
                 return this.disks[i].getHeightAtPosition(x, z);
             }
-
         }
         //No collision with a disk
         return 0.0;
@@ -177,8 +204,7 @@ export class World {
 
     public isOnDisk(x: number, z: number, r: number = 0): boolean {
         for (let disk of this.disks) {
-            if (Collision.circleIntersection(x, z, r, disk.position[0], disk.position[2], disk.radius))
-                return true;
+            if (Collision.circleIntersection(x, z, r, disk.position[0], disk.position[2], disk.radius)) return true;
         }
     }
 
@@ -196,7 +222,6 @@ export class World {
         return false;
     }
 
-
     public static async loadAssets(): Promise<void> {
         this.world_meshes = await this.loadWorldMeshes();
         this.world_mat_lib = await this.loadWorldMat();
@@ -204,42 +229,42 @@ export class World {
         return;
     }
 
-
     private static async loadWorldMeshes(): Promise<WorldMeshes> {
         return OBJ.downloadModels([
             {
-                name: 'DiskA',
+                name: "DiskA",
                 obj: "/assets/models/environment/disks/DiskA.obj",
                 downloadMtlTextures: false
             },
             {
-                name: 'DiskB',
+                name: "DiskB",
                 obj: "/assets/models/environment/disks/DiskB.obj",
                 downloadMtlTextures: false
             },
             {
-                name: 'DiskC',
+                name: "DiskC",
                 obj: "/assets/models/environment/disks/DiskC.obj",
                 downloadMtlTextures: false
             },
             {
-                name: 'DiskD',
+                name: "DiskD",
                 obj: "/assets/models/environment/disks/DiskD.obj",
                 downloadMtlTextures: false
             },
             {
-                name: 'DiskE',
+                name: "DiskE",
                 obj: "/assets/models/environment/disks/DiskE.obj",
                 downloadMtlTextures: false
-            }]);
+            }
+        ]);
     }
 
     private static async loadWorldMat(): Promise<MaterialLibrary> {
-        let mat = new MaterialLibrary(require('../../assets/models/environment/disks/Disks.mtl'));
-        await OBJ.downloadMtlTextures(mat,
-            window.location.href.substr(0, window.location.href.lastIndexOf("/")) + '/assets/models/environment/disks/');
+        let mat = new MaterialLibrary(require("../../assets/models/environment/disks/Disks.mtl"));
+        await OBJ.downloadMtlTextures(
+            mat,
+            window.location.href.substr(0, window.location.href.lastIndexOf("/")) + "/assets/models/environment/disks/"
+        );
         return mat;
     }
-
-
 }

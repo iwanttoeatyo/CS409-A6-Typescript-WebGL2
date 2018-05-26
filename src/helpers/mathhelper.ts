@@ -1,7 +1,6 @@
-import {vec2, vec3} from "gl-matrix";
+import { vec2, vec3 } from "gl-matrix";
 
 export namespace MathHelper {
-
     export function barycentric(p: vec2, a: vec2, b: vec2, c: vec2): vec3 {
         let v0 = vec2.create();
         let v1 = vec2.create();
@@ -32,5 +31,17 @@ export namespace MathHelper {
         out[1] = sin_angle * a[0] + cos_angle * a[1];
         return out;
     }
-}
 
+    export function vec3_truncate(out: vec3, a: vec3, max: number): vec3 {
+        out[0] = a[0];
+        out[1] = a[1];
+        out[2] = a[2];
+        if (vec3.length(a) > max) {
+            vec3.normalize(out, out);
+            out[0] *= max;
+            out[1] *= max;
+            out[2] *= max;
+        }
+        return out;
+    }
+}

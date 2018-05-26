@@ -1,10 +1,10 @@
-import {Entity, Model_Type} from "./entity";
-import {World} from "./world";
-import {vec3} from "gl-matrix";
-import {BasicModel} from "./models/basicmodel";
-import {Collision} from "../helpers/collision";
-import {MovementGraph} from "../movementgraph";
-import {Random} from "../helpers/random";
+import { Entity, Model_Type } from "./entity";
+import { World } from "./world";
+import { vec3 } from "gl-matrix";
+import { BasicModel } from "./models/basicmodel";
+import { Collision } from "../helpers/collision";
+import { MovementGraph } from "../movementgraph";
+import { Random } from "../helpers/random";
 
 export class Ring extends Entity {
     private readonly index: number;
@@ -14,8 +14,8 @@ export class Ring extends Entity {
     static readonly point_value: number = 1;
     static readonly speed: number = 2.5;
     static readonly rotation_speed: number = 1.3;
-    static readonly radius: number = 0.7;
-    static readonly half_height: number = 0.1;
+    public readonly radius: number = 0.7;
+    public readonly half_height: number = 0.1;
 
     public picked_up: boolean = false;
     public target_position: vec3;
@@ -34,6 +34,8 @@ export class Ring extends Entity {
         this.target_position = vec3.clone(this.world_graph.getNodeList()[this.target_node_id].pos);
         this.position = vec3.clone(this.target_position);
         this.path = [];
+        this.radius = model.radius;
+        this.half_height = model.half_height;
     }
 
     public update(delta_time_ms: number) {
@@ -63,7 +65,12 @@ export class Ring extends Entity {
 
             //Tangent vector of vector from center of disk to ring position
             //Required to determine which direction is shortest around disk
-            let tangent_center_to_ring = vec3.rotateY(vec3.create(), center_to_ring, vec3.fromValues(0, 1, 0), Math.PI / 2);
+            let tangent_center_to_ring = vec3.rotateY(
+                vec3.create(),
+                center_to_ring,
+                vec3.fromValues(0, 1, 0),
+                Math.PI / 2
+            );
             let tangent_angle = vec3.angle(tangent_center_to_ring, dir_pos_to_target);
 
             //The radius to rotate around the disk is radius - 0.7
@@ -75,9 +82,7 @@ export class Ring extends Entity {
             //Rotate around the disk in the shorter direction
             if (tangent_angle < Math.PI / 2)
                 vec3.rotateY(center_to_ring, center_to_ring, vec3.fromValues(0, 1, 0), angle);
-            else
-                vec3.rotateY(center_to_ring, center_to_ring, vec3.fromValues(0, 1, 0), -angle);
-
+            else vec3.rotateY(center_to_ring, center_to_ring, vec3.fromValues(0, 1, 0), -angle);
 
             //vec3.add(this.position, center, center_to_ring);
 
@@ -94,15 +99,22 @@ export class Ring extends Entity {
         vec3.rotateY(this.forward, this.forward, vec3.create(), rot);
 
         //Set the rings height based on the world height at that position
-        this.position[1] = this.world.getHeightAtCirclePosition(this.position[0], this.position[2], Ring.radius) + Ring.half_height;
+        this.position[1] =
+            this.world.getHeightAtCirclePosition(this.position[0], this.position[2], this.radius) + this.half_height;
 
         //If on center of disk get new target
-        if (Collision.pointCircleIntersection(this.target_position[0], this.target_position[2], this.position[0], this.position[2], 0.2)) {
-
+        if (
+            Collision.pointCircleIntersection(
+                this.target_position[0],
+                this.target_position[2],
+                this.position[0],
+                this.position[2],
+                0.2
+            )
+        ) {
             this.curr_node_id = this.target_node_id;
 
             if (this.path.length == 0) {
-
                 //Get a random node that is not this same node
                 let rand = Random.randi(node_list.length - 1);
                 while (rand == this.curr_node_id) {
@@ -126,5 +138,4 @@ export class Ring extends Entity {
             this.target_position = vec3.clone(node_list[this.target_node_id].pos);
         }
     }
-
 }

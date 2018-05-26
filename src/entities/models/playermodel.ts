@@ -1,12 +1,11 @@
-import {BasicModel} from "./basicmodel";
-import {global} from "../../globals";
-import {MaterialLibrary} from "../../lib/OBJ";
-import {mat4, vec3} from "gl-matrix";
-import {KeyframeInterpModel} from "./keyframeInterpModel";
-import {Shader} from "../../shader";
+import { BasicModel } from "./basicmodel";
+import { global } from "../../globals";
+import { MaterialLibrary } from "../../lib/OBJ";
+import { mat4, vec3 } from "gl-matrix";
+import { KeyframeInterpModel } from "./keyframeInterpModel";
+import { Shader } from "../../shader";
 
 let OBJ = require("../../lib/OBJ/index.js");
-
 
 let gl = global.gl;
 
@@ -32,9 +31,7 @@ export enum Player_State {
 interface Frame {
     model: KeyframeInterpModel;
     duration: number;
-
 }
-
 
 export class PlayerModel {
     private readonly PLAYER_FOLDER: string = "/assets/models/actors/cbabe/";
@@ -55,16 +52,15 @@ export class PlayerModel {
         gl = gl || global.gl;
 
         this.run_frames = new Array<Frame>(7);
-        for (let frame of this.run_frames)
-            frame = {model: null, duration: null};
+        for (let frame of this.run_frames) frame = { model: null, duration: null };
 
-        this.run_frames[0] = {model: null, duration: 260};
-        this.run_frames[1] = {model: null, duration: 260};
-        this.run_frames[2] = {model: null, duration: 260};
-        this.run_frames[3] = {model: null, duration: 350};
-        this.run_frames[4] = {model: null, duration: 260};
-        this.run_frames[5] = {model: null, duration: 260};
-        this.run_frames[6] = {model: null, duration: 260};
+        this.run_frames[0] = { model: null, duration: 260 };
+        this.run_frames[1] = { model: null, duration: 260 };
+        this.run_frames[2] = { model: null, duration: 260 };
+        this.run_frames[3] = { model: null, duration: 350 };
+        this.run_frames[4] = { model: null, duration: 260 };
+        this.run_frames[5] = { model: null, duration: 260 };
+        this.run_frames[6] = { model: null, duration: 260 };
         this.run_state = Run_State.Start;
     }
 
@@ -77,12 +73,10 @@ export class PlayerModel {
                 this.time_into_frame += delta_time_ms * this.animation_rate;
                 //go to next state
                 if (this.time_into_frame > this.run_frames[index].duration) {
-
                     this.time_into_frame -= this.run_frames[index].duration;
                     this.run_state = this.run_state + 1;
 
-                    if (this.run_state > Run_State.Run5)
-                        this.run_state = Run_State.Run1;
+                    if (this.run_state > Run_State.Run5) this.run_state = Run_State.Run1;
                 }
                 break;
             }
@@ -101,7 +95,14 @@ export class PlayerModel {
         }
     }
 
-    public draw(gl: WebGL2RenderingContext, shader: Shader, model_matrix: mat4, view_matrix: mat4, projection_matrix: mat4, camera_pos: vec3): void {
+    public draw(
+        gl: WebGL2RenderingContext,
+        shader: Shader,
+        model_matrix: mat4,
+        view_matrix: mat4,
+        projection_matrix: mat4,
+        camera_pos: vec3
+    ): void {
         //this.stand_model.activateMaterial(gl, shader, 0);
 
         switch (this.state) {
@@ -168,57 +169,55 @@ export class PlayerModel {
     init(gl: WebGL2RenderingContext) {
         this.stand_model.init(gl);
         this.jump_model.init(gl);
-
     }
 
     public async load(): Promise<void> {
-        let mesh = await OBJ.downloadModels(
-            [{
-                name: 'cbabe_stand',
+        let mesh = await OBJ.downloadModels([
+            {
+                name: "cbabe_stand",
                 obj: this.PLAYER_FOLDER + "cbabe_stand.obj",
-                downloadMtlTextures: false,
-
-            }, {
-                name: 'cbabe_jump',
+                downloadMtlTextures: false
+            },
+            {
+                name: "cbabe_jump",
                 obj: this.PLAYER_FOLDER + "cbabe_jump.obj",
-                downloadMtlTextures: false,
-
-            }, {
-                name: 'cbabe_run_start',
+                downloadMtlTextures: false
+            },
+            {
+                name: "cbabe_run_start",
                 obj: this.PLAYER_FOLDER + "cbabe_run_start.obj",
-                downloadMtlTextures: false,
-
-            }, {
-                name: 'cbabe_run_loop0',
+                downloadMtlTextures: false
+            },
+            {
+                name: "cbabe_run_loop0",
                 obj: this.PLAYER_FOLDER + "cbabe_run_loop0.obj",
-                downloadMtlTextures: false,
-
-            }, {
-                name: 'cbabe_run_loop1',
+                downloadMtlTextures: false
+            },
+            {
+                name: "cbabe_run_loop1",
                 obj: this.PLAYER_FOLDER + "cbabe_run_loop1.obj",
-                downloadMtlTextures: false,
-
-            }, {
-                name: 'cbabe_run_loop2',
+                downloadMtlTextures: false
+            },
+            {
+                name: "cbabe_run_loop2",
                 obj: this.PLAYER_FOLDER + "cbabe_run_loop2.obj",
-                downloadMtlTextures: false,
-
-            }, {
-                name: 'cbabe_run_loop3',
+                downloadMtlTextures: false
+            },
+            {
+                name: "cbabe_run_loop3",
                 obj: this.PLAYER_FOLDER + "cbabe_run_loop3.obj",
-                downloadMtlTextures: false,
-
-            }, {
-                name: 'cbabe_run_loop4',
+                downloadMtlTextures: false
+            },
+            {
+                name: "cbabe_run_loop4",
                 obj: this.PLAYER_FOLDER + "cbabe_run_loop4.obj",
-                downloadMtlTextures: false,
-
+                downloadMtlTextures: false
             }
-            ]);
+        ]);
 
         let root = window.location.href.substr(0, window.location.href.lastIndexOf("/"));
 
-        let data = await (await fetch(root + this.PLAYER_FOLDER + 'cbabe.mtl')).text();
+        let data = await (await fetch(root + this.PLAYER_FOLDER + "cbabe.mtl")).text();
         let mat = new MaterialLibrary(data);
 
         await OBJ.downloadMtlTextures(mat, root + this.PLAYER_FOLDER);
@@ -252,5 +251,4 @@ export class PlayerModel {
         this.run_frames[5].model.init(gl);
         this.run_frames[6].model.init(gl);
     }
-
 }

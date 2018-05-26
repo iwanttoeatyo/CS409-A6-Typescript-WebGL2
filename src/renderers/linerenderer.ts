@@ -1,6 +1,6 @@
-import {mat4, vec3, vec4} from "gl-matrix";
-import {Shader} from "../shader";
-import {global} from "../globals";
+import { mat4, vec3, vec4 } from "gl-matrix";
+import { Shader } from "../shader";
+import { global } from "../globals";
 import * as assert from "assert";
 
 let gl: WebGL2RenderingContext;
@@ -8,7 +8,7 @@ let gl: WebGL2RenderingContext;
 export class PointList {
     private data = [];
     private counter = 0;
-    private arrayView: Float32Array ;
+    private arrayView: Float32Array;
     private static readonly floats_per_point = 7;
 
     constructor() {
@@ -33,7 +33,6 @@ export class PointList {
         this.data[this.counter++] = point.color[1];
         this.data[this.counter++] = point.color[2];
         this.data[this.counter++] = point.color[3];
-
     }
 
     public pushRaw(pos: vec3, color: vec4) {
@@ -63,15 +62,13 @@ export class PointList {
         return 4 * 3;
     }
 
-    public getData() : ReadonlyArray<number> {
+    public getData(): ReadonlyArray<number> {
         return this.data;
     }
 
     public getArrayView(): Float32Array {
-        if (!this.arrayView || this.arrayView.length !== this.counter)
-            this.arrayView = new Float32Array(this.data);
+        if (!this.arrayView || this.arrayView.length !== this.counter) this.arrayView = new Float32Array(this.data);
         return this.arrayView;
-     
     }
 
     public clear() {
@@ -94,9 +91,7 @@ interface Point {
     color: vec4;
 }
 
-
 export class LineRenderer {
-
     private points: PointList;
     private shader: Shader;
     private readonly mvp_id: WebGLUniformLocation;
@@ -122,18 +117,15 @@ export class LineRenderer {
         gl.vertexAttribPointer(1, 4, gl.FLOAT, true, PointList.stride(), PointList.colorOffset());
         gl.bindVertexArray(null);
     }
-    
 
     public drawPointList(point_list: PointList, vp_matrix: mat4): void {
         this.bind();
 
-        gl.bufferData(gl.ARRAY_BUFFER,point_list.getArrayView(), gl.STREAM_DRAW);
+        gl.bufferData(gl.ARRAY_BUFFER, point_list.getArrayView(), gl.STREAM_DRAW);
         this.shader.setMat4(this.mvp_id, vp_matrix);
 
-   
         gl.drawArrays(gl.LINES, 0, point_list.size());
         gl.bindVertexArray(null);
-
     }
 
     public preAllocatePointLine(size: number): void {
@@ -151,7 +143,7 @@ export class LineRenderer {
         this.bind();
         gl.bufferData(gl.ARRAY_BUFFER, this.points.getArrayView(), gl.STREAM_DRAW);
         this.shader.setMat4(this.mvp_id, vp_matrix);
-        
+
         gl.drawArrays(gl.LINES, 0, this.points.size());
         gl.bindVertexArray(null);
         this.points.clear();
@@ -165,7 +157,6 @@ export class LineRenderer {
         this.shader.use();
         gl.bindVertexArray(this.VAO);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.VBO);
-
     }
 
     public drawLine(p1: vec3, p2: vec3, color: vec4, vp_matrix: mat4): void {

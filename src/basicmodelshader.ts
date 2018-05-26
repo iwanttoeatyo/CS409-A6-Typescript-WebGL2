@@ -1,6 +1,6 @@
-import {Shader, Uniforms} from "./shader";
-import {Material} from "./lib/OBJ/"
-import {global} from "./globals";
+import { Shader, Uniforms } from "./shader";
+import { Material } from "./lib/OBJ/";
+import { global } from "./globals";
 
 class BasicModelUniforms extends Uniforms {
     tween_enabled: WebGLUniformLocation;
@@ -20,7 +20,7 @@ class BasicModelUniforms extends Uniforms {
     material_emissive_colour: WebGLUniformLocation;
     material_shininess: WebGLUniformLocation;
     material_is_texture_active: WebGLUniformLocation;
-};
+}
 
 export class BasicModelShader extends Shader {
     public uniforms: BasicModelUniforms;
@@ -52,7 +52,6 @@ export class BasicModelShader extends Shader {
         this.uniforms.material_shininess = this.getUniformLocation("material.shininess");
         this.uniforms.material_is_texture_active = this.getUniformLocation("material.is_texture_active");
 
-
         gl.bindAttribLocation(this.ID, 0, "a_vertex");
         gl.bindAttribLocation(this.ID, 1, "a_tex_coord");
         gl.bindAttribLocation(this.ID, 2, "a_normal");
@@ -73,11 +72,9 @@ export class BasicModelShader extends Shader {
             gl.bindTexture(gl.TEXTURE_2D, global.EMPTY_TEXTURE);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
             gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-            const pixel = new Uint8Array([192, 192, 192, 255]);  // grey
+            const pixel = new Uint8Array([192, 192, 192, 255]); // grey
             gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, 1, 1, 0, gl.RGB, gl.UNSIGNED_BYTE, pixel);
-
         }
-
     }
 
     prepare(gl: WebGL2RenderingContext): void {
@@ -100,28 +97,28 @@ export class BasicModelShader extends Shader {
 
     activateMaterial(gl: WebGL2RenderingContext, material: Material): void {
         if (material.isTextureActive[0] && material.mapTransparency.texture_id) {
-            gl.activeTexture(gl.TEXTURE0);  // transparency
+            gl.activeTexture(gl.TEXTURE0); // transparency
             gl.bindTexture(gl.TEXTURE_2D, material.mapTransparency.texture_id);
         }
         if (material.isTextureActive[1] && material.mapEmissive.texture_id) {
-            gl.activeTexture(gl.TEXTURE1);  // emission
+            gl.activeTexture(gl.TEXTURE1); // emission
             gl.bindTexture(gl.TEXTURE_2D, material.mapEmissive.texture_id);
         }
 
         if (material.isTextureActive[2] && material.mapAmbient.texture_id) {
-            gl.activeTexture(gl.TEXTURE2);  // ambient
+            gl.activeTexture(gl.TEXTURE2); // ambient
             gl.bindTexture(gl.TEXTURE_2D, material.mapAmbient.texture_id);
         }
         if (material.isTextureActive[3] && material.mapDiffuse.texture_id) {
-            gl.activeTexture(gl.TEXTURE3);  // diffuse
+            gl.activeTexture(gl.TEXTURE3); // diffuse
             gl.bindTexture(gl.TEXTURE_2D, material.mapDiffuse.texture_id);
         }
         if (material.isTextureActive[4] && material.mapSpecular.texture_id) {
-            gl.activeTexture(gl.TEXTURE4);  // specular
+            gl.activeTexture(gl.TEXTURE4); // specular
             gl.bindTexture(gl.TEXTURE_2D, material.mapSpecular.texture_id);
         }
         if (material.isTextureActive[5] && material.mapSpecularExponent.texture_id) {
-            gl.activeTexture(gl.TEXTURE5);  // shininess
+            gl.activeTexture(gl.TEXTURE5); // shininess
             gl.bindTexture(gl.TEXTURE_2D, material.mapSpecularExponent.texture_id);
         }
 

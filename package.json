@@ -1,7 +1,7 @@
 {
-  "name": "cs409-a5-typescript",
+  "name": "cs409-a6-typescript",
   "version": "0.1.0",
-  "description": "CS409 Assignment 5 using WebGL and Shaders",
+  "description": "CS409 Assignment 6 using WebGL and Shaders",
   "main": "index.html",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
@@ -13,6 +13,12 @@
   "license": "MIT",
   "repository": {
     "type": "git"
+  },
+  "prettier": {
+    "tabWidth":4,
+    "useTabs": false,
+    "printWidth": 120,
+    "parser": "typescript"
   },
   "dependencies": {
     "@types/gl-matrix": "^2.4.0",

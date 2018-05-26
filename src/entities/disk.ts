@@ -1,10 +1,10 @@
-import {vec2, vec3} from "gl-matrix";
-import {BasicModel} from "./models/basicmodel";
-import {MeshlessModel} from "./models/meshlessmodel";
-import {Noisefield} from "../noisefield";
-import {Entity, Model_Type} from "./entity";
-import {MathHelper} from "../helpers/mathhelper";
-import {Random} from "../helpers/random";
+import { vec2, vec3 } from "gl-matrix";
+import { BasicModel } from "./models/basicmodel";
+import { MeshlessModel } from "./models/meshlessmodel";
+import { Noisefield } from "../noisefield";
+import { Entity, Model_Type } from "./entity";
+import { MathHelper } from "../helpers/mathhelper";
+import { Random } from "../helpers/random";
 
 export enum Terrain {
     RED_ROCK = 0,
@@ -32,13 +32,18 @@ export class Disk extends Entity {
     static height_map_model_gen_count = 0;
 
     constructor(disk_model: BasicModel, type: Terrain, radius: number, x: number, y: number, z: number) {
-        super(disk_model.mesh.name, Model_Type.BASIC, vec3.fromValues(x, y, z), vec3.fromValues(0, 0, 0), vec3.fromValues(radius, 1, radius));
+        super(
+            disk_model.mesh.name,
+            Model_Type.BASIC,
+            vec3.fromValues(x, y, z),
+            vec3.fromValues(0, 0, 0),
+            vec3.fromValues(radius, 1, radius)
+        );
         if (!disk_model.initialized) throw "DiskModel was not initialized";
         this.model = disk_model;
         this.radius = radius;
         this.type = type;
         this.initialized = false;
-
     }
 
     init(gl: WebGL2RenderingContext) {
@@ -51,7 +56,6 @@ export class Disk extends Entity {
         Disk.height_map_model_gen_count++;
         this.initialized = true;
     }
-
 
     private generateHeightMapModels(gl: WebGL2RenderingContext) {
         switch (this.type) {
@@ -79,7 +83,6 @@ export class Disk extends Entity {
         this.generateHeightMapModel(gl);
     }
 
-
     private generateHeightMapModel(gl: WebGL2RenderingContext) {
         let vert_buffer_size = (this.heightMapSize + 1) * (this.heightMapSize + 1);
         let verts: Float32Array = new Float32Array(vert_buffer_size * 8);
@@ -87,9 +90,9 @@ export class Disk extends Entity {
         for (let x = 0; x < this.heightMapSize + 1; x++) {
             for (let z = 0; z < this.heightMapSize + 1; z++) {
                 //Position
-                verts[count++] = x - (this.heightMapSize / 2);
+                verts[count++] = x - this.heightMapSize / 2;
                 verts[count++] = this.heightMap[x][z] + 0.00001;
-                verts[count++] = z - (this.heightMapSize / 2);
+                verts[count++] = z - this.heightMapSize / 2;
 
                 //Texture coords
                 verts[count++] = x / 16.0;
@@ -98,16 +101,14 @@ export class Disk extends Entity {
                 verts[count++] = 0;
                 verts[count++] = 0;
                 verts[count++] = 0;
-
-
             }
         }
 
-        let index_buffer_size = this.heightMapSize * (this.heightMapSize) * 6;
+        let index_buffer_size = this.heightMapSize * this.heightMapSize * 6;
         let indices = new Uint16Array(index_buffer_size);
         count = 0;
         //Create triangles using indices which reference vertices in the triangle strip
-        for (let i = 0; i < vert_buffer_size - (this.heightMapSize + 1); i += (this.heightMapSize + 1)) {
+        for (let i = 0; i < vert_buffer_size - (this.heightMapSize + 1); i += this.heightMapSize + 1) {
             for (let j = 0; j < this.heightMapSize; j++) {
                 const v = i + j;
 
@@ -121,7 +122,6 @@ export class Disk extends Entity {
                 indices[count++] = v;
                 indices[count++] = v + 1;
             }
-
         }
 
         //Calculate the normals. For each faces normal we add it to the normals of the vertices used.
@@ -159,8 +159,6 @@ export class Disk extends Entity {
         }
 
         this.heightMapModel = new MeshlessModel(verts, indices, this.model.mesh.materialsByIndex[2]);
-
-
     }
 
     private initRedRockHeightMap() {
@@ -169,7 +167,7 @@ export class Disk extends Entity {
         heights.push(0, 0);
         for (let i = 2; i <= this.heightMapSize / 2; i++) {
             let a = heights[i - 1];
-            heights.push(Math.round((a + Math.random() * (3) - 1) * 1e1) / 1e1);
+            heights.push(Math.round((a + Math.random() * 3 - 1) * 1e1) / 1e1);
         }
 
         for (let x = 0; x <= this.heightMapSize; x++) {
@@ -187,11 +185,20 @@ export class Disk extends Entity {
     private initSandyHeightMap() {
         this.heightMap = [];
 
-        let ns = new Noisefield(16, 8, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF),
-            Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF));
+        let ns = new Noisefield(
+            16,
+            8,
+            Random.randi(0xffffffff),
+            Random.randi(0xffffffff),
+            Random.randi(0xffffffff),
+            Random.randi(0xffffffff),
+            Random.randi(0xffffffff),
+            Random.randi(0xffffffff),
+            Random.randi(0xffffffff)
+        );
 
         let xz_6 = new Array(this.heightMapSize + 1);
-        let pow_divisor = (1.0 - Math.pow(0.5, 6));
+        let pow_divisor = 1.0 - Math.pow(0.5, 6);
 
         for (let x = 0; x <= this.heightMapSize; x++) {
             let ux = x / this.heightMapSize;
@@ -213,36 +220,87 @@ export class Disk extends Entity {
         this.heightMap = [];
 
         let ns = [
-            new Noisefield(32, 1.0, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF),
-                Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF)),
-            new Noisefield(16, 7.0, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF),
-                Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF)),
-            new Noisefield(8, 5.0, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF),
-                Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF)),
-            new Noisefield(4, 3.5, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF),
-                Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF)),
-            new Noisefield(2, 2.5, Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF),
-                Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF), Random.randi(0xFFFFFFFF)),
+            new Noisefield(
+                32,
+                1.0,
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff)
+            ),
+            new Noisefield(
+                16,
+                7.0,
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff)
+            ),
+            new Noisefield(
+                8,
+                5.0,
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff)
+            ),
+            new Noisefield(
+                4,
+                3.5,
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff)
+            ),
+            new Noisefield(
+                2,
+                2.5,
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff),
+                Random.randi(0xffffffff)
+            )
         ];
 
         for (let x = 0; x <= this.heightMapSize; x++) {
             this.heightMap[x] = [];
 
             for (let z = 0; z <= this.heightMapSize; z++) {
-                let h = ns[0].perlineNoise(z, x)
-                    + ns[1].perlineNoise(z, x)
-                    + ns[2].perlineNoise(z, x)
-                    + ns[3].perlineNoise(z, x)
-                    + ns[4].perlineNoise(z, x);
+                let h =
+                    ns[0].perlineNoise(z, x) +
+                    ns[1].perlineNoise(z, x) +
+                    ns[2].perlineNoise(z, x) +
+                    ns[3].perlineNoise(z, x) +
+                    ns[4].perlineNoise(z, x);
 
                 let ux = x / this.heightMapSize;
                 let uy = z / this.heightMapSize;
-                let f = (1 - Math.max(Math.max(Math.pow(ux, 6), Math.pow(1.0 - ux, 6)), Math.max(Math.pow(uy, 6), Math.pow(1.0 - uy, 6)))) / (1.0 - Math.pow(0.5, 6));
+                let f =
+                    (1 -
+                        Math.max(
+                            Math.max(Math.pow(ux, 6), Math.pow(1.0 - ux, 6)),
+                            Math.max(Math.pow(uy, 6), Math.pow(1.0 - uy, 6))
+                        )) /
+                    (1.0 - Math.pow(0.5, 6));
                 this.heightMap[x].push(h * f);
             }
         }
     }
-
 
     private initIcyHeightMap() {
         let points = [];
@@ -255,8 +313,8 @@ export class Disk extends Entity {
             let d4 = Math.random() * h;
             let d = Math.max(d1, d2, d3, d4);
             let a = Math.random() * Math.PI * 2;
-            let x = (h + Math.cos(a) * d);
-            let z = (h + Math.sin(a) * d);
+            let x = h + Math.cos(a) * d;
+            let z = h + Math.sin(a) * d;
             let m = (h - d) * 0.7;
             let y = Math.random() * (m + m) - m;
             points.push([x, y, z]);
@@ -265,7 +323,8 @@ export class Disk extends Entity {
         for (let x = 0; x <= this.heightMapSize; x++) {
             this.heightMap[x] = new Array(this.heightMapSize + 1);
             for (let z = 0; z <= this.heightMapSize; z++) {
-                let min = 0, max = 0;
+                let min = 0,
+                    max = 0;
                 for (let i = 0; i < points.length; i++) {
                     let x2 = (points[i][0] - x) * (points[i][0] - x);
                     let z2 = (points[i][2] - z) * (points[i][2] - z);
@@ -280,13 +339,12 @@ export class Disk extends Entity {
 
     private initLeafyHeightMap() {
         //Math.random() * (max - min) + min;
-        let LL = Math.random() * (2) - 1;
-        let LC = Math.random() * (2) - 1;
-        let LR = Math.random() * (2) - 1;
-        let RI = Math.random() * (2) - 1;
-        let RM = Math.random() * (2) - 1;
-        let RO = Math.random() * (2) - 1;
-
+        let LL = Math.random() * 2 - 1;
+        let LC = Math.random() * 2 - 1;
+        let LR = Math.random() * 2 - 1;
+        let RI = Math.random() * 2 - 1;
+        let RM = Math.random() * 2 - 1;
+        let RO = Math.random() * 2 - 1;
 
         let a1 = Random.randi(7);
         let a2 = Random.randi(7);
@@ -302,7 +360,6 @@ export class Disk extends Entity {
             AO = -AO;
         }
 
-
         this.heightMap = new Array(this.heightMapSize + 1);
 
         for (let x = 0; x <= this.heightMapSize; x++) {
@@ -317,7 +374,7 @@ export class Disk extends Entity {
 
                 let ll = Math.pow(ux, 4) * (1 - ux) * 12;
                 let lc = (Math.cos(Math.PI * x2) + 1) * 0.5;
-                let lr = Math.pow((1 - ux), 4) * ux * 12;
+                let lr = Math.pow(1 - ux, 4) * ux * 12;
                 let lsum = ll * LL + lc * LC + lr * LR;
 
                 let ri = Math.pow(Math.max(1 - dist, 0), 2);
@@ -326,7 +383,7 @@ export class Disk extends Entity {
                 let rsum = ri * RI + rm * RM + ro * RO;
 
                 let ai = (Math.sqrt(dist) - dist) * 4;
-                let am = Math.pow(dist, 2) * Math.pow((1 - dist), 2) * 16;
+                let am = Math.pow(dist, 2) * Math.pow(1 - dist, 2) * 16;
                 let ao = (Math.sqrt(1 - dist) - (1 - dist)) * 4;
                 let asum = ai * AI + am * AM + ao * AO;
 
@@ -335,11 +392,9 @@ export class Disk extends Entity {
                 let arm_magnitude = (Math.sin(arm_radians) + 1.0) * 0.5;
                 let arm_height = arm_magnitude * asum;
                 this.heightMap[x][z] = non_arm_height * 5 + arm_height * 3;
-
             }
         }
     }
-
 
     // draw(gl: WebGL2RenderingContext, view_matrix: mat4, projection_matrix: mat4) {
     //     this.drawDiskModel(gl, view_matrix, projection_matrix);
@@ -434,14 +489,16 @@ export class Disk extends Entity {
     }
 
     public getHeightAtPosition(x: number, z: number): number {
-
         //get x,z within the height map centered on the bottom left corner
-        let cx = (x - this.position[0]) * (this.heightMapSize / 2.0) / (this.radius * Math.SQRT1_2) + (this.heightMapSize / 2.0);
-        let cz = (z - this.position[2]) * (this.heightMapSize / 2.0) / (this.radius * Math.SQRT1_2) + (this.heightMapSize / 2.0);
+        let cx =
+            (x - this.position[0]) * (this.heightMapSize / 2.0) / (this.radius * Math.SQRT1_2) +
+            this.heightMapSize / 2.0;
+        let cz =
+            (z - this.position[2]) * (this.heightMapSize / 2.0) / (this.radius * Math.SQRT1_2) +
+            this.heightMapSize / 2.0;
 
         //If outside height map return 0
-        if ((cx > this.heightMapSize || cx < 0) || (cz > this.heightMapSize || cz < 0))
-            return 0.0;
+        if (cx > this.heightMapSize || cx < 0 || (cz > this.heightMapSize || cz < 0)) return 0.0;
 
         //Index in height map
         let ix = Math.floor(cx);
@@ -456,7 +513,7 @@ export class Disk extends Entity {
 
         //Upper right triangle
         if (fx > fz) {
-            vec3.set(p0, ix + 1, this.heightMap[ix + 1][kz], kz)
+            vec3.set(p0, ix + 1, this.heightMap[ix + 1][kz], kz);
         } else {
             //Lower right triangle
             vec3.set(p0, ix, this.heightMap[ix][kz + 1], kz + 1);

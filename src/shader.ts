@@ -1,5 +1,5 @@
-import {mat4, vec3, vec4} from "gl-matrix";
-import {Material} from "./lib/OBJ/";
+import { mat4, vec3, vec4 } from "gl-matrix";
+import { Material } from "./lib/OBJ/";
 
 export class Uniforms {
     model_matrix: WebGLUniformLocation;
@@ -7,7 +7,6 @@ export class Uniforms {
     model_view_projection_matrix: WebGLUniformLocation;
     camera_pos: WebGLUniformLocation;
 }
-
 
 export class Shader {
     ID: WebGLProgram;
@@ -34,7 +33,6 @@ export class Shader {
         this.uniforms.view_matrix = this.getUniformLocation("view_matrix");
         this.uniforms.model_view_projection_matrix = this.getUniformLocation("model_view_projection_matrix");
         this.uniforms.camera_pos = this.getUniformLocation("camera_pos");
-
     }
 
     public use(): void {
@@ -45,11 +43,14 @@ export class Shader {
         this.use();
     }
 
-    public activateMaterial(gl: WebGL2RenderingContext, material: Material): void {
+    public activateMaterial(gl: WebGL2RenderingContext, material: Material): void {}
 
-    }
-
-    public setMVPMatrices(model: mat4, view: mat4, projection: mat4, camera_pos: vec3 = vec3.fromValues(0, 0, 0)): void {
+    public setMVPMatrices(
+        model: mat4,
+        view: mat4,
+        projection: mat4,
+        camera_pos: vec3 = vec3.fromValues(0, 0, 0)
+    ): void {
         let mvp_matrix = mat4.create();
         mat4.mul(mvp_matrix, view, model);
         mat4.mul(mvp_matrix, projection, mvp_matrix);
@@ -74,7 +75,6 @@ export class Shader {
     public setIntByName(name: string, value: number): void {
         this.gl.uniform1i(this.getUniformLocation(name), value);
     }
-
 
     public setIntV(id: number | WebGLUniformLocation, value: number[]): void {
         this.gl.uniform1iv(id, value);
@@ -120,7 +120,6 @@ export class Shader {
     public setVec4ByName(name: string, vec: vec4 | number[]) {
         this.gl.uniform4fv(this.getUniformLocation(name), vec);
     }
-
 }
 
 function getShader(gl: WebGL2RenderingContext, sourceCode, type) {

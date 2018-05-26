@@ -3,7 +3,6 @@ interface Vec2 {
     y: number;
 }
 
-
 export class Noisefield {
     GRID_SIZE: number;
     SEED_X1: number;
@@ -15,7 +14,17 @@ export class Noisefield {
     SEED_Q2: number;
     amplitude: number;
 
-    constructor(grid_size: number, amplitude: number, x1: number, x2: number, y1: number, y2: number, q0: number, q1: number, q2: number) {
+    constructor(
+        grid_size: number,
+        amplitude: number,
+        x1: number,
+        x2: number,
+        y1: number,
+        y2: number,
+        q0: number,
+        q1: number,
+        q2: number
+    ) {
         this.GRID_SIZE = grid_size;
         this.amplitude = amplitude;
         this.SEED_X1 = x1;
@@ -28,13 +37,9 @@ export class Noisefield {
     }
 
     private pseudorandom(x: number, y: number) {
-        let n = (this.SEED_X1 * x) + (this.SEED_Y1 * y);
-        let quad_term = this.SEED_Q2 * n * n +
-            this.SEED_Q1 * n +
-            this.SEED_Q0;
-        return quad_term +
-            (this.SEED_X2 * x) +
-            (this.SEED_Y2 * y);
+        let n = this.SEED_X1 * x + this.SEED_Y1 * y;
+        let quad_term = this.SEED_Q2 * n * n + this.SEED_Q1 * n + this.SEED_Q0;
+        return quad_term + this.SEED_X2 * x + this.SEED_Y2 * y;
     }
 
     private fade(n: number): number {
@@ -46,10 +51,9 @@ export class Noisefield {
     }
 
     private lattice(x: number, y: number): Vec2 {
-        let value = this.pseudorandom(x, y,);
+        let value = this.pseudorandom(x, y);
         let radians = value * 2 * Math.PI;
-        return {x: Math.cos(radians), y: Math.sin(radians)};
-
+        return { x: Math.cos(radians), y: Math.sin(radians) };
     }
 
     public perlineNoise(x: number, y: number) {
@@ -67,10 +71,10 @@ export class Noisefield {
         let lattice10: Vec2 = this.lattice(x1, y0);
         let lattice11: Vec2 = this.lattice(x1, y1);
 
-        let direction00: Vec2 = {x: -x_frac, y: -y_frac};
-        let direction01: Vec2 = {x: -x_frac, y: 1 - y_frac};
-        let direction10: Vec2 = {x: 1 - x_frac, y: -y_frac};
-        let direction11: Vec2 = {x: 1 - x_frac, y: 1 - y_frac};
+        let direction00: Vec2 = { x: -x_frac, y: -y_frac };
+        let direction01: Vec2 = { x: -x_frac, y: 1 - y_frac };
+        let direction10: Vec2 = { x: 1 - x_frac, y: -y_frac };
+        let direction11: Vec2 = { x: 1 - x_frac, y: 1 - y_frac };
 
         let value00 = this.dotProduct(lattice00, direction00);
         let value01 = this.dotProduct(lattice01, direction01);
@@ -88,7 +92,7 @@ export class Noisefield {
         let value = value0 * x_fade0 + value1 * x_fade1;
 
         let result = value * this.amplitude;
-        return result
+        return result;
     }
 
     private dotProduct(a: Vec2, b: Vec2): number {

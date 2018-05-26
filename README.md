@@ -1,5 +1,5 @@
 # CS409-A4-Typescript-WebGL2
-CS409 - 201810 Assignment 5  
+CS409 - 201810 Assignment 6  
 Written in Typescript using WebGL2 and Shaders
 
 # Credits
