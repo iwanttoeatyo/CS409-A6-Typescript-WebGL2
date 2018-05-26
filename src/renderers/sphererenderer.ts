@@ -30,10 +30,10 @@ export class SphereRenderer {
         this.mat.transparency = [color[3]];
 
         global.renderer.prepareShader(gl);
-        global.renderer.shader.setMVPMatrices(model_matrix, view_matrix, projection_matrix);
+        global.renderer.basic_model_shader.setMVPMatrices(model_matrix, view_matrix, projection_matrix);
 
         this.sphere.activateBuffers(gl);
-        global.renderer.shader.activateMaterial(gl, this.mat);
+        global.renderer.basic_model_shader.activateMaterial(gl, this.mat);
 
         this.sphere.drawActivatedMaterial(gl, 0);
     }

@@ -6,6 +6,7 @@ import { Shader } from "../shader";
 import { MeshlessModel } from "../entities/models/meshlessmodel";
 import { global } from "../globals";
 import * as assert from "assert";
+import {DepthTexture} from "./depthtexture";
 
 let gl: WebGL2RenderingContext;
 
@@ -13,22 +14,28 @@ export class Renderer {
     private models: Map<string, BasicModel>;
     private meshless_models: Map<string, MeshlessModel>;
     private materials: Map<string, Material>;
-    public shader: Shader;
+    public active_shader: Shader;
+    public basic_model_shader:Shader;
     private entities: Map<string, Entity>;
+    
+    public depth_texture:DepthTexture;
 
     constructor(shader: Shader) {
         this.models = new Map<string, BasicModel>();
         this.materials = new Map<string, Material>();
         this.entities = new Map<string, Entity>();
         this.meshless_models = new Map<string, MeshlessModel>();
+        this.depth_texture = new DepthTexture();
 
         gl = global.gl;
         assert(gl);
-        this.shader = shader;
+        this.basic_model_shader = shader;
+        this.active_shader = this.basic_model_shader;
     }
 
     public setShader(shader: Shader): void {
-        this.shader = shader;
+        this.basic_model_shader = shader;
+        this.active_shader = shader;
     }
 
     public addBasicModel(model: BasicModel): void {
@@ -85,7 +92,8 @@ export class Renderer {
     }
 
     prepareShader(gl: WebGL2RenderingContext) {
-        this.shader.prepare(gl);
+        this.active_shader = this.basic_model_shader;
+        this.active_shader.prepare(gl);
     }
 
     public setMVPMatrices(
@@ -94,15 +102,32 @@ export class Renderer {
         projection: mat4,
         camera_pos: vec3 = vec3.fromValues(0, 0, 0)
     ): void {
-        this.shader.setMVPMatrices(model, view, projection, camera_pos);
+        this.active_shader.setMVPMatrices(model, view, projection, camera_pos);
     }
 
     render(gl: WebGL2RenderingContext, view_matrix: mat4, projection_matrix: mat4) {
+        this.depth_texture.startRenderToDepthTexture();
+        this.active_shader = this.depth_texture.depth_shader;
+        gl.disable(gl.CULL_FACE);
+        gl.enable(gl.POLYGON_OFFSET_FILL);
+        gl.polygonOffset(2.0, 2.2);
+
+		this.renderMeshlessModels(gl, view_matrix, projection_matrix);
+		this.renderBasicModels(gl, view_matrix, projection_matrix);
+		
+		gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+		gl.viewport(0,0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+		gl.disable(gl.POLYGON_OFFSET_FILL);
+		gl.enable(gl.CULL_FACE);
+		gl.cullFace(gl.BACK);
+		gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
+		
         //sort entities
         this.prepareShader(gl);
 
         this.renderMeshlessModels(gl, view_matrix, projection_matrix);
         this.renderBasicModels(gl, view_matrix, projection_matrix);
+        
     }
 
     private renderMeshlessModels(gl: WebGL2RenderingContext, view_matrix: mat4, projection_matrix: mat4) {
@@ -134,7 +159,7 @@ export class Renderer {
                     model.activateBuffers(gl);
                     //Activate the material
                     if (!activated) {
-                        this.shader.activateMaterial(gl, model.material);
+                        this.active_shader.activateMaterial(gl, model.material);
                         activated = true;
                     }
 
@@ -155,7 +180,7 @@ export class Renderer {
                             entities_to_draw[i].scalar
                         );
                         //Set matrices in shader
-                        this.shader.setMVPMatrices(model_matrix, view_matrix, projection_matrix);
+                        this.active_shader.setMVPMatrices(model_matrix, view_matrix, projection_matrix);
                         model.drawActivatedMaterial(gl);
                     }
                 }
@@ -193,7 +218,7 @@ export class Renderer {
                 let mat_id = model.mesh.materialIndices[mat_list[j]];
 
                 if (!activated) {
-                    this.shader.activateMaterial(gl, model.mesh.materialsByIndex[mat_id]);
+                    this.active_shader.activateMaterial(gl, model.mesh.materialsByIndex[mat_id]);
                     activated = true;
                 }
                 model.activateBuffers(gl);
@@ -214,7 +239,7 @@ export class Renderer {
                         entities_to_draw[i].scalar
                     );
                     //Set matrices in shader
-                    this.shader.setMVPMatrices(model_matrix, view_matrix, projection_matrix);
+                    this.active_shader.setMVPMatrices(model_matrix, view_matrix, projection_matrix);
                     //Draw triangle list
                     model.drawActivatedMaterial(gl, mat_id);
                 }

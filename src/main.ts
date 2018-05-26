@@ -36,10 +36,9 @@ export class Main {
             require("shaders/basicmodel.vert"),
             require("shaders/basicmodelmanylights.frag")
         );
-        global.renderer = new Renderer(shader);
-        global.line_renderer = new LineRenderer();
-
-        global.sphere_renderer = new SphereRenderer();
+        global.renderer = await new Renderer(shader);
+        global.line_renderer = await new LineRenderer();
+        global.sphere_renderer = await new SphereRenderer();
         await global.sphere_renderer.load();
 
         this.game = new Game();

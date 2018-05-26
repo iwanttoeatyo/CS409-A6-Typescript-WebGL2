@@ -80,8 +80,8 @@ export class Game {
         this.initBats();
         this.overview_camera.lookAt(vec3.fromValues(0, 0, 0));
 
-        this.initRenderer();
-        this.addAllGameEntitiesToRenderer();
+        await this.initRenderer();
+        await this.addAllGameEntitiesToRenderer();
     }
 
     private initBats(): void {
@@ -177,7 +177,7 @@ export class Game {
         renderer.addBasicModel(this.bat_model);
 
         //Init lighting
-        let shader = renderer.shader;
+        let shader = renderer.basic_model_shader;
         shader.use();
 
         // directional light
@@ -340,18 +340,20 @@ export class Game {
         mat4.translate(model, model, this.active_camera.position);
 
         renderer.setMVPMatrices(model, view_matrix, projection_matrix, this.active_camera.position);
-        this.skybox_model.draw(gl, renderer.shader);
+        this.skybox_model.draw(gl, renderer.basic_model_shader);
         gl.enable(gl.DEPTH_TEST);
 
         //Draw all entities in renderer
         renderer.render(gl, view_matrix, projection_matrix);
 
-        this.player.draw(gl, renderer.shader, view_matrix, projection_matrix, camera);
+        this.player.draw(gl, renderer.basic_model_shader, view_matrix, projection_matrix, camera);
 
         this.displayMovementGraph(view_matrix, projection_matrix);
 
         this.displaySearchPathSpheres(view_matrix, projection_matrix);
         this.displayRingZeroPath(view_matrix, projection_matrix);
+
+		global.renderer.depth_texture.renderDepthTextureToQuad(0,0, 400,400);
     }
 
     public batPlayerCollisions(): void {
