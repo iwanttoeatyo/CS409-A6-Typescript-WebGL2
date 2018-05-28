@@ -51,8 +51,8 @@ export class Ring extends Entity {
         if (node_list[this.curr_node_id].disk_id === node_list[this.target_node_id].disk_id) {
             //Same disk -- Arc rotate around disk
 
-            let old_dist = vec3.distance(this.position, this.target_position);
-            let old_pos = vec3.clone(this.position);
+            //let old_dist = vec3.distance(this.position, this.target_position);
+            //let old_pos = vec3.clone(this.position);
 
             //center of disk
             let center = vec3.clone(this.world.disks[node_list[this.curr_node_id].disk_id].position);
@@ -65,12 +65,7 @@ export class Ring extends Entity {
 
             //Tangent vector of vector from center of disk to ring position
             //Required to determine which direction is shortest around disk
-            let tangent_center_to_ring = vec3.rotateY(
-                vec3.create(),
-                center_to_ring,
-                vec3.fromValues(0, 1, 0),
-                Math.PI / 2
-            );
+            let tangent_center_to_ring = vec3.rotateY(vec3.create(), center_to_ring, [0, 0, 0], Math.PI / 2);
             let tangent_angle = vec3.angle(tangent_center_to_ring, dir_pos_to_target);
 
             //The radius to rotate around the disk is radius - 0.7
@@ -80,9 +75,8 @@ export class Ring extends Entity {
             let angle = distance / radius;
 
             //Rotate around the disk in the shorter direction
-            if (tangent_angle < Math.PI / 2)
-                vec3.rotateY(center_to_ring, center_to_ring, vec3.fromValues(0, 1, 0), angle);
-            else vec3.rotateY(center_to_ring, center_to_ring, vec3.fromValues(0, 1, 0), -angle);
+            if (tangent_angle < Math.PI / 2) vec3.rotateY(center_to_ring, center_to_ring, [0, 0, 0], angle);
+            else vec3.rotateY(center_to_ring, center_to_ring, [0, 0, 0], -angle);
 
             //vec3.add(this.position, center, center_to_ring);
 
@@ -96,7 +90,7 @@ export class Ring extends Entity {
 
         //Rotate the ring's forward based on how much we moved
         let rot = Ring.rotation_speed * distance;
-        vec3.rotateY(this.forward, this.forward, vec3.create(), rot);
+        vec3.rotateY(this.forward, this.forward, [0, 0, 0], rot);
 
         //Set the rings height based on the world height at that position
         this.position[1] =

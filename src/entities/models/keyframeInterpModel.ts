@@ -35,12 +35,13 @@ export class KeyframeInterpModel extends BasicModel {
 
             let is = this.mesh.vertexBuffer.itemSize;
             let submesh = this.mesh.submesh[i];
-            this.activateMaterial(gl, shader, i);
+            this.activateMaterial(shader, i);
             this.setTweenFactor(shader, tween);
             let byteSize = 2;
             gl.drawElements(gl.TRIANGLES, is * submesh.numItems, gl.UNSIGNED_SHORT, submesh.offset * is * byteSize);
         }
 
+        shader.setBoolByName("tween_enabled", false);
         gl.bindVertexArray(null);
     }
 

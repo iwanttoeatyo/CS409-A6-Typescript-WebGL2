@@ -1,9 +1,5 @@
 import { mat4, vec3, vec4 } from "gl-matrix";
 import { Shader } from "../shader";
-import { global } from "../globals";
-import * as assert from "assert";
-
-let gl: WebGL2RenderingContext;
 
 export class PointList {
     private data = [];
@@ -62,10 +58,6 @@ export class PointList {
         return 4 * 3;
     }
 
-    public getData(): ReadonlyArray<number> {
-        return this.data;
-    }
-
     public getArrayView(): Float32Array {
         if (!this.arrayView || this.arrayView.length !== this.counter) this.arrayView = new Float32Array(this.data);
         return this.arrayView;
@@ -92,15 +84,16 @@ interface Point {
 }
 
 export class LineRenderer {
+    private readonly gl:WebGL2RenderingContext;
     private points: PointList;
     private shader: Shader;
     private readonly mvp_id: WebGLUniformLocation;
     private readonly VAO: WebGLVertexArrayObject;
     private readonly VBO: WebGLBuffer;
 
-    constructor() {
-        gl = global.gl;
-        assert(gl);
+    constructor(gl:WebGL2RenderingContext) {
+        this.gl = gl;
+
         this.points = new PointList();
         this.shader = new Shader(gl, require("shaders/line.vert"), require("shaders/line.frag"));
         this.mvp_id = this.shader.uniforms.model_view_projection_matrix;
@@ -119,8 +112,7 @@ export class LineRenderer {
     }
 
     public drawPointList(point_list: PointList, vp_matrix: mat4): void {
-        this.bind();
-
+        let gl = this.gl;
         gl.bufferData(gl.ARRAY_BUFFER, point_list.getArrayView(), gl.STREAM_DRAW);
         this.shader.setMat4(this.mvp_id, vp_matrix);
 
@@ -139,8 +131,7 @@ export class LineRenderer {
 
     public drawAndClear(vp_matrix: mat4): void {
         if (this.points.size() === 0) return;
-
-        this.bind();
+        let gl = this.gl;
         gl.bufferData(gl.ARRAY_BUFFER, this.points.getArrayView(), gl.STREAM_DRAW);
         this.shader.setMat4(this.mvp_id, vp_matrix);
 
@@ -153,7 +144,8 @@ export class LineRenderer {
         this.points.clear();
     }
 
-    private bind() {
+    public prepare() {
+        let gl = this.gl;
         this.shader.use();
         gl.bindVertexArray(this.VAO);
         gl.bindBuffer(gl.ARRAY_BUFFER, this.VBO);

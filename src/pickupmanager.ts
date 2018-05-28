@@ -8,8 +8,8 @@ import { Renderer } from "./renderers/renderer";
 import { MovementGraph } from "./movementgraph";
 
 export class PickupManager {
-    private rod_model: BasicModel;
-    private ring_model: BasicModel;
+    private readonly rod_model: BasicModel;
+    private readonly ring_model: BasicModel;
 
     public rings: Array<Ring>;
     public rods: Array<Rod>;
@@ -27,18 +27,18 @@ export class PickupManager {
         this.rings = [];
         this.rods = [];
 
-        world.disks.forEach(disk => {
+        for (let disk of world.disks) {
             let pos: vec3 = vec3.clone(disk.position);
             pos[1] = world.getHeightAtPointPosition(pos[0], pos[2]);
             this.addRod(pos, disk.type + 1);
             this.addRing(world, world_graph);
-        });
+        }
     }
 
     public update(delta_time_ms: number): void {
-        this.rings.forEach(ring => {
+        for (let ring of this.rings) {
             if (!ring.picked_up) ring.update(delta_time_ms);
-        });
+        }
     }
 
     public checkForPickupsCylinderIntersection(
@@ -47,7 +47,7 @@ export class PickupManager {
         half_height: number,
         renderer: Renderer
     ): void {
-        this.rings.forEach(ring => {
+        for (let ring of this.rings) {
             if (!ring.picked_up)
                 if (
                     Collision.cylinderIntersection(
@@ -63,9 +63,9 @@ export class PickupManager {
                     this.score += Ring.point_value;
                     renderer.removeEntity(ring);
                 }
-        });
+        }
 
-        this.rods.forEach(rod => {
+        for (let rod of this.rods) {
             if (!rod.picked_up)
                 if (
                     Collision.cylinderIntersection(
@@ -81,7 +81,7 @@ export class PickupManager {
                     this.score += rod.point_value;
                     renderer.removeEntity(rod);
                 }
-        });
+        }
     }
 
     public addRod(position: vec3, value: number): void {

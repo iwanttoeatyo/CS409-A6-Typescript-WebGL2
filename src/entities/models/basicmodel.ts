@@ -1,5 +1,6 @@
 import { Shader } from "../../shader";
 import { Material, Mesh } from "../../lib/OBJ/index.js";
+import { global } from "globals";
 
 let OBJ = require("../../lib/OBJ/index.js");
 
@@ -45,36 +46,35 @@ export class BasicModel {
         this.initialized = true;
     }
 
+    initTexture(gl: WebGL2RenderingContext, material_texture: any) {
+        if (material_texture.image && !material_texture.image.failed && !material_texture.texture) {
+            if (material_texture.image.complete) {
+                material_texture.texture = this.createTexture(gl, material_texture.image);
+            } else {
+                //Set to empty texture first because sometimes textures load slow
+                material_texture.texture = global.EMPTY_TEXTURE;
+                // prettier-ignore
+                material_texture.image.addEventListener("load", () => {
+                    material_texture.texture = this.createTexture(gl, material_texture.image);
+                    delete material_texture.image;
+                }, {once: true});
+            }
+        } else {
+            material_texture.texture = global.EMPTY_TEXTURE;
+        }
+    }
+
     initAllTextures(gl: WebGL2RenderingContext) {
         for (let i in this.mesh.materialsByIndex) {
             let material = this.mesh.materialsByIndex[i];
-            if (material.mapDiffuse) {
-                if (material.mapDiffuse.texture.complete) {
-                    material.mapDiffuse.texture_id = this.loadTexture(gl, material.mapDiffuse.texture);
-                } else {
-                    material.mapDiffuse.texture.addEventListener("load", () => {
-                        material.mapDiffuse.texture_id = this.loadTexture(gl, material.mapDiffuse.texture);
-                    });
-                }
-            }
-            if (material.mapAmbient) {
-                if (material.mapAmbient.texture.complete) {
-                    material.mapAmbient.texture_id = this.loadTexture(gl, material.mapAmbient.texture);
-                } else {
-                    material.mapAmbient.texture.addEventListener("load", () => {
-                        material.mapAmbient.texture_id = this.loadTexture(gl, material.mapAmbient.texture);
-                    });
-                }
-            }
-            if (material.mapEmissive) {
-                if (material.mapEmissive.texture.complete) {
-                    material.mapEmissive.texture_id = this.loadTexture(gl, material.mapEmissive.texture);
-                } else {
-                    material.mapEmissive.texture.addEventListener("load", () => {
-                        material.mapEmissive.texture_id = this.loadTexture(gl, material.mapEmissive.texture);
-                    });
-                }
-            }
+            if (material.texturesInitialized) continue;
+            if (material.mapDiffuse) this.initTexture(gl, material.mapDiffuse);
+            if (material.mapAmbient) this.initTexture(gl, material.mapAmbient);
+            if (material.mapEmissive) this.initTexture(gl, material.mapEmissive);
+            if (material.mapTransparency) this.initTexture(gl, material.mapTransparency);
+            if (material.mapSpecular) this.initTexture(gl, material.mapSpecular);
+            if (material.mapSpecularExponent) this.initTexture(gl, material.mapSpecularExponent);
+            material.texturesInitialized = true;
         }
     }
 
@@ -87,7 +87,7 @@ export class BasicModel {
             let submesh = this.mesh.submesh[i];
             const BYTE_SIZE = 2;
 
-            this.activateMaterial(gl, shader, i);
+            this.activateMaterial(shader, i);
             gl.drawElements(
                 gl.TRIANGLES,
                 item_size * submesh.numItems,
@@ -95,7 +95,6 @@ export class BasicModel {
                 submesh.offset * item_size * BYTE_SIZE
             );
         }
-
         gl.bindVertexArray(null);
     }
 
@@ -111,22 +110,22 @@ export class BasicModel {
         gl.drawElements(gl.TRIANGLES, is * submesh.numItems, gl.UNSIGNED_SHORT, submesh.offset * is * byteSize);
     }
 
-    public activateMaterial(gl: WebGL2RenderingContext, shader: Shader, index: number): void {
+    public activateMaterial(shader: Shader, index: number): void {
         let material: Material = this.mesh.materialsByIndex[index];
-        shader.activateMaterial(gl, material);
+        shader.activateMaterial(material);
     }
 
-    private loadTexture(gl: WebGL2RenderingContext, texture: any, flip: boolean = true) {
-        let texture_id = gl.createTexture();
+    private createTexture(gl: WebGL2RenderingContext, image: HTMLImageElement, flip: boolean = true) {
+        let texture = gl.createTexture();
         gl.activeTexture(gl.TEXTURE0);
-        gl.bindTexture(gl.TEXTURE_2D, texture_id);
+        gl.bindTexture(gl.TEXTURE_2D, texture);
         if (flip) gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
-        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, texture);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, gl.RGB, gl.UNSIGNED_BYTE, image);
         gl.generateMipmap(gl.TEXTURE_2D);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
-        return texture_id;
+        return texture;
     }
 }

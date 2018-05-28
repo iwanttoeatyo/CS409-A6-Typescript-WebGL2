@@ -25,10 +25,11 @@
 			// range from zero to one inclusive. Higher values result in weighting more
 			// recent seconds more heavily.
 			fpsAlpha = 0.9,
+		
 
 			// The minimum duration between updates to the frames-per-second estimate.
 			// Higher values increase accuracy, but result in slower updates.
-			fpsUpdateInterval = 1000,
+			fpsUpdateInterval = 500,
 
 			// The timestamp (in milliseconds) of the last time the `fps` moving
 			// average was updated.

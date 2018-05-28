@@ -36,6 +36,10 @@ export class Player extends Entity {
     constructor() {
         super("player", Model_Type.ANIMATED);
     }
+    
+    public init(gl:WebGL2RenderingContext){
+        this.model.init(gl);
+    }
 
     public getVelocity(): vec3 {
         return this.velocity;
@@ -201,12 +205,12 @@ export class Player extends Entity {
 
     public turnLeft(delta_time_ms: number): void {
         let amount = TURNING_DEGREES * delta_time_ms / 1000;
-        vec3.rotateY(this.forward, this.forward, this.up, amount);
+        vec3.rotateY(this.forward, this.forward, [0,0,0], amount);
     }
 
     public turnRight(delta_time_ms: number): void {
         let amount = TURNING_DEGREES * delta_time_ms / 1000;
-        vec3.rotateY(this.forward, this.forward, this.up, -amount);
+        vec3.rotateY(this.forward, this.forward, [0,0,0], -amount);
     }
 
     public transitionAnimationTo(state: Player_State): void {

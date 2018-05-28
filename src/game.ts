@@ -1,23 +1,20 @@
-import { Player } from "./entities/player";
-import { World } from "./entities/world";
-import { global } from "./globals";
-import { PickupManager } from "./pickupmanager";
-import { Camera } from "./camera";
+import { Player } from "entities/player";
+import { World } from "entities/world";
+import { global } from "globals";
+import { PickupManager } from "pickupmanager";
+import { Camera } from "camera";
 import { glMatrix, mat4, vec3, vec4 } from "gl-matrix";
-import { BasicModel } from "./entities/models/basicmodel";
-import { Renderer } from "./renderers/renderer";
-import * as assert from "assert";
-import { BasicModelShader } from "./basicmodelshader";
-import { Player_State } from "./entities/models/playermodel";
-import { MovementGraph } from "./movementgraph";
-import { PointList } from "./renderers/linerenderer";
-import line_renderer = global.line_renderer;
-import { Bat } from "./entities/bat";
-import { Collision } from "./helpers/collision";
+import { BasicModel } from "entities/models/basicmodel";
+import { Renderer } from "renderers/renderer";
+import { Player_State } from "entities/models/playermodel";
+import { MovementGraph } from "movementgraph";
+import { PointList } from "renderers/linerenderer";
+import { Bat } from "entities/bat";
+import { Collision } from "helpers/collision";
 
-let OBJ = require("./lib/OBJ/index.js");
-let gl: WebGL2RenderingContext = global.gl;
+let OBJ = require("lib/OBJ/index.js");
 
+let gl: WebGL2RenderingContext;
 let g_keys: Array<boolean> = global.keys;
 let g_mouse_keys: Array<boolean> = global.mouse_keys;
 
@@ -52,18 +49,18 @@ export class Game {
     //World Name, World Data
     static maps: Array<string>;
 
-    constructor() {
+    constructor(_gl:WebGL2RenderingContext) {
         //   if (!this.assets_loaded) throw "Game loadAssets must be called before constructor.";
-        gl = gl || global.gl;
-        assert(gl);
+        gl = _gl;
+        this.player = new Player();
     }
 
     public async init(): Promise<void> {
-        this.player = new Player();
         await this.loadAssets();
 
         await global.updateProgressText("Initializing world");
 
+        this.player.init(gl);
         this.ring_model.init(gl);
         this.rod_model.init(gl);
         this.skybox_model.init(gl);
@@ -115,6 +112,7 @@ export class Game {
         if (this.active_camera === this.overview_camera) gl.disable(gl.DEPTH_TEST);
         let vp = mat4.multiply(mat4.create(), projection_matrix, view_matrix);
 
+        global.line_renderer.prepare();
         global.line_renderer.drawPointList(this.world_graph_point_list, vp);
         gl.enable(gl.DEPTH_TEST);
     }
@@ -125,6 +123,7 @@ export class Game {
         let offset = vec3.fromValues(0, 1, 0);
         let node_list = this.world_graph.getNodeList();
 
+        global.line_renderer.prepare();
         global.line_renderer.preAllocatePointLine(path.length * 2 + 6);
         global.line_renderer.addLine(
             ring.position,
@@ -160,12 +159,9 @@ export class Game {
 
     private initRenderer(): void {
         // instancedShader = await new Shader(gl, require('../src/shaders/instanced.vert'), require("../src/shaders/instanced.frag"));
-
         renderer = global.renderer;
-        assert(renderer);
 
         //basicModelRenderer.addBasicModel(Player.model);
-
         renderer.removeAllModels();
         renderer.addBasicModel(this.world.diskA_model);
         renderer.addBasicModel(this.world.diskB_model);
@@ -200,7 +196,6 @@ export class Game {
         renderer.removeAllEntities();
         //basicModelRenderer.addEntityToRenderList(this.player);
         for (let disk of this.world.disks) {
-            assert(disk.initialized);
             renderer.addEntityToRenderList(disk);
             renderer.addMeshlessModel(disk.heightMapModel);
             renderer.addEntityToRenderList(disk.heightMapEntity);
@@ -302,8 +297,6 @@ export class Game {
             renderer
         );
 
-        //console.log(this.player.position[0] + ", " + this.player.position[1] + ", " + this.player.position[2] );
-
         this.player_camera.front[0] = this.player.forward[0];
         //playerCamera.front[1] = 1;
         this.player_camera.front[2] = this.player.forward[2];
@@ -317,13 +310,20 @@ export class Game {
     }
 
     public draw(): void {
-        gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
-
         let camera = vec3.clone(this.active_camera.position);
+
         //Setup view and projection
         let projection_matrix = mat4.create();
-        mat4.identity(projection_matrix);
         let view_matrix = this.active_camera.getViewMatrix();
+
+        mat4.perspective(projection_matrix, glMatrix.toRadian(80), 1, 2, 200);
+
+        renderer.beginRenderDepth();
+        renderer.render(view_matrix, projection_matrix);
+        this.player.draw(gl, renderer.active_shader, view_matrix, projection_matrix, camera);
+        renderer.endRenderDepth();
+
+        mat4.identity(projection_matrix);
         mat4.perspective(
             projection_matrix,
             glMatrix.toRadian(80),
@@ -332,28 +332,26 @@ export class Game {
             2000
         );
 
-        renderer.prepareShader(gl);
+        renderer.beginRender();
         let model = mat4.create();
 
         //Draw Skybox
         gl.disable(gl.DEPTH_TEST);
         mat4.translate(model, model, this.active_camera.position);
-
-        renderer.setMVPMatrices(model, view_matrix, projection_matrix, this.active_camera.position);
-        this.skybox_model.draw(gl, renderer.basic_model_shader);
+        renderer.active_shader.setMVPMatrices(model, view_matrix, projection_matrix, this.active_camera.position);
+        this.skybox_model.draw(gl, renderer.active_shader);
         gl.enable(gl.DEPTH_TEST);
 
         //Draw all entities in renderer
-        renderer.render(gl, view_matrix, projection_matrix);
+        renderer.render(view_matrix, projection_matrix);
 
-        this.player.draw(gl, renderer.basic_model_shader, view_matrix, projection_matrix, camera);
+        this.player.draw(gl, renderer.active_shader, view_matrix, projection_matrix, camera);
 
         this.displayMovementGraph(view_matrix, projection_matrix);
-
         this.displaySearchPathSpheres(view_matrix, projection_matrix);
         this.displayRingZeroPath(view_matrix, projection_matrix);
 
-		global.renderer.depth_texture.renderDepthTextureToQuad(0,0, 400,400);
+        global.renderer.depth_texture.renderDepthTextureToQuad(0, 0, 256, 256);
     }
 
     public batPlayerCollisions(): void {
@@ -381,6 +379,7 @@ export class Game {
     }
 
     public displaySearchPathSpheres(view_matrix: mat4, projection_matrix: mat4): void {
+        global.sphere_renderer.prepare();
         let search_data = this.world_graph.getMemorizedSearchData();
         let start_node_id = 0;
         let end_node_id = 0;

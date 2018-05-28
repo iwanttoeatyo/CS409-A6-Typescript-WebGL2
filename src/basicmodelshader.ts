@@ -25,9 +25,9 @@ class BasicModelUniforms extends Uniforms {
 export class BasicModelShader extends Shader {
     public uniforms: BasicModelUniforms;
 
-    constructor(gl: WebGL2RenderingContext, vertexSourceCode: string, fragmentSourceCode: string) {
-        super(gl, vertexSourceCode, fragmentSourceCode);
-        this.use();
+    constructor(gl: WebGL2RenderingContext) {
+        super(gl, require("shaders/basicmodel.vert"), require("shaders/basicmodelmanylights.frag"));
+        this.gl.useProgram(this.ID);
 
         this.uniforms = new BasicModelUniforms();
         this.uniforms.model_matrix = this.getUniformLocation("model_matrix");
@@ -64,21 +64,11 @@ export class BasicModelShader extends Shader {
         this.setInt(this.uniforms.material_diffuse_texture, 3);
         this.setInt(this.uniforms.material_specular_texture, 4);
         this.setInt(this.uniforms.material_shininess_texture, 5);
-
-        if (!global.EMPTY_TEXTURE) {
-            gl.bindVertexArray(null);
-            global.EMPTY_TEXTURE = gl.createTexture();
-            gl.activeTexture(gl.TEXTURE0);
-            gl.bindTexture(gl.TEXTURE_2D, global.EMPTY_TEXTURE);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
-            gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
-            const pixel = new Uint8Array([192, 192, 192, 255]); // grey
-            gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, 1, 1, 0, gl.RGB, gl.UNSIGNED_BYTE, pixel);
-        }
     }
 
-    prepare(gl: WebGL2RenderingContext): void {
-        this.use();
+    prepare(): void {
+        this.gl.useProgram(this.ID);
+        let gl = this.gl;
         gl.activeTexture(gl.TEXTURE0);
         gl.bindTexture(gl.TEXTURE_2D, global.EMPTY_TEXTURE);
         gl.activeTexture(gl.TEXTURE1);
@@ -91,35 +81,33 @@ export class BasicModelShader extends Shader {
         gl.bindTexture(gl.TEXTURE_2D, global.EMPTY_TEXTURE);
         gl.activeTexture(gl.TEXTURE5);
         gl.bindTexture(gl.TEXTURE_2D, global.EMPTY_TEXTURE);
-
-        this.setBool(this.uniforms.tween_enabled, false);
     }
 
-    activateMaterial(gl: WebGL2RenderingContext, material: Material): void {
-        if (material.isTextureActive[0] && material.mapTransparency.texture_id) {
+    activateMaterial(material: Material): void {
+        let gl = this.gl;
+        if (material.isTextureActive[0]) {
             gl.activeTexture(gl.TEXTURE0); // transparency
-            gl.bindTexture(gl.TEXTURE_2D, material.mapTransparency.texture_id);
+            gl.bindTexture(gl.TEXTURE_2D, material.mapTransparency.texture);
         }
-        if (material.isTextureActive[1] && material.mapEmissive.texture_id) {
+        if (material.isTextureActive[1]) {
             gl.activeTexture(gl.TEXTURE1); // emission
-            gl.bindTexture(gl.TEXTURE_2D, material.mapEmissive.texture_id);
+            gl.bindTexture(gl.TEXTURE_2D, material.mapEmissive.texture);
         }
-
-        if (material.isTextureActive[2] && material.mapAmbient.texture_id) {
+        if (material.isTextureActive[2]) {
             gl.activeTexture(gl.TEXTURE2); // ambient
-            gl.bindTexture(gl.TEXTURE_2D, material.mapAmbient.texture_id);
+            gl.bindTexture(gl.TEXTURE_2D, material.mapAmbient.texture);
         }
-        if (material.isTextureActive[3] && material.mapDiffuse.texture_id) {
+        if (material.isTextureActive[3]) {
             gl.activeTexture(gl.TEXTURE3); // diffuse
-            gl.bindTexture(gl.TEXTURE_2D, material.mapDiffuse.texture_id);
+            gl.bindTexture(gl.TEXTURE_2D, material.mapDiffuse.texture);
         }
-        if (material.isTextureActive[4] && material.mapSpecular.texture_id) {
+        if (material.isTextureActive[4]) {
             gl.activeTexture(gl.TEXTURE4); // specular
-            gl.bindTexture(gl.TEXTURE_2D, material.mapSpecular.texture_id);
+            gl.bindTexture(gl.TEXTURE_2D, material.mapSpecular.texture);
         }
-        if (material.isTextureActive[5] && material.mapSpecularExponent.texture_id) {
+        if (material.isTextureActive[5]) {
             gl.activeTexture(gl.TEXTURE5); // shininess
-            gl.bindTexture(gl.TEXTURE_2D, material.mapSpecularExponent.texture_id);
+            gl.bindTexture(gl.TEXTURE_2D, material.mapSpecularExponent.texture);
         }
 
         this.setFloat(this.uniforms.material_transparency, material.transparency);

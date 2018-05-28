@@ -14,18 +14,18 @@ export enum Camera_Movement {
 }
 
 export class Camera {
-    position: vec3;
-    front: vec3;
-    up: vec3;
-    right: vec3;
-    worldUp: vec3;
+    public position: vec3;
+    public front: vec3;
+    public up: vec3;
+    private right: vec3;
+    private worldUp: vec3;
 
-    yaw: number;
-    pitch: number;
+    private yaw: number;
+    private pitch: number;
 
-    movementSpeed: number;
-    mouseSensitivity: number;
-    zoom: number;
+    private movementSpeed: number;
+    private mouseSensitivity: number;
+    private zoom: number;
 
     constructor(
         pos: vec3 = vec3.fromValues(0, 0, 0),

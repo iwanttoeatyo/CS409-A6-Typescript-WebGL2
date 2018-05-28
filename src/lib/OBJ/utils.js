@@ -46,14 +46,15 @@ export function downloadMtlTextures (mtl, root) {
 				  })
 				  .then(function(data) {
 					  loading[mapData.filename].src = URL.createObjectURL(data);
-					  mapData.texture = loading[mapData.filename];
+					  mapData.image = loading[mapData.filename];
 				  })
 				  .catch(() => {
 					  console.error(`Unable to download texture: ${url}`);
+					  loading[mapData.filename].failed = true;
 				  })
 		  );
 	  }else{
-        mapData.texture = loading[mapData.filename];
+        mapData.image = loading[mapData.filename];
       }
     }
 

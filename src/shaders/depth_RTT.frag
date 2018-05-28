@@ -1,5 +1,5 @@
 #version 300 es
-precision mediump  float;
+precision highp  float;
 // Ouput data
 layout(location = 0) out float fragmentdepth;
 

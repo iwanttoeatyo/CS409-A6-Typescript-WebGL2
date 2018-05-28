@@ -1,13 +1,10 @@
 import { BasicModel } from "./basicmodel";
-import { global } from "../../globals";
 import { MaterialLibrary } from "../../lib/OBJ";
 import { mat4, vec3 } from "gl-matrix";
 import { KeyframeInterpModel } from "./keyframeInterpModel";
 import { Shader } from "../../shader";
 
 let OBJ = require("../../lib/OBJ/index.js");
-
-let gl = global.gl;
 
 enum Run_State {
     Start = 0,
@@ -49,8 +46,6 @@ export class PlayerModel {
     public half_height: number = 0.8;
 
     constructor() {
-        gl = gl || global.gl;
-
         this.run_frames = new Array<Frame>(7);
         for (let frame of this.run_frames) frame = { model: null, duration: null };
 
@@ -62,6 +57,18 @@ export class PlayerModel {
         this.run_frames[5] = { model: null, duration: 260 };
         this.run_frames[6] = { model: null, duration: 260 };
         this.run_state = Run_State.Start;
+    }
+
+    public init(gl: WebGL2RenderingContext): void {
+        this.stand_model.init(gl);
+        this.jump_model.init(gl);
+        this.run_frames[0].model.init(gl);
+        this.run_frames[1].model.init(gl);
+        this.run_frames[2].model.init(gl);
+        this.run_frames[3].model.init(gl);
+        this.run_frames[4].model.init(gl);
+        this.run_frames[5].model.init(gl);
+        this.run_frames[6].model.init(gl);
     }
 
     public updateAnimation(delta_time_ms: number): void {
@@ -119,7 +126,6 @@ export class PlayerModel {
             case Player_State.Strafing:
             case Player_State.Reversing: {
                 let tween = this.time_into_frame / this.run_frames[this.run_state].duration;
-
                 this.run_frames[this.run_state].model.draw(gl, shader, tween);
                 break;
             }
@@ -164,11 +170,6 @@ export class PlayerModel {
         }
 
         this.state = new_state;
-    }
-
-    init(gl: WebGL2RenderingContext) {
-        this.stand_model.init(gl);
-        this.jump_model.init(gl);
     }
 
     public async load(): Promise<void> {
@@ -240,15 +241,5 @@ export class PlayerModel {
         this.run_frames[4].model = new KeyframeInterpModel(mesh.cbabe_run_loop3, mesh.cbabe_run_loop4);
         this.run_frames[5].model = new KeyframeInterpModel(mesh.cbabe_run_loop4, mesh.cbabe_run_loop0);
         this.run_frames[6].model = new KeyframeInterpModel(mesh.cbabe_run_loop0, mesh.cbabe_run_start);
-
-        this.stand_model.init(gl);
-        this.jump_model.init(gl);
-        this.run_frames[0].model.init(gl);
-        this.run_frames[1].model.init(gl);
-        this.run_frames[2].model.init(gl);
-        this.run_frames[3].model.init(gl);
-        this.run_frames[4].model.init(gl);
-        this.run_frames[5].model.init(gl);
-        this.run_frames[6].model.init(gl);
     }
 }

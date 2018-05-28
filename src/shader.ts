@@ -9,12 +9,14 @@ export class Uniforms {
 }
 
 export class Shader {
-    ID: WebGLProgram;
-    gl: WebGL2RenderingContext;
-    uniforms: Uniforms;
+    protected readonly ID: WebGLProgram;
+    protected gl: WebGL2RenderingContext;
+    public uniforms: Uniforms;
+    protected mvp_matrix: mat4;
 
     constructor(gl: WebGL2RenderingContext, vertexSourceCode: string, fragmentSourceCode: string) {
         this.gl = gl;
+        this.mvp_matrix = mat4.create();
 
         let vertexShader: WebGLShader = getShader(gl, vertexSourceCode, gl.VERTEX_SHADER);
         let fragmentShader: WebGLShader = getShader(gl, fragmentSourceCode, gl.FRAGMENT_SHADER);
@@ -39,11 +41,11 @@ export class Shader {
         this.gl.useProgram(this.ID);
     }
 
-    public prepare(gl: WebGL2RenderingContext): void {
-        this.use();
+    public prepare(): void {
+        this.gl.useProgram(this.ID);
     }
 
-    public activateMaterial(gl: WebGL2RenderingContext, material: Material): void {}
+    public activateMaterial(material: Material): void {}
 
     public setMVPMatrices(
         model: mat4,
@@ -51,12 +53,12 @@ export class Shader {
         projection: mat4,
         camera_pos: vec3 = vec3.fromValues(0, 0, 0)
     ): void {
-        let mvp_matrix = mat4.create();
-        mat4.mul(mvp_matrix, view, model);
-        mat4.mul(mvp_matrix, projection, mvp_matrix);
+        mat4.identity(this.mvp_matrix);
+        mat4.mul(this.mvp_matrix, view, model);
+        mat4.mul(this.mvp_matrix, projection, this.mvp_matrix);
         this.setMat4(this.uniforms.model_matrix, model);
         //  BasicModel.shader.setMat4(BasicModel.uniforms.view_matrix, view);
-        this.setMat4(this.uniforms.model_view_projection_matrix, mvp_matrix);
+        this.setMat4(this.uniforms.model_view_projection_matrix, this.mvp_matrix);
         this.setVec3(this.uniforms.camera_pos, camera_pos);
     }
 

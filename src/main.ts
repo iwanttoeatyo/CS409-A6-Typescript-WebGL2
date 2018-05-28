@@ -10,7 +10,7 @@ let MainLoop = require("./lib/MainLoop/mainloop.js");
 
 let is_mobile;
 let document = window.document;
-let gl: WebGL2RenderingContext = global.gl;
+let gl: WebGL2RenderingContext;
 
 let fps_element = document.getElementById("fpscounter");
 let ups_element = document.getElementById("upscounter");
@@ -31,17 +31,13 @@ export class Main {
     }
 
     public async init(): Promise<void> {
-        let shader = new BasicModelShader(
-            gl,
-            require("shaders/basicmodel.vert"),
-            require("shaders/basicmodelmanylights.frag")
-        );
-        global.renderer = await new Renderer(shader);
-        global.line_renderer = await new LineRenderer();
-        global.sphere_renderer = await new SphereRenderer();
+        let shader = new BasicModelShader(gl);
+        global.renderer = await new Renderer(gl, shader);
+        global.line_renderer = await new LineRenderer(gl);
+        global.sphere_renderer = await new SphereRenderer(gl);
         await global.sphere_renderer.load();
 
-        this.game = new Game();
+        this.game = new Game(gl);
         await this.game.init();
 
         let loading = document.getElementById("loading-container");
@@ -60,24 +56,28 @@ export class Main {
     }
 
     private initGL() {
-        try {
-            global.gl = <WebGL2RenderingContext>global.canvas.getContext("webgl2");
-            gl = global.gl;
-        } catch (e) {
-            throw "GL init error:\n" + e;
-        }
+        gl = <WebGL2RenderingContext>global.canvas.getContext("webgl2");
         if (!gl) {
-            alert("WebGL is not available on your browser.");
+            alert("WebGL2 is not available on your browser.");
         }
-        gl.enable(gl.SAMPLE_COVERAGE);
-        gl.sampleCoverage(1, false);
-        //Set the background color before we load any assets
-        gl.clearColor(0.2, 0.3, 0.3, 1.0);
-        gl.enable(gl.DEPTH_TEST);
-        gl.enable(gl.CULL_FACE);
-        gl.cullFace(gl.BACK);
+
+        global.EMPTY_TEXTURE = gl.createTexture();
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, global.EMPTY_TEXTURE);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+        gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR);
+        const pixel = new Uint8Array([255, 0, 255, 255]); // pink
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGB, 1, 1, 0, gl.RGB, gl.UNSIGNED_BYTE, pixel);
+
+        //THIS DUMB COMMAND BREAKS RENDERING TO FRAMEBUFFERS -WTF!!!!!!!!!!!!
+        // gl.enable(gl.SAMPLE_COVERAGE);
+        // gl.sampleCoverage(1, false);
 
         this.resize();
+        //Set the background color before we load any assets
+        gl.clearColor(0.2, 0.3, 0.3, 1.0);
         gl.clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT);
     }
 
