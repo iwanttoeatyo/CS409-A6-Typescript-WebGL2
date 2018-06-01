@@ -11,6 +11,7 @@ import { MovementGraph } from "movementgraph";
 import { PointList } from "renderers/linerenderer";
 import { Bat } from "entities/bat";
 import { Collision } from "helpers/collision";
+import {Pointer} from "./helpers/pointer";
 
 let OBJ = require("lib/OBJ/index.js");
 
@@ -21,6 +22,7 @@ let g_mouse_keys: Array<boolean> = global.mouse_keys;
 let renderer: Renderer;
 
 const PLAYER_CAMERA_OFFSET = vec3.fromValues(0, 0.8, 0);
+const LIGHT_DIRECTION = vec4.fromValues(0.34, 0.83, 0.44, 0.0);
 
 export class Game {
     readonly ROD_FILENAME: string = "/assets/models/environment/rod/Rod";
@@ -42,7 +44,7 @@ export class Game {
 
     private player_camera: Camera = new Camera(vec3.fromValues(0, 1.6, 0), vec3.fromValues(0, 1, 0), 0);
     private overview_camera: Camera = new Camera(vec3.fromValues(100, 190, 10), vec3.fromValues(0, 1, 0), 0, 0);
-    private active_camera: Camera = this.player_camera;
+    private active_camera: Pointer<Camera> = new Pointer<Camera>(this.player_camera);
 
     private current_map: number = 0;
 
@@ -109,7 +111,7 @@ export class Game {
     }
 
     private displayMovementGraph(view_matrix: mat4, projection_matrix: mat4): void {
-        if (this.active_camera === this.overview_camera) gl.disable(gl.DEPTH_TEST);
+        if (this.active_camera.value === this.overview_camera) gl.disable(gl.DEPTH_TEST);
         let vp = mat4.multiply(mat4.create(), projection_matrix, view_matrix);
 
         global.line_renderer.prepare();
@@ -160,6 +162,7 @@ export class Game {
     private initRenderer(): void {
         // instancedShader = await new Shader(gl, require('../src/shaders/instanced.vert'), require("../src/shaders/instanced.frag"));
         renderer = global.renderer;
+        renderer.initShadows(LIGHT_DIRECTION,this.active_camera);
 
         //basicModelRenderer.addBasicModel(Player.model);
         renderer.removeAllModels();
@@ -178,11 +181,20 @@ export class Game {
 
         // directional light
         shader.setBoolByName("lights[0].is_enabled", true);
-        shader.setVec4ByName("lights[0].position", [0.34, 0.83, 0.44, 0.0]);
+        shader.setVec4ByName("lights[0].position", LIGHT_DIRECTION);
         shader.setVec3ByName("lights[0].ambient", [1.8, 1.8, 1.8]);
         shader.setVec3ByName("lights[0].diffuse", [1.2, 1.2, 1.2]);
         shader.setVec3ByName("lights[0].specular", [0.0, 0.0, 0.0]);
 
+        shader = renderer.basic_model_shader_shadow;
+        shader.use();
+
+        shader.setBoolByName("lights[0].is_enabled", true);
+        shader.setVec4ByName("lights[0].position", LIGHT_DIRECTION);
+        shader.setVec3ByName("lights[0].ambient", [1.8, 1.8, 1.8]);
+        shader.setVec3ByName("lights[0].diffuse", [1.2, 1.2, 1.2]);
+        shader.setVec3ByName("lights[0].specular", [0.0, 0.0, 0.0]);
+        
         //Setup player point light
         // shader.setBool("lights[1].is_enabled", true);
         // shader.setVec4("lights[1].position", [this.player.position[0], this.player.position[1], this.player.position[2], 1.0]);
@@ -222,6 +234,11 @@ export class Game {
             this.addAllGameEntitiesToRenderer();
             g_keys[77] = false;
         }
+        
+        if(g_keys[76]){
+            renderer.toggleShadows();
+            g_keys[76] = false;
+        }
 
         let accel_factor = this.world.getAccelFactorAtPosition(
             this.player.position[0],
@@ -229,25 +246,38 @@ export class Game {
             this.player.model.radius
         );
 
-        //Movement
-        let moved = false;
+        //Movement  
 
         if (g_keys[40] || g_keys[83]) {
             this.player.accelerateBackward(delta_ms, accel_factor);
-            moved = true;
+
         } else if (g_keys[38] || g_keys[87] || (g_mouse_keys[1] && g_mouse_keys[3])) {
             this.player.accelerateForward(delta_ms, accel_factor);
-            moved = true;
+
         }
         if (g_keys[65]) {
             this.player.accelerateLeft(delta_ms, accel_factor);
-            moved = true;
+
         } else if (g_keys[68]) {
             this.player.accelerateRight(delta_ms, accel_factor);
-            moved = true;
+
         }
 
-        if (!moved) this.player.transitionAnimationTo(Player_State.Standing);
+        if (g_keys[40] || g_keys[83]) {
+            this.player.transitionAnimationTo(Player_State.Reversing);
+
+        } else if (g_keys[38] || g_keys[87] || (g_mouse_keys[1] && g_mouse_keys[3])) {
+            this.player.transitionAnimationTo(Player_State.Running);
+
+        }else if (g_keys[65] || g_keys[68]) {
+            this.player.transitionAnimationTo(Player_State.Strafing);
+
+        } else{
+            this.player.transitionAnimationTo(Player_State.Standing);
+        }
+
+        
+       
 
         //Turning
         if (g_keys[37]) this.player.turnLeft(delta_ms);
@@ -259,7 +289,7 @@ export class Game {
         this.player.update(this.world, delta_ms);
 
         for (let bat of this.bats) {
-            bat.update(delta_ms);
+            //bat.update(delta_ms);
         }
 
         this.batPlayerCollisions();
@@ -271,9 +301,9 @@ export class Game {
 
         //O to switch to overview camera
         if (g_keys[79]) {
-            this.active_camera = this.overview_camera;
+            this.active_camera.value = this.overview_camera;
         } else {
-            this.active_camera = this.player_camera;
+            this.active_camera.value = this.player_camera;
         }
 
         //Mouse rotate
@@ -303,30 +333,32 @@ export class Game {
         this.player_camera.up = this.player.up;
 
         let new_cam_position = vec3.clone(this.player.position);
-        new_cam_position[0] -= 2.0 * this.player.forward[0];
-        new_cam_position[2] -= 2.0 * this.player.forward[2];
+        new_cam_position[0] -= 3.0 * this.player.forward[0];
+        new_cam_position[2] -= 3.0 * this.player.forward[2];
         vec3.add(new_cam_position, new_cam_position, PLAYER_CAMERA_OFFSET);
         vec3.copy(this.player_camera.position, new_cam_position);
     }
 
     public draw(): void {
-        let camera = vec3.clone(this.active_camera.position);
-
-        //Setup view and projection
-        let projection_matrix = mat4.create();
-        let view_matrix = this.active_camera.getViewMatrix();
-
-        mat4.perspective(projection_matrix, glMatrix.toRadian(80), 1, 2, 200);
-
+        let camera = vec3.clone(this.active_camera.value.position);
+        let depth_proj_matrix = renderer.getDepthProjMatrix();
+        let light_view_matrix = renderer.getLightViewMatrix();
+        
+        //Render Shadows to Depth Texture
         renderer.beginRenderDepth();
-        renderer.render(view_matrix, projection_matrix);
-        this.player.draw(gl, renderer.active_shader, view_matrix, projection_matrix, camera);
-        renderer.endRenderDepth();
+        this.player.draw(gl, renderer.active_shader, light_view_matrix, depth_proj_matrix, camera);
+        renderer.render(light_view_matrix,depth_proj_matrix, camera);
+        renderer.endRenderDepth(light_view_matrix,depth_proj_matrix);
 
+        
+        //Render To Screen
+        let projection_matrix = mat4.create();
+        let view_matrix = this.active_camera.value.getViewMatrix();
+        
         mat4.identity(projection_matrix);
         mat4.perspective(
             projection_matrix,
-            glMatrix.toRadian(80),
+            glMatrix.toRadian(global.FOV),
             global.canvas.clientWidth / global.canvas.clientHeight,
             0.1,
             2000
@@ -337,13 +369,13 @@ export class Game {
 
         //Draw Skybox
         gl.disable(gl.DEPTH_TEST);
-        mat4.translate(model, model, this.active_camera.position);
-        renderer.active_shader.setMVPMatrices(model, view_matrix, projection_matrix, this.active_camera.position);
+        mat4.translate(model, model, this.active_camera.value.position);
+        renderer.active_shader.setMVPMatrices(model, view_matrix, projection_matrix, camera);
         this.skybox_model.draw(gl, renderer.active_shader);
         gl.enable(gl.DEPTH_TEST);
 
         //Draw all entities in renderer
-        renderer.render(view_matrix, projection_matrix);
+        renderer.render(view_matrix, projection_matrix,camera);
 
         this.player.draw(gl, renderer.active_shader, view_matrix, projection_matrix, camera);
 
@@ -351,6 +383,7 @@ export class Game {
         this.displaySearchPathSpheres(view_matrix, projection_matrix);
         this.displayRingZeroPath(view_matrix, projection_matrix);
 
+        //Render the shadow map texture
         global.renderer.depth_texture.renderDepthTextureToQuad(0, 0, 256, 256);
     }
 
@@ -386,7 +419,7 @@ export class Game {
         let meeting_node_id = 0;
 
         if (search_data.length)
-            if (this.active_camera === this.overview_camera) {
+            if (this.active_camera.value === this.overview_camera) {
                 let highest_priority_start = 0;
                 let lowest_priority_start = Number.MAX_VALUE;
                 let highest_priority_end = 0;

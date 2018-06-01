@@ -108,4 +108,8 @@ export class DepthTexture {
 
         gl.bindVertexArray(null);
     }
+    
+    public getTexture():WebGLTexture{
+        return this.depth_texture;
+    }
 }

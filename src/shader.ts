@@ -19,12 +19,14 @@ export class Shader {
         this.mvp_matrix = mat4.create();
 
         let vertexShader: WebGLShader = getShader(gl, vertexSourceCode, gl.VERTEX_SHADER);
+  
         let fragmentShader: WebGLShader = getShader(gl, fragmentSourceCode, gl.FRAGMENT_SHADER);
-
+       
         this.ID = gl.createProgram();
         gl.attachShader(this.ID, vertexShader);
         gl.attachShader(this.ID, fragmentShader);
         gl.linkProgram(this.ID);
+      
 
         if (!gl.getProgramParameter(this.ID, gl.LINK_STATUS)) {
             alert("Could not initialize shaders");
@@ -57,7 +59,7 @@ export class Shader {
         mat4.mul(this.mvp_matrix, view, model);
         mat4.mul(this.mvp_matrix, projection, this.mvp_matrix);
         this.setMat4(this.uniforms.model_matrix, model);
-        //  BasicModel.shader.setMat4(BasicModel.uniforms.view_matrix, view);
+        this.setMat4(this.uniforms.view_matrix, view);
         this.setMat4(this.uniforms.model_view_projection_matrix, this.mvp_matrix);
         this.setVec3(this.uniforms.camera_pos, camera_pos);
     }
@@ -103,23 +105,23 @@ export class Shader {
         this.gl.uniformMatrix4fv(id, false, matrix);
     }
 
-    public setMat4ByName(name: string, matrix: mat4 | number[]) {
+    public setMat4ByName(name: string, matrix: mat4 | number[] | Float32Array) {
         this.gl.uniformMatrix4fv(this.getUniformLocation(name), false, matrix);
     }
 
-    public setVec3(id: number | WebGLUniformLocation, vec: vec3 | number[]) {
+    public setVec3(id: number | WebGLUniformLocation, vec: vec3 | number[] | Float32Array) {
         this.gl.uniform3fv(id, vec);
     }
 
-    public setVec3ByName(name: string, vec: vec3 | number[]) {
+    public setVec3ByName(name: string, vec: vec3 | number[] | Float32Array) {
         this.gl.uniform3fv(this.getUniformLocation(name), vec);
     }
 
-    public setVec4(id: number | WebGLUniformLocation, vec: vec4 | number[]) {
+    public setVec4(id: number | WebGLUniformLocation, vec: vec4 | number[] | Float32Array) {
         this.gl.uniform4fv(id, vec);
     }
 
-    public setVec4ByName(name: string, vec: vec4 | number[]) {
+    public setVec4ByName(name: string, vec: vec4 | number[] | Float32Array) {
         this.gl.uniform4fv(this.getUniformLocation(name), vec);
     }
 }

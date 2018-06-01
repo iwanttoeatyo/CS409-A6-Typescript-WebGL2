@@ -31,8 +31,8 @@ export class Main {
     }
 
     public async init(): Promise<void> {
-        let shader = new BasicModelShader(gl);
-        global.renderer = await new Renderer(gl, shader);
+
+        global.renderer = await new Renderer(gl);
         global.line_renderer = await new LineRenderer(gl);
         global.sphere_renderer = await new SphereRenderer(gl);
         await global.sphere_renderer.load();

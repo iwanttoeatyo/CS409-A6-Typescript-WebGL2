@@ -177,7 +177,7 @@ export class Player extends Entity {
         let accel = vec3.clone(this.forward);
         vec3.scale(accel, accel, ACCEL_FORWARD * delta_time_ms / 1000 * speed_factor);
         this.addAcceleration(accel);
-        this.transitionAnimationTo(Player_State.Running);
+       
     }
 
     public accelerateBackward(delta_time_ms: number, speed_factor: number): void {
@@ -185,7 +185,7 @@ export class Player extends Entity {
         vec3.negate(accel, accel);
         vec3.scale(accel, accel, ACCEL_FORWARD * delta_time_ms / 1000 * speed_factor);
         this.addAcceleration(accel);
-        this.transitionAnimationTo(Player_State.Reversing);
+        
     }
 
     public accelerateLeft(delta_time_ms: number, speed_factor: number): void {
@@ -193,14 +193,14 @@ export class Player extends Entity {
         vec3.negate(accel, accel);
         vec3.scale(accel, accel, ACCEL * delta_time_ms / 1000 * speed_factor);
         this.addAcceleration(accel);
-        this.transitionAnimationTo(Player_State.Strafing);
+     
     }
 
     public accelerateRight(delta_time_ms: number, speed_factor: number): void {
         let accel = this.getRight();
         vec3.scale(accel, accel, ACCEL * delta_time_ms / 1000 * speed_factor);
         this.addAcceleration(accel);
-        this.transitionAnimationTo(Player_State.Strafing);
+        
     }
 
     public turnLeft(delta_time_ms: number): void {

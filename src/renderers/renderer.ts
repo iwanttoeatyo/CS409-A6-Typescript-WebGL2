@@ -1,10 +1,16 @@
 import { BasicModel } from "entities/models/basicmodel";
 import { Material } from "lib/OBJ/index.js";
 import { Entity, Model_Type } from "entities/entity";
-import { mat4, quat, vec3 } from "gl-matrix";
+import { mat4, quat, vec2, vec3, vec4 } from "gl-matrix";
 import { Shader } from "shader";
 import { MeshlessModel } from "entities/models/meshlessmodel";
 import { DepthTexture } from "./depthtexture";
+import { ShadowBox } from "./shadowbox";
+import { Camera } from "../camera";
+import { Pointer } from "../helpers/pointer";
+import { BasicModelShader, BasicModelShaderShadow } from "../basicmodelshader";
+
+let BIAS_MATRIX = mat4.fromValues(0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0.5, 0.5, 0.5, 1);
 
 export class Renderer {
     private readonly gl: WebGL2RenderingContext;
@@ -12,26 +18,51 @@ export class Renderer {
     private meshless_models: Map<string, MeshlessModel>;
     private materials: Map<string, Material>;
     public active_shader: Shader;
-    public basic_model_shader: Shader;
+    public basic_model_shader: BasicModelShader;
+    public basic_model_shader_shadow: BasicModelShaderShadow;
     private entities: Map<string, Entity>;
 
+    private shadow_enabled: boolean;
     public depth_texture: DepthTexture;
+    private shadow_box: ShadowBox;
+    private light_view_matrix: mat4;
+    private light_direction: vec4;
+    private shadow_map_space_matrix: mat4;
 
-    constructor(gl: WebGL2RenderingContext, shader: Shader) {
+    constructor(gl: WebGL2RenderingContext) {
         this.gl = gl;
 
         this.models = new Map<string, BasicModel>();
         this.materials = new Map<string, Material>();
         this.entities = new Map<string, Entity>();
         this.meshless_models = new Map<string, MeshlessModel>();
-        this.depth_texture = new DepthTexture(gl);
 
-        this.basic_model_shader = shader;
+        this.basic_model_shader = new BasicModelShader(this.gl);
+        this.basic_model_shader_shadow = new BasicModelShaderShadow(this.gl);
         this.active_shader = this.basic_model_shader;
     }
 
-    public setShader(shader: Shader): void {
-        this.active_shader = shader;
+    initShadows(light_direction: vec4, camera_pointer: Pointer<Camera>): void {
+        this.enableShadows();
+        this.shadow_enabled = true;
+        this.light_view_matrix = mat4.create();
+        this.light_direction = vec4.normalize(vec4.create(), light_direction);
+        this.shadow_box = new ShadowBox(this.gl, this.light_view_matrix, camera_pointer);
+        this.depth_texture = new DepthTexture(this.gl);
+    }
+
+    enableShadows(): void {
+        this.shadow_enabled = false;
+        //Change shaders
+    }
+
+    disableShadows(): void {
+        this.shadow_enabled = true;
+        //Change shaders
+    }
+    
+    toggleShadows():void{
+        this.shadow_enabled = !this.shadow_enabled;
     }
 
     public addBasicModel(model: BasicModel): void {
@@ -87,9 +118,19 @@ export class Renderer {
         this.models = new Map<string, BasicModel>();
     }
 
-    beginRender() {
-        this.active_shader = this.basic_model_shader;
-        this.active_shader.prepare();
+    public beginRender(): void {
+        if (this.shadow_enabled) {
+            this.active_shader = this.basic_model_shader_shadow;
+            this.active_shader.prepare();
+            this.basic_model_shader_shadow.setMat4(
+                this.basic_model_shader_shadow.uniforms.shadow_map_space_matrix,
+                this.shadow_map_space_matrix
+            );
+            this.basic_model_shader_shadow.setShadowMap(this.depth_texture.getTexture());
+        } else {
+            this.active_shader = this.basic_model_shader;
+            this.active_shader.prepare();
+        }
     }
 
     public beginRenderDepth(): void {
@@ -99,11 +140,15 @@ export class Renderer {
 
         gl.disable(gl.CULL_FACE);
         gl.enable(gl.POLYGON_OFFSET_FILL);
-        gl.polygonOffset(2.0, 2.2);
+        gl.polygonOffset(0.1, 4.0);
     }
 
-    public endRenderDepth(): void {
+    public endRenderDepth(light_view_matrix: mat4, depth_proj_matrix: mat4): void {
         let gl = this.gl;
+
+        let depth_vp = mat4.mul(mat4.create(), depth_proj_matrix, light_view_matrix);
+        this.shadow_map_space_matrix = mat4.mul(mat4.create(), BIAS_MATRIX, depth_vp);
+
         gl.disable(gl.POLYGON_OFFSET_FILL);
         gl.enable(gl.CULL_FACE);
         gl.cullFace(gl.BACK);
@@ -112,12 +157,48 @@ export class Renderer {
         gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     }
 
-    public render(view_matrix: mat4, projection_matrix: mat4): void {
-        this.renderBasicModels(view_matrix, projection_matrix);
-        this.renderMeshlessModels(view_matrix, projection_matrix);
+    public getDepthProjMatrix(): mat4 {
+        this.shadow_box.update();
+
+        let depth_proj_matrix = mat4.create();
+        depth_proj_matrix[0] = 2.0 / this.shadow_box.getWidth();
+        depth_proj_matrix[5] = 2.0 / this.shadow_box.getHeight();
+        depth_proj_matrix[10] = -2.0 / this.shadow_box.getLength();
+        depth_proj_matrix[15] = 1;
+        return depth_proj_matrix;
     }
 
-    private renderMeshlessModels(view_matrix: mat4, projection_matrix: mat4) {
+    public getLightViewMatrix(): mat4 {
+        this.shadow_box.update();
+        let center = this.shadow_box.getCenter();
+        vec3.negate(center, center);
+
+        let light_inverse_dir = vec3.fromValues(
+            -this.light_direction[0],
+            -this.light_direction[1],
+            -this.light_direction[2]
+        );
+
+        mat4.identity(this.light_view_matrix);
+        let pitch = Math.acos(vec2.length([light_inverse_dir[0], light_inverse_dir[2]]));
+
+        mat4.rotateX(this.light_view_matrix, this.light_view_matrix, pitch);
+
+        let yaw = Math.atan2(light_inverse_dir[2], light_inverse_dir[0]);
+
+        yaw = light_inverse_dir[2] > 0 ? yaw - Math.PI : yaw;
+
+        mat4.rotateY(this.light_view_matrix, this.light_view_matrix, yaw + Math.PI / 2);
+        mat4.translate(this.light_view_matrix, this.light_view_matrix, center);
+        return mat4.clone(this.light_view_matrix);
+    }
+
+    public render(view_matrix: mat4, projection_matrix: mat4, camera_position:vec3): void {
+        this.renderBasicModels(view_matrix, projection_matrix,camera_position);
+        this.renderMeshlessModels(view_matrix, projection_matrix,camera_position);
+    }
+
+    private renderMeshlessModels(view_matrix: mat4, projection_matrix: mat4, camera_position:vec3) {
         let mat_list = [];
         let model_matrix = mat4.create();
         let q = quat.create();
@@ -158,7 +239,7 @@ export class Renderer {
                         quat.identity(q);
                         quat.rotateY(q, q, Math.atan2(entity.forward[0], entity.forward[2]) + model.rotation_offset);
                         mat4.fromRotationTranslationScale(model_matrix, q, entity.position, entity.scalar);
-                        this.active_shader.setMVPMatrices(model_matrix, view_matrix, projection_matrix);
+                        this.active_shader.setMVPMatrices(model_matrix, view_matrix, projection_matrix, camera_position);
                         model.drawActivatedMaterial(this.gl);
                     }
                 }
@@ -166,7 +247,7 @@ export class Renderer {
         }
     }
 
-    private renderBasicModels(view_matrix: mat4, projection_matrix: mat4) {
+    private renderBasicModels(view_matrix: mat4, projection_matrix: mat4, camera_position:vec3) {
         //Find list of materials that have meshes to draw
         let mat_list = [];
         let model_matrix = mat4.create();
@@ -208,7 +289,7 @@ export class Renderer {
                     quat.identity(q);
                     quat.rotateY(q, q, Math.atan2(entity.forward[0], entity.forward[2]) + model.rotation_offset);
                     mat4.fromRotationTranslationScale(model_matrix, q, entity.position, entity.scalar);
-                    this.active_shader.setMVPMatrices(model_matrix, view_matrix, projection_matrix);
+                    this.active_shader.setMVPMatrices(model_matrix, view_matrix, projection_matrix, camera_position);
                     model.drawActivatedMaterial(this.gl, mat_id);
                 }
             }

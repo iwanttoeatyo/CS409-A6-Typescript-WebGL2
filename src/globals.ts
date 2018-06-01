@@ -3,11 +3,15 @@ import { LineRenderer } from "./renderers/linerenderer";
 import { SphereRenderer } from "./renderers/sphererenderer";
 
 export namespace global {
+    export const FOV = 60.0;
+    export const SHADOW_DISTANCE = 30.0;
+    
     export var canvas: HTMLCanvasElement;
     export var keys: Array<boolean> = [];
     export var mouse_keys: Array<boolean> = [];
     export var mouse_x_total: number = 0;
     export var mouse_y_total: number = 0;
+
     export var renderer: Renderer;
     export var line_renderer: LineRenderer;
     export var sphere_renderer: SphereRenderer;

@@ -2,6 +2,15 @@ import { Shader, Uniforms } from "./shader";
 import { Material } from "./lib/OBJ/";
 import { global } from "./globals";
 
+interface Light {
+    is_enabled: WebGLUniformLocation;
+    position: WebGLUniformLocation;
+    ambient: WebGLUniformLocation;
+    diffuse: WebGLUniformLocation;
+    specular: WebGLUniformLocation;
+    attenuation: WebGLUniformLocation;
+}
+
 class BasicModelUniforms extends Uniforms {
     tween_enabled: WebGLUniformLocation;
     tween_factor: WebGLUniformLocation;
@@ -20,16 +29,28 @@ class BasicModelUniforms extends Uniforms {
     material_emissive_colour: WebGLUniformLocation;
     material_shininess: WebGLUniformLocation;
     material_is_texture_active: WebGLUniformLocation;
+
+    lights: Light[] = new Array<Light>(8).fill({} as Light);
+}
+
+class BasicModelShadowUniforms extends BasicModelUniforms {
+    shadow_map: WebGLUniformLocation;
+    shadow_map_space_matrix: WebGLUniformLocation;
+    shadow_distance: WebGLUniformLocation;
 }
 
 export class BasicModelShader extends Shader {
     public uniforms: BasicModelUniforms;
 
-    constructor(gl: WebGL2RenderingContext) {
-        super(gl, require("shaders/basicmodel.vert"), require("shaders/basicmodelmanylights.frag"));
+    constructor(
+        gl: WebGL2RenderingContext,
+        vertexSourceCode: string = require("shaders/basicmodel.vert"),
+        fragmentSourceCode: string = require("shaders/basicmodelmanylights.frag")
+    ) {
+        super(gl, vertexSourceCode, fragmentSourceCode);
         this.gl.useProgram(this.ID);
 
-        this.uniforms = new BasicModelUniforms();
+        this.uniforms = new BasicModelShadowUniforms();
         this.uniforms.model_matrix = this.getUniformLocation("model_matrix");
         this.uniforms.view_matrix = this.getUniformLocation("view_matrix");
         this.uniforms.model_view_projection_matrix = this.getUniformLocation("model_view_projection_matrix");
@@ -51,6 +72,15 @@ export class BasicModelShader extends Shader {
         this.uniforms.material_emissive_colour = this.getUniformLocation("material.emission_colour");
         this.uniforms.material_shininess = this.getUniformLocation("material.shininess");
         this.uniforms.material_is_texture_active = this.getUniformLocation("material.is_texture_active");
+
+        for (let i = 0; i < this.uniforms.lights.length; i++) {
+            this.uniforms.lights[i].is_enabled = this.getUniformLocation(`lights[${i}].is_enabled`);
+            this.uniforms.lights[i].position = this.getUniformLocation(`lights[${i}].position`);
+            this.uniforms.lights[i].ambient = this.getUniformLocation(`lights[${i}].ambient`);
+            this.uniforms.lights[i].diffuse = this.getUniformLocation(`lights[${i}].diffuse`);
+            this.uniforms.lights[i].specular = this.getUniformLocation(`lights[${i}].specular`);
+            this.uniforms.lights[i].attenuation = this.getUniformLocation(`lights[${i}].attenuation`);
+        }
 
         gl.bindAttribLocation(this.ID, 0, "a_vertex");
         gl.bindAttribLocation(this.ID, 1, "a_tex_coord");
@@ -120,4 +150,32 @@ export class BasicModelShader extends Shader {
         this.setFloat(this.uniforms.material_shininess, material.specularExponent);
         this.setIntV(this.uniforms.material_is_texture_active, material.isTextureActive);
     }
+}
+
+export class BasicModelShaderShadow extends BasicModelShader {
+    public uniforms:BasicModelShadowUniforms;
+    
+    constructor(gl: WebGL2RenderingContext) {
+        super(gl, require("shaders/basicmodelshadow.vert"), require("shaders/basicmodelmanylights1shadow.frag"));
+
+        this.uniforms.shadow_map = this.getUniformLocation("shadow_map");
+        this.uniforms.shadow_distance = this.getUniformLocation("shadow_distance");
+        this.uniforms.shadow_map_space_matrix = this.getUniformLocation("shadow_map_space_matrix");
+    }
+    
+    public setShadowMap(shadow_map:WebGLTexture):void{
+        let gl = this.gl;
+        gl.activeTexture(gl.TEXTURE6); // shadow_map
+        gl.bindTexture(gl.TEXTURE_2D, shadow_map);
+    }
+    
+    public prepare():void{
+        super.prepare();
+        let gl = this.gl;
+        gl.activeTexture(gl.TEXTURE6);
+        gl.bindTexture(gl.TEXTURE_2D, global.EMPTY_TEXTURE);
+        this.setInt(this.uniforms.shadow_map, 6);
+        this.setFloat(this.uniforms.shadow_distance, global.SHADOW_DISTANCE);
+    }
+    
 }
