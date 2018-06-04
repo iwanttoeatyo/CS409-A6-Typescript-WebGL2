@@ -48,7 +48,7 @@ export class Game {
     private active_camera: Pointer<Camera> = new Pointer<Camera>(this.player_camera);
 
     private current_map: number = 0;
-    private show_path: boolean = true;
+    public show_path: boolean = true;
 
     //World Name, World Data
     static maps: Array<string>;
@@ -300,11 +300,14 @@ export class Game {
         }
 
         //O to switch to overview camera
-        if (g_keys[79]) {
-            this.active_camera.value = this.overview_camera;
-        } else {
-            this.active_camera.value = this.player_camera;
+        if(!global.is_mobile){
+            if (g_keys[79]) {
+                this.active_camera.value = this.overview_camera;
+            } else {
+                this.active_camera.value = this.player_camera;
+            } 
         }
+
 
         //Mouse rotate
         this.player.rotate(-global.mouse_x_total / 600);
@@ -392,6 +395,14 @@ export class Game {
         //Render the shadow map texture
         // if(renderer.shadow_enabled)
         //     global.renderer.depth_texture.renderDepthTextureToQuad(0, 0, 256, 256);
+    }
+    
+    public toggleCamera():void{
+        if(this.active_camera.value == this.overview_camera){
+            this.active_camera.value = this.player_camera
+        }else{
+            this.active_camera.value = this.overview_camera;
+        }
     }
 
     public batPlayerCollisions(): void {

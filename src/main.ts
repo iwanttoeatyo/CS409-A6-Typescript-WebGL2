@@ -14,9 +14,12 @@ let document = window.document;
 let gl: WebGL2RenderingContext;
 
 let fps_element = document.getElementById("fpscounter");
-let shadow_element = document.getElementById("shadow");
 let ups_element = document.getElementById("upscounter");
 let score_element = document.getElementById("score");
+
+let hq_toggle_element = document.getElementById("hq-toggle");
+let path_toggle_element = document.getElementById("path-toggle");
+let camera_toggle_element = document.getElementById("camera-toggle");
 
 export class Main {
     game: Game;
@@ -46,6 +49,19 @@ export class Main {
         let loading = document.getElementById("loading-container");
         loading.remove();
 
+        hq_toggle_element.addEventListener("click",function(){
+            global.poor_performance = !global.poor_performance;
+        },false);
+        
+        path_toggle_element.addEventListener("click",
+            e => {
+                this.game.show_path = !this.game.show_path;
+            }, false );
+        camera_toggle_element.addEventListener("click",
+            e => {
+                this.game.toggleCamera();
+            }, false );
+        
         //Done loading
         this.initPointerLock();
 
