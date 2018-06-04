@@ -11,7 +11,8 @@ import { MovementGraph } from "movementgraph";
 import { PointList } from "renderers/linerenderer";
 import { Bat } from "entities/bat";
 import { Collision } from "helpers/collision";
-import {Pointer} from "./helpers/pointer";
+import { Pointer } from "./helpers/pointer";
+import is_mobile = global.is_mobile;
 
 let OBJ = require("lib/OBJ/index.js");
 
@@ -47,11 +48,12 @@ export class Game {
     private active_camera: Pointer<Camera> = new Pointer<Camera>(this.player_camera);
 
     private current_map: number = 0;
+    private show_path: boolean = true;
 
     //World Name, World Data
     static maps: Array<string>;
 
-    constructor(_gl:WebGL2RenderingContext) {
+    constructor(_gl: WebGL2RenderingContext) {
         //   if (!this.assets_loaded) throw "Game loadAssets must be called before constructor.";
         gl = _gl;
         this.player = new Player();
@@ -162,7 +164,7 @@ export class Game {
     private initRenderer(): void {
         // instancedShader = await new Shader(gl, require('../src/shaders/instanced.vert'), require("../src/shaders/instanced.frag"));
         renderer = global.renderer;
-        renderer.initShadows(LIGHT_DIRECTION,this.active_camera);
+        renderer.initShadows(LIGHT_DIRECTION, this.active_camera);
 
         //basicModelRenderer.addBasicModel(Player.model);
         renderer.removeAllModels();
@@ -194,7 +196,7 @@ export class Game {
         shader.setVec3ByName("lights[0].ambient", [1.8, 1.8, 1.8]);
         shader.setVec3ByName("lights[0].diffuse", [1.2, 1.2, 1.2]);
         shader.setVec3ByName("lights[0].specular", [0.0, 0.0, 0.0]);
-        
+
         //Setup player point light
         // shader.setBool("lights[1].is_enabled", true);
         // shader.setVec4("lights[1].position", [this.player.position[0], this.player.position[1], this.player.position[2], 1.0]);
@@ -234,11 +236,19 @@ export class Game {
             this.addAllGameEntitiesToRenderer();
             g_keys[77] = false;
         }
-        
-        if(g_keys[76]){
-            renderer.toggleShadows();
-            g_keys[76] = false;
+
+        if (g_keys[80]) {
+            g_keys[80] = false;
+            this.show_path = !this.show_path;
         }
+
+        if (g_keys[76]) {
+            g_keys[76] = false;
+            global.poor_performance = !global.poor_performance;
+        }
+
+        if (global.poor_performance) renderer.disableShadows();
+        else renderer.enableShadows();
 
         let accel_factor = this.world.getAccelFactorAtPosition(
             this.player.position[0],
@@ -246,38 +256,28 @@ export class Game {
             this.player.model.radius
         );
 
-        //Movement  
+        //Movement
 
         if (g_keys[40] || g_keys[83]) {
             this.player.accelerateBackward(delta_ms, accel_factor);
-
         } else if (g_keys[38] || g_keys[87] || (g_mouse_keys[1] && g_mouse_keys[3])) {
             this.player.accelerateForward(delta_ms, accel_factor);
-
         }
         if (g_keys[65]) {
             this.player.accelerateLeft(delta_ms, accel_factor);
-
         } else if (g_keys[68]) {
             this.player.accelerateRight(delta_ms, accel_factor);
-
         }
 
         if (g_keys[40] || g_keys[83]) {
             this.player.transitionAnimationTo(Player_State.Reversing);
-
         } else if (g_keys[38] || g_keys[87] || (g_mouse_keys[1] && g_mouse_keys[3])) {
             this.player.transitionAnimationTo(Player_State.Running);
-
-        }else if (g_keys[65] || g_keys[68]) {
+        } else if (g_keys[65] || g_keys[68]) {
             this.player.transitionAnimationTo(Player_State.Strafing);
-
-        } else{
+        } else {
             this.player.transitionAnimationTo(Player_State.Standing);
         }
-
-        
-       
 
         //Turning
         if (g_keys[37]) this.player.turnLeft(delta_ms);
@@ -341,20 +341,22 @@ export class Game {
 
     public draw(): void {
         let camera = vec3.clone(this.active_camera.value.position);
-        let depth_proj_matrix = renderer.getDepthProjMatrix();
-        let light_view_matrix = renderer.getLightViewMatrix();
-        
-        //Render Shadows to Depth Texture
-        renderer.beginRenderDepth();
-        this.player.draw(gl, renderer.active_shader, light_view_matrix, depth_proj_matrix, camera);
-        renderer.render(light_view_matrix,depth_proj_matrix, camera);
-        renderer.endRenderDepth(light_view_matrix,depth_proj_matrix);
 
-        
+        if (renderer.shadow_enabled) {
+            let depth_proj_matrix = renderer.getDepthProjMatrix();
+            let light_view_matrix = renderer.getLightViewMatrix();
+
+            //Render Shadows to Depth Texture
+            renderer.beginRenderDepth();
+            this.player.draw(gl, renderer.active_shader, light_view_matrix, depth_proj_matrix, camera);
+            renderer.renderCull(light_view_matrix, depth_proj_matrix, camera, global.SHADOW_DISTANCE * 2);
+            renderer.endRenderDepth(light_view_matrix, depth_proj_matrix);
+        }
+
         //Render To Screen
         let projection_matrix = mat4.create();
         let view_matrix = this.active_camera.value.getViewMatrix();
-        
+
         mat4.identity(projection_matrix);
         mat4.perspective(
             projection_matrix,
@@ -375,16 +377,21 @@ export class Game {
         gl.enable(gl.DEPTH_TEST);
 
         //Draw all entities in renderer
-        renderer.render(view_matrix, projection_matrix,camera);
+        if (this.active_camera.value == this.player_camera && global.poor_performance)
+            renderer.renderCull(view_matrix, projection_matrix, camera, 100);
+        else renderer.render(view_matrix, projection_matrix, camera);
 
         this.player.draw(gl, renderer.active_shader, view_matrix, projection_matrix, camera);
 
-        this.displayMovementGraph(view_matrix, projection_matrix);
-        this.displaySearchPathSpheres(view_matrix, projection_matrix);
-        this.displayRingZeroPath(view_matrix, projection_matrix);
+        if (this.show_path) {
+            this.displayMovementGraph(view_matrix, projection_matrix);
+            this.displaySearchPathSpheres(view_matrix, projection_matrix);
+            this.displayRingZeroPath(view_matrix, projection_matrix);
+        }
 
         //Render the shadow map texture
-        global.renderer.depth_texture.renderDepthTextureToQuad(0, 0, 256, 256);
+        // if(renderer.shadow_enabled)
+        //     global.renderer.depth_texture.renderDepthTextureToQuad(0, 0, 256, 256);
     }
 
     public batPlayerCollisions(): void {

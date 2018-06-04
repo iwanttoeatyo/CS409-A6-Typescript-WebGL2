@@ -19,14 +19,13 @@ export class Shader {
         this.mvp_matrix = mat4.create();
 
         let vertexShader: WebGLShader = getShader(gl, vertexSourceCode, gl.VERTEX_SHADER);
-  
+
         let fragmentShader: WebGLShader = getShader(gl, fragmentSourceCode, gl.FRAGMENT_SHADER);
-       
+
         this.ID = gl.createProgram();
         gl.attachShader(this.ID, vertexShader);
         gl.attachShader(this.ID, fragmentShader);
         gl.linkProgram(this.ID);
-      
 
         if (!gl.getProgramParameter(this.ID, gl.LINK_STATUS)) {
             alert("Could not initialize shaders");
@@ -59,7 +58,7 @@ export class Shader {
         mat4.mul(this.mvp_matrix, view, model);
         mat4.mul(this.mvp_matrix, projection, this.mvp_matrix);
         this.setMat4(this.uniforms.model_matrix, model);
-        this.setMat4(this.uniforms.view_matrix, view);
+        //this.setMat4(this.uniforms.view_matrix, view);
         this.setMat4(this.uniforms.model_view_projection_matrix, this.mvp_matrix);
         this.setVec3(this.uniforms.camera_pos, camera_pos);
     }

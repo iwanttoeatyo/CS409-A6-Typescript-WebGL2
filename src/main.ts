@@ -5,14 +5,16 @@ import { Renderer } from "./renderers/renderer";
 import { LineRenderer } from "./renderers/linerenderer";
 import keys = global.keys;
 import { SphereRenderer } from "./renderers/sphererenderer";
+import is_mobile = global.is_mobile;
+import renderer = global.renderer;
 
 let MainLoop = require("./lib/MainLoop/mainloop.js");
 
-let is_mobile;
 let document = window.document;
 let gl: WebGL2RenderingContext;
 
 let fps_element = document.getElementById("fpscounter");
+let shadow_element = document.getElementById("shadow");
 let ups_element = document.getElementById("upscounter");
 let score_element = document.getElementById("score");
 
@@ -24,15 +26,16 @@ export class Main {
         this.initGL();
 
         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            is_mobile = true;
+            global.is_mobile = true;
         }
 
         this.init();
     }
 
     public async init(): Promise<void> {
-
         global.renderer = await new Renderer(gl);
+        if (global.is_mobile) global.renderer.disableShadows();
+        else global.renderer.enableShadows();
         global.line_renderer = await new LineRenderer(gl);
         global.sphere_renderer = await new SphereRenderer(gl);
         await global.sphere_renderer.load();
@@ -86,7 +89,9 @@ export class Main {
      *   The amount of time since the last update, in milliseconds.
      */
     private update(delta_ms: number) {
-        if (is_mobile) this.doDemo(delta_ms);
+        if (global.is_mobile) {
+            this.doDemo(delta_ms);
+        }
         this.game.update(delta_ms);
     }
 
@@ -108,10 +113,17 @@ export class Main {
         this.resize();
     }
 
-    private end(fps, ups, panic): void {
+    private end(fps, ups, time_elapsed, panic): void {
         fps_element.textContent = Math.round(fps) + " FPS";
         ups_element.textContent = Math.round(ups) + " UPS";
         score_element.textContent = "Score: " + this.game.getScore();
+
+        if (time_elapsed > 5000 && Math.round(fps) < 20 && global.toggled_performance == false) {
+            global.poor_performance = true;
+            global.toggled_performance = true;
+            global.renderer.disableShadows();
+        }
+
         if (panic) {
             let discardedTime = Math.round(MainLoop.resetFrameDelta());
             console.warn(

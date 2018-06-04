@@ -9,6 +9,8 @@ import { ShadowBox } from "./shadowbox";
 import { Camera } from "../camera";
 import { Pointer } from "../helpers/pointer";
 import { BasicModelShader, BasicModelShaderShadow } from "../basicmodelshader";
+import { global } from "globals";
+import { Collision } from "../helpers/collision";
 
 let BIAS_MATRIX = mat4.fromValues(0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0.5, 0.5, 0.5, 1);
 
@@ -22,7 +24,7 @@ export class Renderer {
     public basic_model_shader_shadow: BasicModelShaderShadow;
     private entities: Map<string, Entity>;
 
-    private shadow_enabled: boolean;
+    public shadow_enabled: boolean;
     public depth_texture: DepthTexture;
     private shadow_box: ShadowBox;
     private light_view_matrix: mat4;
@@ -40,11 +42,10 @@ export class Renderer {
         this.basic_model_shader = new BasicModelShader(this.gl);
         this.basic_model_shader_shadow = new BasicModelShaderShadow(this.gl);
         this.active_shader = this.basic_model_shader;
+        this.shadow_enabled = true;
     }
 
     initShadows(light_direction: vec4, camera_pointer: Pointer<Camera>): void {
-        this.enableShadows();
-        this.shadow_enabled = true;
         this.light_view_matrix = mat4.create();
         this.light_direction = vec4.normalize(vec4.create(), light_direction);
         this.shadow_box = new ShadowBox(this.gl, this.light_view_matrix, camera_pointer);
@@ -52,16 +53,16 @@ export class Renderer {
     }
 
     enableShadows(): void {
-        this.shadow_enabled = false;
+        this.shadow_enabled = true;
         //Change shaders
     }
 
     disableShadows(): void {
-        this.shadow_enabled = true;
+        this.shadow_enabled = false;
         //Change shaders
     }
-    
-    toggleShadows():void{
+
+    toggleShadows(): void {
         this.shadow_enabled = !this.shadow_enabled;
     }
 
@@ -119,6 +120,10 @@ export class Renderer {
     }
 
     public beginRender(): void {
+        let gl = this.gl;
+        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+        gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
+
         if (this.shadow_enabled) {
             this.active_shader = this.basic_model_shader_shadow;
             this.active_shader.prepare();
@@ -127,6 +132,10 @@ export class Renderer {
                 this.shadow_map_space_matrix
             );
             this.basic_model_shader_shadow.setShadowMap(this.depth_texture.getTexture());
+            this.basic_model_shader_shadow.setFloat(
+                this.basic_model_shader_shadow.uniforms.shadow_map_size,
+                this.depth_texture.texture_size
+            );
         } else {
             this.active_shader = this.basic_model_shader;
             this.active_shader.prepare();
@@ -140,7 +149,7 @@ export class Renderer {
 
         gl.disable(gl.CULL_FACE);
         gl.enable(gl.POLYGON_OFFSET_FILL);
-        gl.polygonOffset(0.1, 4.0);
+        gl.polygonOffset(global.shadow_factor, global.shadow_offset);
     }
 
     public endRenderDepth(light_view_matrix: mat4, depth_proj_matrix: mat4): void {
@@ -152,9 +161,6 @@ export class Renderer {
         gl.disable(gl.POLYGON_OFFSET_FILL);
         gl.enable(gl.CULL_FACE);
         gl.cullFace(gl.BACK);
-
-        gl.bindFramebuffer(gl.FRAMEBUFFER, null);
-        gl.viewport(0, 0, gl.drawingBufferWidth, gl.drawingBufferHeight);
     }
 
     public getDepthProjMatrix(): mat4 {
@@ -193,61 +199,40 @@ export class Renderer {
         return mat4.clone(this.light_view_matrix);
     }
 
-    public render(view_matrix: mat4, projection_matrix: mat4, camera_position:vec3): void {
-        this.renderBasicModels(view_matrix, projection_matrix,camera_position);
-        this.renderMeshlessModels(view_matrix, projection_matrix,camera_position);
+    public render(view_matrix: mat4, projection_matrix: mat4, camera_position: vec3): void {
+        this.renderModels(this.entities, view_matrix, projection_matrix, camera_position);
+        //  this.renderMeshlessModels(view_matrix, projection_matrix,camera_position);
     }
 
-    private renderMeshlessModels(view_matrix: mat4, projection_matrix: mat4, camera_position:vec3) {
-        let mat_list = [];
-        let model_matrix = mat4.create();
-        let q = quat.create();
-
-        for (const [key, model] of this.meshless_models.entries()) {
-            if (mat_list.indexOf(model.material.name) < 0) {
-                mat_list.push(model.material.name);
-            }
+    public renderCull(
+        view_matrix: mat4,
+        projection_matrix: mat4,
+        camera_position: vec3,
+        distance_from_camera: number
+    ): void {
+        let entities = new Map<string, Entity>();
+        for (const [key, entity] of this.entities.entries()) {
+            if (
+                Collision.circleIntersection(
+                    entity.position[0],
+                    entity.position[2],
+                    0,
+                    camera_position[0],
+                    camera_position[2],
+                    distance_from_camera
+                )
+            )
+                entities.set(key, entity);
         }
-
-        for (let j = 0; j < mat_list.length; j++) {
-            //activate mat first
-            let activated = false;
-
-            //Loop over all models
-            for (const [key, model] of this.meshless_models.entries()) {
-                if (model.material.name !== mat_list[j]) continue;
-
-                //Find all the things we want to draw with this model
-                let entities_to_draw = [];
-                for (const [key, entity] of this.entities.entries()) {
-                    if (entity.model_type == Model_Type.MESHLESS && model.name == entity.mesh_name) {
-                        entities_to_draw.push(entity);
-                    }
-                }
-                //If things to draw
-                if (entities_to_draw.length > 0) {
-                    //Activate this model
-                    model.activateBuffers(this.gl);
-                    //Activate the material
-                    if (!activated) {
-                        this.active_shader.activateMaterial(model.material);
-                        activated = true;
-                    }
-
-                    for (let entity of entities_to_draw) {
-                        mat4.identity(model_matrix);
-                        quat.identity(q);
-                        quat.rotateY(q, q, Math.atan2(entity.forward[0], entity.forward[2]) + model.rotation_offset);
-                        mat4.fromRotationTranslationScale(model_matrix, q, entity.position, entity.scalar);
-                        this.active_shader.setMVPMatrices(model_matrix, view_matrix, projection_matrix, camera_position);
-                        model.drawActivatedMaterial(this.gl);
-                    }
-                }
-            }
-        }
+        this.renderModels(entities, view_matrix, projection_matrix, camera_position);
     }
 
-    private renderBasicModels(view_matrix: mat4, projection_matrix: mat4, camera_position:vec3) {
+    private renderModels(
+        entities: Map<string, Entity>,
+        view_matrix: mat4,
+        projection_matrix: mat4,
+        camera_position: vec3
+    ) {
         //Find list of materials that have meshes to draw
         let mat_list = [];
         let model_matrix = mat4.create();
@@ -260,15 +245,26 @@ export class Renderer {
             }
         }
 
+        for (const [key, model] of this.meshless_models.entries()) {
+            if (mat_list.indexOf(model.material.name) < 0) {
+                mat_list.push(model.material.name);
+            }
+        }
+
         //For each material draw all of the meshes that use it
+        let material_act = 0;
+        let buffer_act = 0;
+        let draw_calls = 0;
         for (let j = 0; j < mat_list.length; j++) {
             let activated = false;
+
+            //Loop over models
             for (const [key, model] of this.models.entries()) {
                 //This model doesn't have this material
                 if (model.mesh.materialIndices[mat_list[j]] === undefined) continue;
 
                 let entities_to_draw = [];
-                for (const [key, entity] of this.entities.entries()) {
+                for (const [key, entity] of entities.entries()) {
                     if (entity.model_type == Model_Type.BASIC && model.mesh.name == entity.mesh_name) {
                         entities_to_draw.push(entity);
                     }
@@ -281,8 +277,10 @@ export class Renderer {
                 if (!activated) {
                     this.active_shader.activateMaterial(model.mesh.materialsByIndex[mat_id]);
                     activated = true;
+                    material_act++;
                 }
                 model.activateBuffers(this.gl);
+                buffer_act++;
 
                 for (let entity of entities_to_draw) {
                     mat4.identity(model_matrix);
@@ -291,8 +289,53 @@ export class Renderer {
                     mat4.fromRotationTranslationScale(model_matrix, q, entity.position, entity.scalar);
                     this.active_shader.setMVPMatrices(model_matrix, view_matrix, projection_matrix, camera_position);
                     model.drawActivatedMaterial(this.gl, mat_id);
+                    draw_calls++;
+                }
+            }
+
+            //Loop over meshless models
+            for (const [key, model] of this.meshless_models.entries()) {
+                if (model.material.name !== mat_list[j]) continue;
+
+                //Find all the things we want to draw with this model
+                let entities_to_draw = [];
+                for (const [key, entity] of entities.entries()) {
+                    if (entity.model_type == Model_Type.MESHLESS && model.name == entity.mesh_name) {
+                        entities_to_draw.push(entity);
+                    }
+                }
+                //If things to draw
+                if (entities_to_draw.length > 0) {
+                    //Activate this model
+                    model.activateBuffers(this.gl);
+                    buffer_act++;
+                    //Activate the material
+                    if (!activated) {
+                        this.active_shader.activateMaterial(model.material);
+                        activated = true;
+                        material_act++;
+                    }
+
+                    for (let entity of entities_to_draw) {
+                        mat4.identity(model_matrix);
+                        quat.identity(q);
+                        quat.rotateY(q, q, Math.atan2(entity.forward[0], entity.forward[2]) + model.rotation_offset);
+                        mat4.fromRotationTranslationScale(model_matrix, q, entity.position, entity.scalar);
+                        this.active_shader.setMVPMatrices(
+                            model_matrix,
+                            view_matrix,
+                            projection_matrix,
+                            camera_position
+                        );
+                        model.drawActivatedMaterial(this.gl);
+                        draw_calls++;
+                    }
                 }
             }
         }
+
+        // console.log("material activations: " + material_act);
+        // console.log("buffer activations: " + buffer_act);
+        // console.log("draw calls: " + draw_calls);
     }
 }

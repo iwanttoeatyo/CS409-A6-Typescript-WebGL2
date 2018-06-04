@@ -6,6 +6,12 @@ import { Collision } from "../helpers/collision";
 import { MovementGraph } from "../movementgraph";
 import { Random } from "../helpers/random";
 
+let direction: vec3 = vec3.create();
+let center: vec3 = vec3.create();
+let center_to_ring: vec3 = vec3.create();
+let dir_pos_to_target: vec3 = vec3.create();
+let tangent_center_to_ring: vec3 = vec3.create();
+
 export class Ring extends Entity {
     private readonly index: number;
     private readonly world: World;
@@ -39,7 +45,6 @@ export class Ring extends Entity {
     }
 
     public update(delta_time_ms: number) {
-        let direction: vec3 = vec3.create();
         vec3.sub(direction, this.target_position, this.position);
         vec3.normalize(direction, direction);
 
@@ -55,17 +60,17 @@ export class Ring extends Entity {
             //let old_pos = vec3.clone(this.position);
 
             //center of disk
-            let center = vec3.clone(this.world.disks[node_list[this.curr_node_id].disk_id].position);
+            vec3.copy(center, this.world.disks[node_list[this.curr_node_id].disk_id].position);
 
             //vector from center of disk to ring position
-            let center_to_ring = vec3.sub(vec3.create(), this.position, center);
+            center_to_ring = vec3.sub(vec3.create(), this.position, center);
 
             //direction vector from ring position to ring target position
-            let dir_pos_to_target = vec3.sub(vec3.create(), this.target_position, this.position);
+            dir_pos_to_target = vec3.sub(vec3.create(), this.target_position, this.position);
 
             //Tangent vector of vector from center of disk to ring position
             //Required to determine which direction is shortest around disk
-            let tangent_center_to_ring = vec3.rotateY(vec3.create(), center_to_ring, [0, 0, 0], Math.PI / 2);
+            tangent_center_to_ring = vec3.rotateY(vec3.create(), center_to_ring, [0, 0, 0], Math.PI / 2);
             let tangent_angle = vec3.angle(tangent_center_to_ring, dir_pos_to_target);
 
             //The radius to rotate around the disk is radius - 0.7

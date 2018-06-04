@@ -15,6 +15,7 @@
 			// The timestamp in milliseconds of the last time the main loop was run.
 			// Used to compute the time elapsed between frames.
 			lastFrameTimeMs = 0,
+			time_elapsed = 0,
 
 			// An exponential moving average of the frames per second.
 			fps = 60,
@@ -600,6 +601,7 @@
 		// last frame) because not all actually elapsed time is guaranteed to be
 		// simulated each frame. See the comments below for details.
 		let loopDelta =  timestamp - lastFrameTimeMs;
+		time_elapsed += loopDelta;
 		loopDelta *= time_scale;
 		frameDelta += loopDelta;
 		lastFrameTimeMs = timestamp;
@@ -755,7 +757,7 @@
 
 		// Run any updates that are not dependent on time in the simulation. See
 		// `MainLoop.setEnd()` for additional details on how to use this.
-		end(fps, ups, panic);
+		end(fps, ups, time_elapsed, panic);
 
 		panic = false;
 	}

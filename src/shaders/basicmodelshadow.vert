@@ -36,7 +36,7 @@ out vec3 normal;
 out vec3 to_camera;
 out vec4 shadow_coord;
 
-const float transition_distance = 5.0;
+const float transition_distance = 2.0;
 
 void main()
 {
@@ -63,7 +63,7 @@ void main()
     vec3 toLight = normalize(lights[0].position.xyz);
     float cos_light_angle = dot(toLight, normal);
     float slope_scale = clamp(1.0 - cos_light_angle, 0.0, 1.0);
-    float normal_offset_scale =  slope_scale * 0.3;
+    float normal_offset_scale =  slope_scale * 0.4;
     
     vec4 shadow_offset = vec4(normal*normal_offset_scale,0.0);
     
@@ -73,8 +73,8 @@ void main()
     //shadow_coord.xy = shadow_coord_xy.xy;
     	
     //Shaodw_coord.w will be used to fade in and out shadows softly when they are far from camera
-    vec4 to_camera_view_space = view_matrix * world_position;
-    float distance1 = length(to_camera_view_space.xyz);
+    //vec4 to_camera_view_space = view_matrix * world_position;
+    float distance1 = length(camera_pos - world_position.xyz);
 
     distance1 = distance1 - (shadow_distance - transition_distance);
     distance1 = distance1 / transition_distance;

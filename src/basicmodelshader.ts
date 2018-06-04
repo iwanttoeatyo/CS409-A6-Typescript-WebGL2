@@ -37,6 +37,7 @@ class BasicModelShadowUniforms extends BasicModelUniforms {
     shadow_map: WebGLUniformLocation;
     shadow_map_space_matrix: WebGLUniformLocation;
     shadow_distance: WebGLUniformLocation;
+    shadow_map_size: WebGLUniformLocation;
 }
 
 export class BasicModelShader extends Shader {
@@ -153,23 +154,24 @@ export class BasicModelShader extends Shader {
 }
 
 export class BasicModelShaderShadow extends BasicModelShader {
-    public uniforms:BasicModelShadowUniforms;
-    
+    public uniforms: BasicModelShadowUniforms;
+
     constructor(gl: WebGL2RenderingContext) {
         super(gl, require("shaders/basicmodelshadow.vert"), require("shaders/basicmodelmanylights1shadow.frag"));
 
         this.uniforms.shadow_map = this.getUniformLocation("shadow_map");
         this.uniforms.shadow_distance = this.getUniformLocation("shadow_distance");
+        this.uniforms.shadow_map_size = this.getUniformLocation("shadow_map_size");
         this.uniforms.shadow_map_space_matrix = this.getUniformLocation("shadow_map_space_matrix");
     }
-    
-    public setShadowMap(shadow_map:WebGLTexture):void{
+
+    public setShadowMap(shadow_map: WebGLTexture): void {
         let gl = this.gl;
         gl.activeTexture(gl.TEXTURE6); // shadow_map
         gl.bindTexture(gl.TEXTURE_2D, shadow_map);
     }
-    
-    public prepare():void{
+
+    public prepare(): void {
         super.prepare();
         let gl = this.gl;
         gl.activeTexture(gl.TEXTURE6);
@@ -177,5 +179,4 @@ export class BasicModelShaderShadow extends BasicModelShader {
         this.setInt(this.uniforms.shadow_map, 6);
         this.setFloat(this.uniforms.shadow_distance, global.SHADOW_DISTANCE);
     }
-    
 }

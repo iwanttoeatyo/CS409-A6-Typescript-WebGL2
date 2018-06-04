@@ -116,7 +116,7 @@ export class PlayerModel {
             case Player_State.Running:
             case Player_State.Strafing:
             case Player_State.Reversing:
-                mat4.translate(model_matrix, model_matrix, vec3.fromValues(0, -0.035, 0));
+                mat4.translate(model_matrix, model_matrix, vec3.fromValues(0, -0.075, 0));
         }
 
         shader.setMVPMatrices(model_matrix, view_matrix, projection_matrix, camera_pos);
