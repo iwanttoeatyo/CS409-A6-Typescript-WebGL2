@@ -20,6 +20,7 @@ let score_element = document.getElementById("score");
 let hq_toggle_element = document.getElementById("hq-toggle");
 let path_toggle_element = document.getElementById("path-toggle");
 let camera_toggle_element = document.getElementById("camera-toggle");
+let reset_element = document.getElementById("reset");
 
 export class Main {
     game: Game;
@@ -61,7 +62,11 @@ export class Main {
             e => {
                 this.game.toggleCamera();
             }, false );
-        
+
+        reset_element.addEventListener("click",
+            e => {
+                this.game.reset();
+            }, false );
 
         //Done loading
         this.initPointerLock();

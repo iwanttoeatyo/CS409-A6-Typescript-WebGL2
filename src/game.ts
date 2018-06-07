@@ -413,6 +413,10 @@ export class Game {
         }
     }
 
+    public reset():void{
+        this.player.reset(this.world);
+    }
+    
     public batPlayerCollisions(): void {
         for (let bat of this.bats) {
             if (bat.ignore_timer > 0) continue;
