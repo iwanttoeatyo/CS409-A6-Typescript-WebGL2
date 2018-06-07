@@ -63,14 +63,14 @@ export class Ring extends Entity {
             vec3.copy(center, this.world.disks[node_list[this.curr_node_id].disk_id].position);
 
             //vector from center of disk to ring position
-            center_to_ring = vec3.sub(vec3.create(), this.position, center);
+            vec3.sub(center_to_ring, this.position, center);
 
             //direction vector from ring position to ring target position
-            dir_pos_to_target = vec3.sub(vec3.create(), this.target_position, this.position);
+            vec3.sub(dir_pos_to_target, this.target_position, this.position);
 
             //Tangent vector of vector from center of disk to ring position
             //Required to determine which direction is shortest around disk
-            tangent_center_to_ring = vec3.rotateY(vec3.create(), center_to_ring, [0, 0, 0], Math.PI / 2);
+            tangent_center_to_ring = vec3.rotateY(tangent_center_to_ring, center_to_ring, [0, 0, 0], Math.PI / 2);
             let tangent_angle = vec3.angle(tangent_center_to_ring, dir_pos_to_target);
 
             //The radius to rotate around the disk is radius - 0.7
@@ -123,8 +123,8 @@ export class Ring extends Entity {
                 if (this.index === 0) {
                     //Perform all the searches so we can record the visits required
 
-                    this.path = this.world_graph.dijkstraSearch(this.curr_node_id, rand);
-                    this.path = this.world_graph.aStarSearch(this.curr_node_id, rand);
+                    //this.path = this.world_graph.dijkstraSearch(this.curr_node_id, rand);
+                    //this.path = this.world_graph.aStarSearch(this.curr_node_id, rand);
                     this.path = this.world_graph.mmSearch(this.curr_node_id, rand);
                     this.world_graph.memorizeLastSearch();
                 } else {
@@ -134,7 +134,7 @@ export class Ring extends Entity {
             }
             //Pop the node off the front and set it as the target
             this.target_node_id = this.path.shift();
-            this.target_position = vec3.clone(node_list[this.target_node_id].pos);
+            vec3.copy(this.target_position,node_list[this.target_node_id].pos);
         }
     }
 }

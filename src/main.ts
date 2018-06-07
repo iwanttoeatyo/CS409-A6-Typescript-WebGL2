@@ -61,20 +61,7 @@ export class Main {
             e => {
                 this.game.toggleCamera();
             }, false );
-
-        hq_toggle_element.addEventListener("tap",function(){
-            global.poor_performance = !global.poor_performance;
-        },false);
-
-        path_toggle_element.addEventListener("tap",
-            e => {
-                this.game.show_path = !this.game.show_path;
-            }, false );
-        camera_toggle_element.addEventListener("tap",
-            e => {
-                this.game.toggleCamera();
-            }, false );
-
+        
 
         //Done loading
         this.initPointerLock();

@@ -44,6 +44,7 @@ export class PlayerModel {
 
     public radius: number = 0.25;
     public half_height: number = 0.8;
+    private model_run_offset:vec3 = vec3.fromValues(0,-0.075, 0);
 
     constructor() {
         this.run_frames = new Array<Frame>(7);
@@ -116,7 +117,7 @@ export class PlayerModel {
             case Player_State.Running:
             case Player_State.Strafing:
             case Player_State.Reversing:
-                mat4.translate(model_matrix, model_matrix, vec3.fromValues(0, -0.075, 0));
+                mat4.translate(model_matrix, model_matrix, this.model_run_offset);
         }
 
         shader.setMVPMatrices(model_matrix, view_matrix, projection_matrix, camera_pos);

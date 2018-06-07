@@ -14,6 +14,13 @@ enum Bat_State {
     EXPLORE
 }
 
+let R = vec3.create();
+let D = vec3.create();
+let S = vec3.create();
+let A_desired = vec3.create();
+let A = vec3.create();
+let T = vec3.create();
+
 export class Bat extends Entity {
     public readonly radius: number = 0.7;
     public readonly half_height: number = 0.1;
@@ -28,19 +35,21 @@ export class Bat extends Entity {
     private readonly S_MIN = 1.0;
     private readonly A_MAX = 8.0;
 
-    constructor(position: vec3, model: BasicModel, player: Readonly<Player>, world: Readonly<World>) {
-        super(model.mesh.name, Model_Type.BASIC, position);
+    constructor(model: BasicModel, player: Readonly<Player>, world: Readonly<World>) {
+        super(model.mesh.name, Model_Type.BASIC);
         this.player = player;
         this.world = world;
         this.radius = model.radius;
         this.half_height = model.half_height;
         this.state = Bat_State.EXPLORE;
 
-        this.position = vec3.clone(position);
         this.velocity = vec3.fromValues(Random.randf(0, this.S_MAX), 0, Random.randf(0, this.S_MAX));
         vec3.normalize(this.forward, this.velocity);
-
-        this.target_position = this.world.getRandomXZPosition();
+        
+        this.position = this.world.getRandomXZPosition(vec3.create());
+        this.position[1] = 15.0;
+        
+        this.target_position = this.world.getRandomXZPosition(vec3.create());
         this.target_position[1] = 15.0;
     }
 
@@ -89,22 +98,22 @@ export class Bat extends Entity {
         if (
             Collision.cylinderIntersection(this.position, this.radius, this.half_height, this.target_position, 2.0, 1.0)
         ) {
-            this.target_position = this.world.getRandomXZPosition();
+            this.target_position = this.world.getRandomXZPosition(this.target_position);
             this.target_position[1] = 15.0;
         }
         this.seek(delta_s);
     }
 
     private seek(delta_s: number) {
-        let R = vec3.sub(vec3.create(), this.target_position, this.position);
-        let D = vec3.normalize(vec3.create(), R);
+        vec3.sub(R, this.target_position, this.position);
+        vec3.normalize(D, R);
         vec3.scale(D, D, this.S_MAX);
 
-        let S = vec3.sub(vec3.create(), D, this.velocity);
+        vec3.sub(S, D, this.velocity);
 
-        let A_desired = vec3.scale(vec3.create(), S, 1 / delta_s);
+        vec3.scale(A_desired, S, 1 / delta_s);
 
-        let A = vec3_truncate(vec3.create(), A_desired, this.A_MAX);
+        vec3_truncate(A, A_desired, this.A_MAX);
 
         // velocity = truncate(velocity + A * delta_s, S_MAX)
         vec3_truncate(this.velocity, vec3.scaleAndAdd(this.velocity, this.velocity, A, delta_s), this.S_MAX);
@@ -115,12 +124,12 @@ export class Bat extends Entity {
     }
 
     private pursue(delta_s: number): void {
-        let D = vec3.sub(vec3.create(), this.player.position, this.position);
+        vec3.sub(D, this.player.position, this.position);
         let s = vec3.length(D) * 0.3;
 
-        let T = vec3.scaleAndAdd(vec3.create(), this.player.position, this.player.getVelocity(), s);
+        vec3.scaleAndAdd(T, this.player.position, this.player.getVelocity(), s);
 
-        this.target_position = vec3.clone(T);
+        this.target_position = vec3.copy(this.target_position, T);
 
         this.seek(delta_s);
     }

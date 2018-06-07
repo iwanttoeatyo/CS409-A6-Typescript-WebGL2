@@ -3,6 +3,7 @@ import { Disk } from "./entities/disk";
 import { vec3 } from "gl-matrix";
 import * as assert from "assert";
 import Collections = require("typescript-collections");
+import {PriorityQueue} from "typescript-collections";
 
 const HIGH_VALUE = Number.MAX_VALUE;
 const NO_VERTEX_FOUND = -1;
@@ -26,11 +27,23 @@ class SearchData {
         this.heuristic = 0;
         this.priority = HIGH_VALUE;
     }
+
+    public copy(sd: SearchData) {
+        this.visited = sd.visited;
+        this.path_node = sd.path_node;
+        this.given_cost = sd.given_cost;
+        this.heuristic = sd.heuristic;
+        this.priority = sd.priority;
+    }
 }
 
 //The search data for both directions of MM search
 class NodeSearchData {
     constructor(public start: SearchData = new SearchData(), public end: SearchData = new SearchData()) {}
+    public copy(nsd: NodeSearchData) {
+        this.start.copy(nsd.start);
+        this.end.copy(nsd.end);
+    }
 }
 
 //The data of each node in the movement graph
@@ -86,6 +99,9 @@ export class MovementGraph {
     private memorized_dijkstra_visits: number = 0;
     private memorized_mm_visits: number = 0;
 
+    private queue_start:PriorityQueue<QueueNode>;
+    private queue_end:PriorityQueue<QueueNode>;
+    
     //The node ids organized per disk
     private readonly disk_node_list: number[][] = [];
 
@@ -99,6 +115,9 @@ export class MovementGraph {
 
         this.node_list = [];
         this.disk_node_list = Array(...Array(size)).map(() => Array(0));
+
+        this.queue_start = new Collections.PriorityQueue<QueueNode>(compare);
+        this.queue_end = new Collections.PriorityQueue<QueueNode>(compare);
 
         for (let i = 0; i < size; i++) {
             for (let j = i + 1; j < size; j++) {
@@ -139,7 +158,8 @@ export class MovementGraph {
                 this.disk_node_list[j].push(node_id_j);
             }
         }
-        this.resetSearchData();
+        this.search_data = Array.from({ length: this.node_list.length }, u => new NodeSearchData());
+        this.memorized_search_data = Array.from({ length: this.node_list.length }, u => new NodeSearchData());
     }
 
     //Performs dijstra's search algorithm to find optimal path between 2 nodes
@@ -147,17 +167,17 @@ export class MovementGraph {
         this.resetSearchData();
 
         this.dijkstra_visits = 0;
-        let queue_start = new Collections.PriorityQueue<QueueNode>(compare);
+        this.queue_start.clear();
 
         this.search_data[node_start_id].start.path_node = node_start_id;
         this.search_data[node_start_id].start.given_cost = 0;
         this.search_data[node_start_id].start.priority =
             this.search_data[node_start_id].start.given_cost + this.search_data[node_start_id].start.heuristic;
-        queue_start.enqueue(new QueueNode(node_start_id, this.search_data[node_start_id].start.priority));
+        this.queue_start.enqueue(new QueueNode(node_start_id, this.search_data[node_start_id].start.priority));
 
-        while (!queue_start.isEmpty()) {
+        while (!this.queue_start.isEmpty()) {
             //Current node we are at
-            const curr = queue_start.dequeue().id;
+            const curr = this.queue_start.dequeue().id;
 
             //already visited
             if (this.search_data[curr].start.visited) continue;
@@ -185,7 +205,7 @@ export class MovementGraph {
                     //Mark the node we came from
                     this.search_data[link.dest_node_id].start.path_node = curr;
                     //Update open list with priority (f = g + h)
-                    queue_start.enqueue(
+                    this.queue_start.enqueue(
                         new QueueNode(link.dest_node_id, this.search_data[link.dest_node_id].start.priority)
                     );
                 }
@@ -200,17 +220,17 @@ export class MovementGraph {
         this.resetSearchDataWithHeuristics(node_start_id, node_end_id);
 
         this.a_star_visits = 0;
-        let queue_start = new Collections.PriorityQueue<QueueNode>(compare);
+        this.queue_start.clear();
 
         this.search_data[node_start_id].start.path_node = node_start_id;
         this.search_data[node_start_id].start.given_cost = 0;
         this.search_data[node_start_id].start.priority =
             this.search_data[node_start_id].start.given_cost + this.search_data[node_start_id].start.heuristic;
-        queue_start.enqueue(new QueueNode(node_start_id, this.search_data[node_start_id].start.priority));
+        this.queue_start.enqueue(new QueueNode(node_start_id, this.search_data[node_start_id].start.priority));
 
-        while (!queue_start.isEmpty()) {
+        while (!this.queue_start.isEmpty()) {
             //Current node we are at
-            const curr = queue_start.dequeue().id;
+            const curr = this.queue_start.dequeue().id;
 
             //already visited
             if (this.search_data[curr].start.visited) continue;
@@ -238,7 +258,7 @@ export class MovementGraph {
                     //Mark the node we came from
                     this.search_data[link.dest_node_id].start.path_node = curr;
                     //Update open list with priority (f = g + h)
-                    queue_start.enqueue(
+                    this.queue_start.enqueue(
                         new QueueNode(link.dest_node_id, this.search_data[link.dest_node_id].start.priority)
                     );
                 }
@@ -254,9 +274,9 @@ export class MovementGraph {
         this.resetSearchDataWithHeuristics(node_start_id, node_end_id);
         this.mm_visits = 0;
         //Open List 1
-        let queue_start = new Collections.PriorityQueue<QueueNode>(compare);
+        this.queue_start.clear();
         //Open List 2
-        let queue_end = new Collections.PriorityQueue<QueueNode>(compare);
+        this.queue_end.clear();
         //Current Node index
         let curr = NO_VERTEX_FOUND;
 
@@ -264,26 +284,26 @@ export class MovementGraph {
         this.search_data[node_start_id].start.given_cost = 0;
         this.search_data[node_start_id].start.priority =
             this.search_data[node_start_id].start.given_cost + this.search_data[node_start_id].start.heuristic;
-        queue_start.enqueue(new QueueNode(node_start_id, this.search_data[node_start_id].start.priority));
+        this.queue_start.enqueue(new QueueNode(node_start_id, this.search_data[node_start_id].start.priority));
 
         this.search_data[node_end_id].end.path_node = node_end_id;
         this.search_data[node_end_id].end.given_cost = 0;
         this.search_data[node_end_id].end.priority =
             this.search_data[node_end_id].end.given_cost + this.search_data[node_end_id].end.heuristic;
-        queue_end.enqueue(new QueueNode(node_end_id, this.search_data[node_end_id].end.priority));
+        this.queue_end.enqueue(new QueueNode(node_end_id, this.search_data[node_end_id].end.priority));
 
-        while (!queue_start.isEmpty() && !queue_end.isEmpty()) {
+        while (!this.queue_start.isEmpty() && !this.queue_end.isEmpty()) {
             let p1 = HIGH_VALUE;
             let p2 = HIGH_VALUE;
 
-            if (!queue_start.isEmpty()) p1 = queue_start.peek().priority;
-            if (!queue_end.isEmpty()) p2 = queue_end.peek().priority;
+            if (!this.queue_start.isEmpty()) p1 = this.queue_start.peek().priority;
+            if (!this.queue_end.isEmpty()) p2 = this.queue_end.peek().priority;
 
             let popped_from_start_queue: boolean;
             let curr_node_search_data: SearchData;
 
             if (p1 <= p2) {
-                curr = queue_start.dequeue().id;
+                curr = this.queue_start.dequeue().id;
                 //We already visited this node
                 if (this.search_data[curr].start.visited) continue;
                 //Goal found if node is on opposite closed list
@@ -292,7 +312,7 @@ export class MovementGraph {
                 curr_node_search_data = this.search_data[curr].start;
                 popped_from_start_queue = true;
             } else {
-                curr = queue_end.dequeue().id;
+                curr = this.queue_end.dequeue().id;
                 //We already visited this node
                 if (this.search_data[curr].end.visited) continue;
                 //Goal found if node is on opposite closed list
@@ -331,8 +351,8 @@ export class MovementGraph {
 
                     //Update open list with priority (f = g + h)
                     if (popped_from_start_queue)
-                        queue_start.enqueue(new QueueNode(link.dest_node_id, linked_node_search_data.priority));
-                    else queue_end.enqueue(new QueueNode(link.dest_node_id, linked_node_search_data.priority));
+                        this.queue_start.enqueue(new QueueNode(link.dest_node_id, linked_node_search_data.priority));
+                    else this.queue_end.enqueue(new QueueNode(link.dest_node_id, linked_node_search_data.priority));
                 }
             }
         }
@@ -341,7 +361,7 @@ export class MovementGraph {
         //It is on both Closed List 1 and 2
         this.search_data[curr].end.visited = true;
         this.search_data[curr].start.visited = true;
-
+        
         return this.getmmPath(node_start_id, curr, node_end_id);
     }
 
@@ -363,8 +383,9 @@ export class MovementGraph {
         this.memorized_dijkstra_visits = this.dijkstra_visits;
         this.memorized_mm_visits = this.mm_visits;
 
-        //This points to search data and should keep it alive
-        this.memorized_search_data = this.search_data;
+        for (let i = 0; i < this.search_data.length; i++) {
+            this.memorized_search_data[i].copy(this.search_data[i]);
+        }
     }
 
     //Returns the search data of the last search that was completed
@@ -444,8 +465,10 @@ export class MovementGraph {
 
     //Clears the search data
     private resetSearchData(): void {
-        //Assign new array to not destroy the memorized search data
-        this.search_data = Array.from({ length: this.node_list.length }, u => new NodeSearchData());
+        for (let nsd of this.search_data) {
+            nsd.start.init();
+            nsd.end.init();
+        }
     }
 
     //Clears the search data and updates all of the nodes with their heuristic data

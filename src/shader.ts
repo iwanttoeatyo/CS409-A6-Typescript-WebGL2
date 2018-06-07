@@ -8,6 +8,8 @@ export class Uniforms {
     camera_pos: WebGLUniformLocation;
 }
 
+let camera = vec3.fromValues(0,0,0);
+
 export class Shader {
     protected readonly ID: WebGLProgram;
     protected gl: WebGL2RenderingContext;
@@ -52,7 +54,7 @@ export class Shader {
         model: mat4,
         view: mat4,
         projection: mat4,
-        camera_pos: vec3 = vec3.fromValues(0, 0, 0)
+        camera_pos: vec3 = camera
     ): void {
         mat4.identity(this.mvp_matrix);
         mat4.mul(this.mvp_matrix, view, model);

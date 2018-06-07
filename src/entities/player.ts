@@ -16,12 +16,15 @@ const TURNING_DEGREES = 3.0;
 const ACCEL_FORWARD = 25.0;
 const ACCEL = 10.0;
 
-export enum Player_Movement {
-    FORWARD,
-    BACKWARD,
-    LEFT,
-    RIGHT
-}
+let old_pos = vec3.create();
+let new_pos = vec3.create();
+let accel = vec3.create();
+let dir = vec2.create();
+let min_direction = vec2.create();
+let GRAVITY = vec3.fromValues(0, -9.8, 0);
+
+let model_matrix:mat4 = mat4.create();
+let q:quat = quat.create();
 
 export class Player extends Entity {
     public model: PlayerModel;
@@ -35,9 +38,10 @@ export class Player extends Entity {
 
     constructor() {
         super("player", Model_Type.ANIMATED);
+        this.velocity = vec3.create();
     }
-    
-    public init(gl:WebGL2RenderingContext){
+
+    public init(gl: WebGL2RenderingContext) {
         this.model.init(gl);
     }
 
@@ -48,8 +52,8 @@ export class Player extends Entity {
     public draw(gl: WebGL2RenderingContext, shader: Shader, view_matrix: mat4, proj_matrix: mat4, camera_pos: vec3) {
         assert(this.loaded);
 
-        let model_matrix = mat4.create();
-        let q = quat.create();
+        mat4.identity(model_matrix);
+        quat.identity(q);
         quat.rotateY(q, q, Math.atan2(this.forward[0], this.forward[2]) - Math.PI / 2);
         mat4.fromRotationTranslation(model_matrix, q, this.position);
 
@@ -63,16 +67,14 @@ export class Player extends Entity {
     public update(world: World, delta_time_ms: number): void {
         let delta_time_s = delta_time_ms / 1000;
 
-        let old_pos = vec3.clone(this.position);
-        let new_pos = vec3.clone(this.velocity);
-        vec3.scaleAndAdd(new_pos, old_pos, new_pos, delta_time_s);
+        vec3.copy(old_pos, this.position);
+        vec3.scaleAndAdd(new_pos, this.position, this.velocity, delta_time_s);
 
         let player_base_y = world.getHeightAtCirclePosition(new_pos[0], new_pos[2], this.model.radius);
         let player_y = player_base_y + this.model.half_height;
 
         if (this.jumping) {
-            let gravity = vec3.fromValues(0, -9.8, 0);
-            vec3.scaleAndAdd(this.velocity, this.velocity, gravity, delta_time_s);
+            vec3.scaleAndAdd(this.velocity, this.velocity, GRAVITY, delta_time_s);
 
             if (world.isCylinderCollisionWithDisk(new_pos, this.model.radius, this.model.half_height)) {
                 if (world.isCylinderCollisionWithDisk(old_pos, this.model.radius, this.model.half_height)) {
@@ -90,7 +92,6 @@ export class Player extends Entity {
             }
         } else {
             //Not jumping
-
             if (world.isOnDisk(new_pos[0], new_pos[2], this.model.radius)) {
                 //Not Falling
                 new_pos[1] = player_y;
@@ -104,15 +105,14 @@ export class Player extends Entity {
                 let min_slope = world.getSlopeFactorAtPosition(new_pos[0], new_pos[2]);
                 let min_height = player_base_y;
 
-                let min_direction = vec2.create();
+                vec2.set(min_direction, 0, 0);
 
                 for (let i = 0; i < 60; i++) {
                     //Rotate the direction so we get 60 equally spaced direction around circle
-                    let dir = vec2.fromValues(1, 0);
+                    vec2.set(dir, 1, 0);
                     vec2_rotate(dir, dir, Math.PI * 2 * (i / 60));
 
-                    let pos = vec3.fromValues(new_pos[0] + dir[0] * 0.01, 0, new_pos[2] + dir[1] * 0.01);
-                    let h = world.getHeightAtPointPosition(pos[0], pos[2]);
+                    let h = world.getHeightAtPointPosition(new_pos[0] + dir[0] * 0.01, new_pos[2] + dir[1] * 0.01);
                     if (h < min_height) {
                         min_height = h;
                         min_direction = dir;
@@ -123,7 +123,7 @@ export class Player extends Entity {
 
                 if (slope > min_slope) {
                     let a = (slope - min_slope) * 10.0 * delta_time_s;
-                    let accel = vec3.fromValues(min_direction[0], 0, min_direction[1]);
+                    vec3.set(accel, min_direction[0], 0, min_direction[1]);
                     vec3.scale(accel, accel, a);
                     this.addAcceleration(accel);
                 }
@@ -141,19 +141,17 @@ export class Player extends Entity {
         if (this.jumping) {
             vec3.scaleAndAdd(this.velocity, this.velocity, vec3.normalize(bat_velocity, bat_velocity), 7.0);
         } else {
-            let bat_vel = vec3.clone(bat_velocity);
-            bat_vel[1] = 0;
-            vec3.scale(this.velocity, vec3.normalize(bat_vel, bat_vel), 5.0);
+            vec3.copy(this.velocity, bat_velocity);
+            this.velocity[1] = 0;
+            vec3.scale(this.velocity, vec3.normalize(this.velocity, this.velocity), 5.0);
             this.velocity[1] = 5.0;
             this.model.setState(Player_State.Jumping);
             this.jumping = true;
         }
     }
     public reset(world: World): void {
-        this.velocity = this.velocity || vec3.create();
-        let pos: vec3 = vec3.clone(world.disks[0].position);
-        pos[1] = world.getHeightAtPointPosition(pos[0], pos[2]) + this.model.half_height;
-        vec3.copy(this.position, pos);
+        vec3.copy(this.position, world.disks[0].position);
+        this.position[1] = world.getHeightAtPointPosition(this.position[0], this.position[2]) + this.model.half_height;
         vec3.set(this.velocity, 0, 0, 0);
         this.jumping = false;
     }
@@ -164,7 +162,8 @@ export class Player extends Entity {
 
     public jump(): void {
         if (this.jumping) return;
-        vec3.scaleAndAdd(this.velocity, vec3.fromValues(0, JUMP_UP_SPEED, 0), this.forward, JUMP_FORWARD_SPEED);
+        vec3.set(this.velocity,0,JUMP_UP_SPEED,0);
+        vec3.scaleAndAdd(this.velocity, this.velocity, this.forward, JUMP_FORWARD_SPEED);
         this.model.setState(Player_State.Jumping);
         this.jumping = true;
     }
@@ -174,43 +173,39 @@ export class Player extends Entity {
     }
 
     public accelerateForward(delta_time_ms: number, speed_factor: number): void {
-        let accel = vec3.clone(this.forward);
+        vec3.copy(accel, this.forward);
         vec3.scale(accel, accel, ACCEL_FORWARD * delta_time_ms / 1000 * speed_factor);
         this.addAcceleration(accel);
-       
     }
 
     public accelerateBackward(delta_time_ms: number, speed_factor: number): void {
-        let accel = vec3.clone(this.forward);
+        vec3.copy(accel, this.forward);
         vec3.negate(accel, accel);
         vec3.scale(accel, accel, ACCEL_FORWARD * delta_time_ms / 1000 * speed_factor);
         this.addAcceleration(accel);
-        
     }
 
     public accelerateLeft(delta_time_ms: number, speed_factor: number): void {
-        let accel = this.getRight();
+        accel = this.getRight(accel);
         vec3.negate(accel, accel);
         vec3.scale(accel, accel, ACCEL * delta_time_ms / 1000 * speed_factor);
         this.addAcceleration(accel);
-     
     }
 
     public accelerateRight(delta_time_ms: number, speed_factor: number): void {
-        let accel = this.getRight();
+        accel = this.getRight(accel);
         vec3.scale(accel, accel, ACCEL * delta_time_ms / 1000 * speed_factor);
         this.addAcceleration(accel);
-        
     }
 
     public turnLeft(delta_time_ms: number): void {
         let amount = TURNING_DEGREES * delta_time_ms / 1000;
-        vec3.rotateY(this.forward, this.forward, [0,0,0], amount);
+        vec3.rotateY(this.forward, this.forward, [0, 0, 0], amount);
     }
 
     public turnRight(delta_time_ms: number): void {
         let amount = TURNING_DEGREES * delta_time_ms / 1000;
-        vec3.rotateY(this.forward, this.forward, [0,0,0], -amount);
+        vec3.rotateY(this.forward, this.forward, [0, 0, 0], -amount);
     }
 
     public transitionAnimationTo(state: Player_State): void {

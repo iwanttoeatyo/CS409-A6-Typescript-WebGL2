@@ -13,6 +13,8 @@ export enum Camera_Movement {
     RIGHT
 }
 
+let forward = vec3.create();
+
 export class Camera {
     public position: vec3;
     public front: vec3;
@@ -36,6 +38,8 @@ export class Camera {
         this.position = pos;
         this.front = vec3.fromValues(0, 0, -1);
         this.worldUp = up;
+        this.right = vec3.create();
+        this.up = vec3.create();
         this.movementSpeed = SPEED;
         this.mouseSensitivity = SENSITIVITY;
         this.zoom = ZOOM;
@@ -45,30 +49,22 @@ export class Camera {
         this.updateCameraVectors();
     }
 
-    public getViewMatrix(): mat4 {
-        let forward = vec3.create();
+    public getViewMatrix(out: mat4): mat4 {
         vec3.add(forward, this.position, this.front);
-
-        let look = mat4.create();
-        mat4.lookAt(look, this.position, forward, this.up);
-        return look;
+        mat4.lookAt(out, this.position, forward, this.up);
+        return out;
     }
 
     public lookAt(pos: vec3): void {
-        let a = vec3.create();
-        vec3.subtract(a, pos, this.position);
-        vec3.normalize(a, a);
-        this.front = a;
+        vec3.subtract(this.front, pos, this.position);
+        vec3.normalize(this.front, this.front);
     }
 
-    public getInverseViewMatrix(): mat4 {
-        let forward = vec3.create();
+    public getInverseViewMatrix(out:mat4 ): mat4 {
         vec3.add(forward, this.position, this.front);
-
-        let look = mat4.create();
-        mat4.lookAt(look, this.position, forward, this.up);
-        mat4.invert(look, look);
-        return look;
+        mat4.lookAt(out, this.position, forward, this.up);
+        mat4.invert(out, out);
+        return out;
     }
 
     public processKeyboard(direction: Camera_Movement, deltaTime: number): void {
@@ -133,15 +129,9 @@ export class Camera {
         let x = Math.cos(glMatrix.toRadian(this.yaw)) * Math.cos(glMatrix.toRadian(this.pitch));
         let y = Math.sin(glMatrix.toRadian(this.pitch));
         let z = Math.sin(glMatrix.toRadian(this.yaw)) * Math.cos(glMatrix.toRadian(this.pitch));
-        let newFront: vec3 = vec3.fromValues(x, y, z);
-        vec3.normalize(newFront, newFront);
-        this.front = newFront;
 
-        let cross: vec3 = vec3.create();
-        vec3.normalize(cross, vec3.cross(cross, this.front, this.worldUp));
-        this.right = cross;
-        let cross2: vec3 = vec3.create();
-        vec3.normalize(cross2, vec3.cross(cross2, this.right, this.front));
-        this.up = cross2;
+        vec3.normalize(this.front, vec3.set(this.front, x, y, z));
+        vec3.normalize(this.right, vec3.cross(this.right, this.front, this.worldUp));
+        vec3.normalize(this.up, vec3.cross(this.up, this.right, this.front));
     }
 }

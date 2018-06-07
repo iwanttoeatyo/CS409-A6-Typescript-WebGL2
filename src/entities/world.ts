@@ -105,14 +105,6 @@ export class World {
         this.disks = [];
     }
 
-    public update(delta_time_ms: number): void {}
-
-    // public draw(gl: WebGL2RenderingContext, view_matrix: mat4, projection_matrix: mat4): void {
-    //     this.disks.forEach(disk => {
-    //         disk.draw(gl, view_matrix, projection_matrix);
-    //     })
-    // }
-
     public getSpeedFactorAtPosition(x: number, z: number, radius: number = 0): number {
         for (let i = 0; i < this.disks.length; i++) {
             if (
@@ -157,10 +149,13 @@ export class World {
         return this.disks[i].position;
     }
 
-    public getRandomXZPosition(): vec3 {
+    public getRandomXZPosition(out:vec3): vec3 {
         let r = Math.sqrt(Random.randf(0, 1)) * this.world_radius;
         let t = Random.randf(0, Math.PI * 2);
-        return vec3.fromValues(r * Math.cos(t), 15.0, r * Math.sin(t));
+        out[0] = r * Math.cos(t);
+        out[1] = 0;
+        out[2] = r * Math.sin(t);
+        return out
     }
 
     public getHeightAtPointPosition(x: number, z: number): number {

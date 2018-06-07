@@ -20,6 +20,15 @@ const ICY_SIZE = 48;
 const SANDY_SIZE = 64;
 const GREY_ROCK_SIZE = 80;
 
+let p0 = vec3.create();
+let p1 = vec3.create();
+let p2 = vec3.create();
+let weights = vec3.create();
+let p = vec2.create();
+let p00 = vec2.create();
+let p11 = vec2.create();
+let p22 = vec2.create();
+
 export class Disk extends Entity {
     initialized: boolean;
     model: BasicModel;
@@ -507,9 +516,9 @@ export class Disk extends Entity {
         let fx = cx - ix;
         let fz = cz - kz;
 
-        let p0 = vec3.create();
-        let p1 = vec3.fromValues(ix, this.heightMap[ix][kz], kz);
-        let p2 = vec3.fromValues(ix + 1, this.heightMap[ix + 1][kz + 1], kz + 1);
+        vec3.set(p0, 0, 0, 0);
+        vec3.set(p1, ix, this.heightMap[ix][kz], kz);
+        vec3.set(p2, ix + 1, this.heightMap[ix + 1][kz + 1], kz + 1);
 
         //Upper right triangle
         if (fx > fz) {
@@ -526,12 +535,12 @@ export class Disk extends Entity {
         //height = (-normal.x*ix - normal.z*kz + normal.dotProduct(p0)) / normal.y;
 
         //Barycentric
-        let p = vec2.fromValues(cx, cz);
-        let p00 = vec2.fromValues(p0[0], p0[2]);
-        let p11 = vec2.fromValues(p1[0], p1[2]);
-        let p22 = vec2.fromValues(p2[0], p2[2]);
+        vec2.set(p, cx, cz);
+        vec2.set(p00, p0[0], p0[2]);
+        vec2.set(p11, p1[0], p1[2]);
+        vec2.set(p22, p2[0], p2[2]);
 
-        let weights: vec3 = MathHelper.barycentric(p, p00, p11, p22);
+        MathHelper.barycentric(weights, p, p00, p11, p22);
         height = weights[0] * p0[1] + weights[1] * p1[1] + weights[2] * p2[1];
 
         return height;

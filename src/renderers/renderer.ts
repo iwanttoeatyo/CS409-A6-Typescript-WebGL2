@@ -13,6 +13,9 @@ import { global } from "globals";
 import { Collision } from "../helpers/collision";
 
 let BIAS_MATRIX = mat4.fromValues(0.5, 0, 0, 0, 0, 0.5, 0, 0, 0, 0, 0.5, 0, 0.5, 0.5, 0.5, 1);
+let depth_vp: mat4 = mat4.create();
+let model_matrix = mat4.create();
+let q = quat.create();
 
 export class Renderer {
     private readonly gl: WebGL2RenderingContext;
@@ -22,7 +25,7 @@ export class Renderer {
     public active_shader: Shader;
     public basic_model_shader: BasicModelShader;
     public basic_model_shader_shadow: BasicModelShaderShadow;
-    private entities: Map<string, Entity>;
+    private entities: Entity[];
 
     public shadow_enabled: boolean;
     public depth_texture: DepthTexture;
@@ -36,7 +39,7 @@ export class Renderer {
 
         this.models = new Map<string, BasicModel>();
         this.materials = new Map<string, Material>();
-        this.entities = new Map<string, Entity>();
+        this.entities = [];
         this.meshless_models = new Map<string, MeshlessModel>();
 
         this.basic_model_shader = new BasicModelShader(this.gl);
@@ -46,6 +49,7 @@ export class Renderer {
     }
 
     initShadows(light_direction: vec4, camera_pointer: Pointer<Camera>): void {
+        this.shadow_map_space_matrix = mat4.create();
         this.light_view_matrix = mat4.create();
         this.light_direction = vec4.normalize(vec4.create(), light_direction);
         this.shadow_box = new ShadowBox(this.gl, this.light_view_matrix, camera_pointer);
@@ -54,12 +58,10 @@ export class Renderer {
 
     enableShadows(): void {
         this.shadow_enabled = true;
-        //Change shaders
     }
 
     disableShadows(): void {
         this.shadow_enabled = false;
-        //Change shaders
     }
 
     toggleShadows(): void {
@@ -91,9 +93,11 @@ export class Renderer {
     }
 
     public addEntityToRenderList(entity: Entity): void {
-        if (this.entities.get(entity.id) === undefined) {
-            this.entities.set(entity.id, entity);
+        let exists = false;
+        for (let i = 0; i < this.entities.length; i++) {
+            if (entity.id == this.entities[i].id) exists = true;
         }
+        if (!exists) this.entities.push(entity);
 
         if (entity.model_type == Model_Type.BASIC) {
             if (this.models.get(entity.mesh_name) === undefined) {
@@ -107,11 +111,13 @@ export class Renderer {
     }
 
     public removeEntity(entity: Entity) {
-        this.entities.delete(entity.id);
+        for (let i = 0; i < this.entities.length; i++) {
+            if (entity.id == this.entities[i].id) this.entities.splice(i, 1);
+        }
     }
 
     public removeAllEntities(): void {
-        this.entities = new Map<string, Entity>();
+        this.entities = [];
     }
 
     public removeAllModels(): void {
@@ -155,26 +161,26 @@ export class Renderer {
     public endRenderDepth(light_view_matrix: mat4, depth_proj_matrix: mat4): void {
         let gl = this.gl;
 
-        let depth_vp = mat4.mul(mat4.create(), depth_proj_matrix, light_view_matrix);
-        this.shadow_map_space_matrix = mat4.mul(mat4.create(), BIAS_MATRIX, depth_vp);
+        mat4.mul(depth_vp, depth_proj_matrix, light_view_matrix);
+        this.shadow_map_space_matrix = mat4.mul(this.shadow_map_space_matrix, BIAS_MATRIX, depth_vp);
 
         gl.disable(gl.POLYGON_OFFSET_FILL);
         gl.enable(gl.CULL_FACE);
         gl.cullFace(gl.BACK);
     }
 
-    public getDepthProjMatrix(): mat4 {
+    public getDepthProjMatrix(out: mat4): mat4 {
         this.shadow_box.update();
 
-        let depth_proj_matrix = mat4.create();
-        depth_proj_matrix[0] = 2.0 / this.shadow_box.getWidth();
-        depth_proj_matrix[5] = 2.0 / this.shadow_box.getHeight();
-        depth_proj_matrix[10] = -2.0 / this.shadow_box.getLength();
-        depth_proj_matrix[15] = 1;
-        return depth_proj_matrix;
+        mat4.identity(out);
+        out[0] = 2.0 / this.shadow_box.getWidth();
+        out[5] = 2.0 / this.shadow_box.getHeight();
+        out[10] = -2.0 / this.shadow_box.getLength();
+        out[15] = 1;
+        return out;
     }
 
-    public getLightViewMatrix(): mat4 {
+    public getLightViewMatrix(out: mat4): mat4 {
         this.shadow_box.update();
         let center = this.shadow_box.getCenter();
         vec3.negate(center, center);
@@ -196,12 +202,12 @@ export class Renderer {
 
         mat4.rotateY(this.light_view_matrix, this.light_view_matrix, yaw + Math.PI / 2);
         mat4.translate(this.light_view_matrix, this.light_view_matrix, center);
-        return mat4.clone(this.light_view_matrix);
+        mat4.copy(out, this.light_view_matrix);
+        return out;
     }
 
     public render(view_matrix: mat4, projection_matrix: mat4, camera_position: vec3): void {
         this.renderModels(this.entities, view_matrix, projection_matrix, camera_position);
-        //  this.renderMeshlessModels(view_matrix, projection_matrix,camera_position);
     }
 
     public renderCull(
@@ -210,8 +216,8 @@ export class Renderer {
         camera_position: vec3,
         distance_from_camera: number
     ): void {
-        let entities = new Map<string, Entity>();
-        for (const [key, entity] of this.entities.entries()) {
+        let entities = [];
+        for (let entity of this.entities) {
             if (
                 Collision.circleIntersection(
                     entity.position[0],
@@ -222,60 +228,41 @@ export class Renderer {
                     distance_from_camera
                 )
             )
-                entities.set(key, entity);
+                entities.push(entity);
         }
         this.renderModels(entities, view_matrix, projection_matrix, camera_position);
     }
 
-    private renderModels(
-        entities: Map<string, Entity>,
-        view_matrix: mat4,
-        projection_matrix: mat4,
-        camera_position: vec3
-    ) {
-        //Find list of materials that have meshes to draw
-        let mat_list = [];
-        let model_matrix = mat4.create();
-        let q = quat.create();
-        for (const [key, model] of this.models.entries()) {
-            for (const i in model.mesh.materialNames) {
-                if (mat_list.indexOf(model.mesh.materialsByIndex[i].name) < 0) {
-                    mat_list.push(model.mesh.materialsByIndex[i].name);
-                }
-            }
-        }
-
-        for (const [key, model] of this.meshless_models.entries()) {
-            if (mat_list.indexOf(model.material.name) < 0) {
-                mat_list.push(model.material.name);
-            }
-        }
-
+    private renderModels(entities: Entity[], view_matrix: mat4, projection_matrix: mat4, camera_position: vec3) {
         //For each material draw all of the meshes that use it
         let material_act = 0;
         let buffer_act = 0;
         let draw_calls = 0;
-        for (let j = 0; j < mat_list.length; j++) {
+        let entities_to_draw = [];
+        for (const material_key of this.materials.keys()) {
+            let material = this.materials.get(material_key);
             let activated = false;
 
             //Loop over models
-            for (const [key, model] of this.models.entries()) {
+            for (const model_key of this.models.keys()) {
+                let model = this.models.get(model_key);
                 //This model doesn't have this material
-                if (model.mesh.materialIndices[mat_list[j]] === undefined) continue;
+                if (model.mesh.materialIndices[material_key] === undefined) continue;
 
-                let entities_to_draw = [];
-                for (const [key, entity] of entities.entries()) {
+                entities_to_draw.length = 0;
+                for (let entity of entities) {
                     if (entity.model_type == Model_Type.BASIC && model.mesh.name == entity.mesh_name) {
                         entities_to_draw.push(entity);
                     }
                 }
+
                 if (entities_to_draw.length == 0) continue;
 
                 //Find the correct material and activate it
-                let mat_id = model.mesh.materialIndices[mat_list[j]];
+                let mat_id = model.mesh.materialIndices[material_key];
 
                 if (!activated) {
-                    this.active_shader.activateMaterial(model.mesh.materialsByIndex[mat_id]);
+                    this.active_shader.activateMaterial(material);
                     activated = true;
                     material_act++;
                 }
@@ -294,12 +281,13 @@ export class Renderer {
             }
 
             //Loop over meshless models
-            for (const [key, model] of this.meshless_models.entries()) {
-                if (model.material.name !== mat_list[j]) continue;
+            for (const model_key of this.meshless_models.keys()) {
+                let model = this.meshless_models.get(model_key);
+                if (model.material.name !== material.name) continue;
 
                 //Find all the things we want to draw with this model
-                let entities_to_draw = [];
-                for (const [key, entity] of entities.entries()) {
+                entities_to_draw.length = 0;
+                for (let entity of entities) {
                     if (entity.model_type == Model_Type.MESHLESS && model.name == entity.mesh_name) {
                         entities_to_draw.push(entity);
                     }
@@ -311,7 +299,7 @@ export class Renderer {
                     buffer_act++;
                     //Activate the material
                     if (!activated) {
-                        this.active_shader.activateMaterial(model.material);
+                        this.active_shader.activateMaterial(material);
                         activated = true;
                         material_act++;
                     }
@@ -333,7 +321,6 @@ export class Renderer {
                 }
             }
         }
-
         // console.log("material activations: " + material_act);
         // console.log("buffer activations: " + buffer_act);
         // console.log("draw calls: " + draw_calls);

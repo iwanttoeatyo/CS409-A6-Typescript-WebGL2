@@ -25,6 +25,10 @@ let renderer: Renderer;
 const PLAYER_CAMERA_OFFSET = vec3.fromValues(0, 0.8, 0);
 const LIGHT_DIRECTION = vec4.fromValues(0.34, 0.83, 0.44, 0.0);
 
+let model_matrix: mat4 = mat4.create();
+let projection_matrix: mat4 = mat4.create();
+let view_matrix: mat4 = mat4.create();
+
 export class Game {
     readonly ROD_FILENAME: string = "/assets/models/environment/rod/Rod";
     readonly RING_FILENAME: string = "/assets/models/environment/ring/Ring";
@@ -46,6 +50,7 @@ export class Game {
     private player_camera: Camera = new Camera(vec3.fromValues(0, 1.6, 0), vec3.fromValues(0, 1, 0), 0);
     private overview_camera: Camera = new Camera(vec3.fromValues(100, 190, 10), vec3.fromValues(0, 1, 0), 0, 0);
     private active_camera: Pointer<Camera> = new Pointer<Camera>(this.player_camera);
+    private camera_lock: boolean = false;
 
     private current_map: number = 0;
     public show_path: boolean = true;
@@ -88,9 +93,7 @@ export class Game {
     private initBats(): void {
         this.bats = [];
         for (let disk of this.world.disks) {
-            let pos = this.world.getRandomXZPosition();
-            pos[1] = 15.0;
-            this.bats.push(new Bat(pos, this.bat_model, this.player, this.world));
+            this.bats.push(new Bat(this.bat_model, this.player, this.world));
         }
     }
 
@@ -125,33 +128,36 @@ export class Game {
         let ring = this.pickup_manager.rings[0];
         let path = ring.path;
         let offset = vec3.fromValues(0, 1, 0);
+        let white = vec4.fromValues(1,1,1,1);
+        let position = vec3.create();
+        let target = vec3.create();
         let node_list = this.world_graph.getNodeList();
 
         global.line_renderer.prepare();
         global.line_renderer.preAllocatePointLine(path.length * 2 + 6);
         global.line_renderer.addLine(
             ring.position,
-            vec3.add(vec3.create(), ring.position, offset),
-            vec4.fromValues(1, 1, 1, 1)
+            vec3.add(position, ring.position, offset),
+            white
         );
         global.line_renderer.addLine(
-            vec3.add(vec3.create(), ring.position, offset),
-            vec3.add(vec3.create(), ring.target_position, offset),
-            vec4.fromValues(1, 1, 1, 1)
+            vec3.add(position, ring.position, offset),
+            vec3.add(target, ring.target_position, offset),
+            white
         );
 
         if (path.length) {
             global.line_renderer.addLine(
-                vec3.add(vec3.create(), node_list[ring.target_node_id].pos, offset),
-                vec3.add(vec3.create(), node_list[path[0]].pos, offset),
-                vec4.fromValues(1, 1, 1, 1)
+                vec3.add(position, node_list[ring.target_node_id].pos, offset),
+                vec3.add(target, node_list[path[0]].pos, offset),
+                white
             );
 
             for (let i = 0; i < path.length - 1; i++) {
                 global.line_renderer.addLine(
-                    vec3.add(vec3.create(), node_list[path[i]].pos, offset),
-                    vec3.add(vec3.create(), node_list[path[i + 1]].pos, offset),
-                    vec4.fromValues(1, 1, 1, 1)
+                    vec3.add(position, node_list[path[i]].pos, offset),
+                    vec3.add(target, node_list[path[i + 1]].pos, offset),
+                    white
                 );
             }
         }
@@ -247,6 +253,19 @@ export class Game {
             global.poor_performance = !global.poor_performance;
         }
 
+        //R to reset
+        if (g_keys[82]) {
+            this.player.reset(this.world);
+        }
+
+        //O to switch to overview camera
+        if (g_keys[79]) {
+            this.active_camera.value = this.overview_camera;
+            this.camera_lock = false;
+        } else {
+            if (!this.camera_lock) this.active_camera.value = this.player_camera;
+        }
+
         if (global.poor_performance) renderer.disableShadows();
         else renderer.enableShadows();
 
@@ -257,7 +276,6 @@ export class Game {
         );
 
         //Movement
-
         if (g_keys[40] || g_keys[83]) {
             this.player.accelerateBackward(delta_ms, accel_factor);
         } else if (g_keys[38] || g_keys[87] || (g_mouse_keys[1] && g_mouse_keys[3])) {
@@ -289,24 +307,11 @@ export class Game {
         this.player.update(this.world, delta_ms);
 
         for (let bat of this.bats) {
-            //bat.update(delta_ms);
+            bat.update(delta_ms);
         }
 
         this.batPlayerCollisions();
 
-        //R to reset
-        if (g_keys[82]) {
-            this.player.reset(this.world);
-        }
-
-        //O to switch to overview camera
-        if(!global.is_mobile){
-            if (g_keys[79]) {
-                this.active_camera.value = this.overview_camera;
-            } else {
-                this.active_camera.value = this.player_camera;
-            } 
-        }
 
 
         //Mouse rotate
@@ -320,7 +325,6 @@ export class Game {
         );
         global.resetMousePosition();
 
-        this.world.update(delta_ms);
         this.pickup_manager.update(delta_ms);
 
         this.pickup_manager.checkForPickupsCylinderIntersection(
@@ -335,32 +339,35 @@ export class Game {
         this.player_camera.front[2] = this.player.forward[2];
         this.player_camera.up = this.player.up;
 
-        let new_cam_position = vec3.clone(this.player.position);
-        new_cam_position[0] -= 3.0 * this.player.forward[0];
-        new_cam_position[2] -= 3.0 * this.player.forward[2];
-        vec3.add(new_cam_position, new_cam_position, PLAYER_CAMERA_OFFSET);
-        vec3.copy(this.player_camera.position, new_cam_position);
+        vec3.copy(this.player_camera.position, this.player.position);
+        this.player_camera.position[0] -= 3.0 * this.player.forward[0];
+        this.player_camera.position[2] -= 3.0 * this.player.forward[2];
+        vec3.add(this.player_camera.position, this.player_camera.position, PLAYER_CAMERA_OFFSET);
     }
 
     public draw(): void {
-        let camera = vec3.clone(this.active_camera.value.position);
+        let camera_pos = this.active_camera.value.position;
 
         if (renderer.shadow_enabled) {
-            let depth_proj_matrix = renderer.getDepthProjMatrix();
-            let light_view_matrix = renderer.getLightViewMatrix();
+            let light_view_matrix = view_matrix;
+            let depth_proj_matrix = projection_matrix;
+
+            renderer.getDepthProjMatrix(depth_proj_matrix);
+            renderer.getLightViewMatrix(light_view_matrix);
 
             //Render Shadows to Depth Texture
             renderer.beginRenderDepth();
-            this.player.draw(gl, renderer.active_shader, light_view_matrix, depth_proj_matrix, camera);
-            renderer.renderCull(light_view_matrix, depth_proj_matrix, camera, global.SHADOW_DISTANCE * 2);
+            this.player.draw(gl, renderer.active_shader, light_view_matrix, depth_proj_matrix, camera_pos);
+            renderer.renderCull(light_view_matrix, depth_proj_matrix, camera_pos, global.SHADOW_DISTANCE * 2);
             renderer.endRenderDepth(light_view_matrix, depth_proj_matrix);
         }
 
         //Render To Screen
-        let projection_matrix = mat4.create();
-        let view_matrix = this.active_camera.value.getViewMatrix();
-
         mat4.identity(projection_matrix);
+        mat4.identity(view_matrix);
+        mat4.identity(model_matrix);
+        this.active_camera.value.getViewMatrix(view_matrix);
+
         mat4.perspective(
             projection_matrix,
             glMatrix.toRadian(global.FOV),
@@ -368,23 +375,22 @@ export class Game {
             0.1,
             2000
         );
-
+        //
         renderer.beginRender();
-        let model = mat4.create();
 
         //Draw Skybox
         gl.disable(gl.DEPTH_TEST);
-        mat4.translate(model, model, this.active_camera.value.position);
-        renderer.active_shader.setMVPMatrices(model, view_matrix, projection_matrix, camera);
+        mat4.translate(model_matrix, model_matrix, this.active_camera.value.position);
+        renderer.active_shader.setMVPMatrices(model_matrix, view_matrix, projection_matrix, camera_pos);
         this.skybox_model.draw(gl, renderer.active_shader);
         gl.enable(gl.DEPTH_TEST);
 
         //Draw all entities in renderer
         if (this.active_camera.value == this.player_camera && global.poor_performance)
-            renderer.renderCull(view_matrix, projection_matrix, camera, 100);
-        else renderer.render(view_matrix, projection_matrix, camera);
+            renderer.renderCull(view_matrix, projection_matrix, camera_pos, 100);
+        else renderer.render(view_matrix, projection_matrix, camera_pos);
 
-        this.player.draw(gl, renderer.active_shader, view_matrix, projection_matrix, camera);
+        this.player.draw(gl, renderer.active_shader, view_matrix, projection_matrix, camera_pos);
 
         if (this.show_path) {
             this.displayMovementGraph(view_matrix, projection_matrix);
@@ -396,11 +402,13 @@ export class Game {
         // if(renderer.shadow_enabled)
         //     global.renderer.depth_texture.renderDepthTextureToQuad(0, 0, 256, 256);
     }
-    
-    public toggleCamera():void{
-        if(this.active_camera.value == this.overview_camera){
-            this.active_camera.value = this.player_camera
-        }else{
+
+    public toggleCamera(): void {
+        if (this.active_camera.value == this.overview_camera) {
+            this.camera_lock = false;
+            this.active_camera.value = this.player_camera;
+        } else {
+            this.camera_lock = true;
             this.active_camera.value = this.overview_camera;
         }
     }
@@ -421,7 +429,7 @@ export class Game {
             ) {
                 this.player.hitByBat(bat.velocity);
 
-                bat.velocity = vec3.fromValues(0, bat.S_MAX, 0);
+                vec3.set(bat.velocity, 0, bat.S_MAX, 0);
                 bat.ignore_timer = 1.0;
 
                 //global.particle_emitter.addEffect(500, bat.position, 0.03, vec4.fromValues(1,1,0.3, 1), 600, Particle_Pattern.Random, 2.0, 0.0);
@@ -487,15 +495,15 @@ export class Game {
 
                     //Set these colors for distinguished nodes
                     if (i === start_node_id) vec4.set(color, 0, 1, 1, 1);
-                    if (i === meeting_node_id) vec4.set(color, 1, 1, 1, 1);
-                    if (i === end_node_id) vec4.set(color, 0.6, 0, 1, 1);
+                    if (i === meeting_node_id) vec4.set(color, 0.6, 0, 1, 1);
+                    if (i === end_node_id) vec4.set(color, 1, 1, 1, 1);
 
                     //Draw
-                    let model = mat4.create();
-                    mat4.translate(model, model, this.world_graph.getNodeList()[i].pos);
-                    mat4.scale(model, model, vec3.fromValues(scale, scale, scale));
+                    mat4.identity(model_matrix)
+                    mat4.translate(model_matrix, model_matrix, this.world_graph.getNodeList()[i].pos);
+                    mat4.scale(model_matrix, model_matrix, vec3.fromValues(scale, scale, scale));
 
-                    global.sphere_renderer.draw(color, model, view_matrix, projection_matrix);
+                    global.sphere_renderer.draw(color, model_matrix, view_matrix, projection_matrix);
                 }
             }
     }
