@@ -1,4 +1,4 @@
-import { glMatrix, mat4, vec3 } from "gl-matrix";
+import {glMatrix, mat4, vec3} from "gl-matrix";
 
 const YAW: number = 90.0;
 const PITCH: number = 0.0;
@@ -60,7 +60,7 @@ export class Camera {
         vec3.normalize(this.front, this.front);
     }
 
-    public getInverseViewMatrix(out:mat4 ): mat4 {
+    public getInverseViewMatrix(out: mat4): mat4 {
         vec3.add(forward, this.position, this.front);
         mat4.lookAt(out, this.position, forward, this.up);
         mat4.invert(out, out);

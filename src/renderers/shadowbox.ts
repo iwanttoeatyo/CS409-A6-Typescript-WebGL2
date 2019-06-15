@@ -11,17 +11,17 @@
  * @author Karl
  * Site: https://www.dropbox.com/sh/g9vnfiubdglojuh/AACpq1KDpdmB8ZInYxhsKj2Ma/shadows?dl=0
  * Youtube tutorial:
- *		https://www.youtube.com/watch?v=o6zDfDkOFIc
- *		https://www.youtube.com/watch?v=9sEHkT7N7RM
+ *        https://www.youtube.com/watch?v=o6zDfDkOFIc
+ *        https://www.youtube.com/watch?v=9sEHkT7N7RM
  *
  * Modified by Chris Boyd
  * Date Jan 27,2018
  *
  */
-import { glMatrix, mat4, vec3, vec4 } from "gl-matrix";
-import { Camera } from "../camera";
-import { Pointer } from "../helpers/pointer";
-import { global } from "globals";
+import {glMatrix, mat4, vec3, vec4} from "gl-matrix";
+import {Camera} from "../camera";
+import {Pointer} from "../helpers/pointer";
+import {global} from "globals";
 
 export class ShadowBox {
     private SHADOW_DISTANCE: number = global.SHADOW_DISTANCE || 45.0;
@@ -59,8 +59,8 @@ export class ShadowBox {
      * @param camera
      *            - pointer to the pointer of the in-game camera. So it can be swapped.
      * @param shadow_distance
-     *			 - The edge of the shadow box, how far we want to see shadows.
-     *			 a higher value will have lower quality shadows.
+     *             - The edge of the shadow box, how far we want to see shadows.
+     *             a higher value will have lower quality shadows.
      */
     constructor(
         gl: WebGL2RenderingContext,
@@ -81,7 +81,7 @@ export class ShadowBox {
      * (within a certain range) will cast shadows.
      */
     public update() {
-   
+
         let forward_vector: vec3 = vec3.clone(this.camera.value.front);
         let up_vector: vec3 = vec3.clone(this.camera.value.up);
         let to_far: vec3 = vec3.scale(vec3.create(), forward_vector, this.SHADOW_DISTANCE);

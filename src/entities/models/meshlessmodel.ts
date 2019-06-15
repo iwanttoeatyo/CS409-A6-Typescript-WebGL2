@@ -1,6 +1,6 @@
-import { Disk } from "../disk";
-import { Material } from "../../lib/OBJ";
-import { BasicModelShader } from "../../basicmodelshader";
+import {Disk} from "../disk";
+import {Material} from "../../lib/OBJ";
+import {BasicModelShader} from "../../basicmodelshader";
 import * as assert from "assert";
 
 export class MeshlessModel {

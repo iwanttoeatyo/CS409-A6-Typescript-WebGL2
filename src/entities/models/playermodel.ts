@@ -1,8 +1,8 @@
-import { BasicModel } from "./basicmodel";
-import { MaterialLibrary } from "../../lib/OBJ";
-import { mat4, vec3 } from "gl-matrix";
-import { KeyframeInterpModel } from "./keyframeInterpModel";
-import { Shader } from "../../shader";
+import {BasicModel} from "./basicmodel";
+import {MaterialLibrary} from "../../lib/OBJ";
+import {mat4, vec3} from "gl-matrix";
+import {KeyframeInterpModel} from "./keyframeInterpModel";
+import {Shader} from "../../shader";
 
 let OBJ = require("../../lib/OBJ/index.js");
 
@@ -44,19 +44,19 @@ export class PlayerModel {
 
     public radius: number = 0.25;
     public half_height: number = 0.8;
-    private model_run_offset:vec3 = vec3.fromValues(0,-0.075, 0);
+    private model_run_offset: vec3 = vec3.fromValues(0, -0.075, 0);
 
     constructor() {
         this.run_frames = new Array<Frame>(7);
-        for (let frame of this.run_frames) frame = { model: null, duration: null };
+        for (let frame of this.run_frames) frame = {model: null, duration: null};
 
-        this.run_frames[0] = { model: null, duration: 260 };
-        this.run_frames[1] = { model: null, duration: 260 };
-        this.run_frames[2] = { model: null, duration: 260 };
-        this.run_frames[3] = { model: null, duration: 350 };
-        this.run_frames[4] = { model: null, duration: 260 };
-        this.run_frames[5] = { model: null, duration: 260 };
-        this.run_frames[6] = { model: null, duration: 260 };
+        this.run_frames[0] = {model: null, duration: 260};
+        this.run_frames[1] = {model: null, duration: 260};
+        this.run_frames[2] = {model: null, duration: 260};
+        this.run_frames[3] = {model: null, duration: 350};
+        this.run_frames[4] = {model: null, duration: 260};
+        this.run_frames[5] = {model: null, duration: 260};
+        this.run_frames[6] = {model: null, duration: 260};
         this.run_state = Run_State.Start;
     }
 

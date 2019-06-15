@@ -1,5 +1,5 @@
-import { mat4, vec3, vec4 } from "gl-matrix";
-import { Material } from "./lib/OBJ/";
+import {mat4, vec3, vec4} from "gl-matrix";
+import {Material} from "./lib/OBJ/";
 
 export class Uniforms {
     model_matrix: WebGLUniformLocation;

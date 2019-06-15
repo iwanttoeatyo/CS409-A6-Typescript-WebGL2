@@ -1,8 +1,7 @@
-import { Collision } from "./helpers/collision";
-import { Disk } from "./entities/disk";
+import { Collision } from "helpers/collision";
+import { Disk } from "entities/disk";
 import { vec3 } from "gl-matrix";
 import * as assert from "assert";
-import Collections = require("typescript-collections");
 import {PriorityQueue} from "typescript-collections";
 
 const HIGH_VALUE = Number.MAX_VALUE;
@@ -101,7 +100,7 @@ export class MovementGraph {
 
     private queue_start:PriorityQueue<QueueNode>;
     private queue_end:PriorityQueue<QueueNode>;
-    
+
     //The node ids organized per disk
     private readonly disk_node_list: number[][] = [];
 
@@ -116,8 +115,8 @@ export class MovementGraph {
         this.node_list = [];
         this.disk_node_list = Array(...Array(size)).map(() => Array(0));
 
-        this.queue_start = new Collections.PriorityQueue<QueueNode>(compare);
-        this.queue_end = new Collections.PriorityQueue<QueueNode>(compare);
+        this.queue_start = new PriorityQueue<QueueNode>(compare);
+        this.queue_end = new PriorityQueue<QueueNode>(compare);
 
         for (let i = 0; i < size; i++) {
             for (let j = i + 1; j < size; j++) {
@@ -361,7 +360,7 @@ export class MovementGraph {
         //It is on both Closed List 1 and 2
         this.search_data[curr].end.visited = true;
         this.search_data[curr].start.visited = true;
-        
+
         return this.getmmPath(node_start_id, curr, node_end_id);
     }
 

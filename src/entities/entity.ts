@@ -1,5 +1,5 @@
-import { vec3 } from "gl-matrix";
-import { Guid } from "../lib/guid/guid";
+import {vec3} from "gl-matrix";
+import {Guid} from "../lib/guid/guid";
 
 export enum Model_Type {
     BASIC = 0,
@@ -34,7 +34,7 @@ export class Entity {
         this.model_type = model_type;
     }
 
-    public getRight(out:vec3):vec3 {
+    public getRight(out: vec3): vec3 {
         vec3.cross(out, this.forward, this.up);
         return out;
     }

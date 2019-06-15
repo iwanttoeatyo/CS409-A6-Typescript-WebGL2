@@ -1,18 +1,17 @@
-import { Player } from "entities/player";
-import { World } from "entities/world";
-import { global } from "globals";
-import { PickupManager } from "pickupmanager";
-import { Camera } from "camera";
-import { glMatrix, mat4, vec3, vec4 } from "gl-matrix";
-import { BasicModel } from "entities/models/basicmodel";
-import { Renderer } from "renderers/renderer";
-import { Player_State } from "entities/models/playermodel";
-import { MovementGraph } from "movementgraph";
-import { PointList } from "renderers/linerenderer";
-import { Bat } from "entities/bat";
-import { Collision } from "helpers/collision";
-import { Pointer } from "./helpers/pointer";
-import is_mobile = global.is_mobile;
+import {Player} from "entities/player";
+import {World} from "entities/world";
+import {global} from "globals";
+import {PickupManager} from "pickupmanager";
+import {Camera} from "camera";
+import {glMatrix, mat4, vec3, vec4} from "gl-matrix";
+import {BasicModel} from "entities/models/basicmodel";
+import {Renderer} from "renderers/renderer";
+import {Player_State} from "entities/models/playermodel";
+import {MovementGraph} from "movementgraph";
+import {PointList} from "renderers/linerenderer";
+import {Bat} from "entities/bat";
+import {Collision} from "helpers/collision";
+import {Pointer} from "./helpers/pointer";
 
 let OBJ = require("lib/OBJ/index.js");
 
@@ -416,7 +415,7 @@ export class Game {
     public reset():void{
         this.player.reset(this.world);
     }
-    
+
     public batPlayerCollisions(): void {
         for (let bat of this.bats) {
             if (bat.ignore_timer > 0) continue;
@@ -598,6 +597,6 @@ export class Game {
     private async loadWorldData(): Promise<void> {
         Game.maps = [];
         let context = require.context("assets/worlds/maps/", true, /\.txt$/);
-        context.keys().forEach(key => Game.maps.push(context(key)));
+        context.keys().forEach(key => Game.maps.push(context(key).default));
     }
 }

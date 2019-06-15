@@ -1,6 +1,6 @@
-import { Shader } from "../../shader";
-import { Material, Mesh } from "../../lib/OBJ/index.js";
-import { global } from "globals";
+import {Shader} from "../../shader";
+import {Material, Mesh} from "../../lib/OBJ/index.js";
+import {global} from "globals";
 
 let OBJ = require("../../lib/OBJ/index.js");
 

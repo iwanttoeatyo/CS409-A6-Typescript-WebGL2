@@ -1,11 +1,11 @@
-import { Entity, Model_Type } from "./entity";
-import { Player } from "./player";
-import { World } from "./world";
-import { BasicModel } from "./models/basicmodel";
-import { vec3 } from "gl-matrix";
-import { Random } from "../helpers/random";
-import { Collision } from "../helpers/collision";
-import { MathHelper } from "../helpers/mathhelper";
+import {Entity, Model_Type} from "./entity";
+import {Player} from "./player";
+import {World} from "./world";
+import {BasicModel} from "./models/basicmodel";
+import {vec3} from "gl-matrix";
+import {Random} from "../helpers/random";
+import {Collision} from "../helpers/collision";
+import {MathHelper} from "../helpers/mathhelper";
 import vec3_truncate = MathHelper.vec3_truncate;
 
 enum Bat_State {
@@ -45,10 +45,10 @@ export class Bat extends Entity {
 
         this.velocity = vec3.fromValues(Random.randf(0, this.S_MAX), 0, Random.randf(0, this.S_MAX));
         vec3.normalize(this.forward, this.velocity);
-        
+
         this.position = this.world.getRandomXZPosition(vec3.create());
         this.position[1] = 15.0;
-        
+
         this.target_position = this.world.getRandomXZPosition(vec3.create());
         this.target_position[1] = 15.0;
     }

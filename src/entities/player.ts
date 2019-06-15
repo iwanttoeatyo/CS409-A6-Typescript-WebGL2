@@ -1,11 +1,11 @@
-import { mat4, quat, vec2, vec3 } from "gl-matrix";
+import {mat4, quat, vec2, vec3} from "gl-matrix";
 
-import { Player_State, PlayerModel } from "./models/playermodel";
-import { Entity, Model_Type } from "./entity";
-import { World } from "./world";
-import { MathHelper } from "../helpers/mathhelper";
+import {Player_State, PlayerModel} from "./models/playermodel";
+import {Entity, Model_Type} from "./entity";
+import {World} from "./world";
+import {MathHelper} from "../helpers/mathhelper";
 import * as assert from "assert";
-import { Shader } from "../shader";
+import {Shader} from "../shader";
 import vec2_rotate = MathHelper.vec2_rotate;
 
 const SPEED = 10;
@@ -23,8 +23,8 @@ let dir = vec2.create();
 let min_direction = vec2.create();
 let GRAVITY = vec3.fromValues(0, -9.8, 0);
 
-let model_matrix:mat4 = mat4.create();
-let q:quat = quat.create();
+let model_matrix: mat4 = mat4.create();
+let q: quat = quat.create();
 
 export class Player extends Entity {
     public model: PlayerModel;
@@ -149,6 +149,7 @@ export class Player extends Entity {
             this.jumping = true;
         }
     }
+
     public reset(world: World): void {
         vec3.copy(this.position, world.disks[0].position);
         this.position[1] = world.getHeightAtPointPosition(this.position[0], this.position[2]) + this.model.half_height;
@@ -162,7 +163,7 @@ export class Player extends Entity {
 
     public jump(): void {
         if (this.jumping) return;
-        vec3.set(this.velocity,0,JUMP_UP_SPEED,0);
+        vec3.set(this.velocity, 0, JUMP_UP_SPEED, 0);
         vec3.scaleAndAdd(this.velocity, this.velocity, this.forward, JUMP_FORWARD_SPEED);
         this.model.setState(Player_State.Jumping);
         this.jumping = true;

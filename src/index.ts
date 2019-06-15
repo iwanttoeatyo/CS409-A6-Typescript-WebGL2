@@ -1,10 +1,10 @@
-import { Game } from "./game";
-import { global } from "./globals";
+import { Game } from "game";
+import { global } from "globals";
 import { BasicModelShader } from "./basicmodelshader";
-import { Renderer } from "./renderers/renderer";
-import { LineRenderer } from "./renderers/linerenderer";
+import { Renderer } from "renderers/renderer";
+import { LineRenderer } from "renderers/linerenderer";
 import keys = global.keys;
-import { SphereRenderer } from "./renderers/sphererenderer";
+import { SphereRenderer } from "renderers/sphererenderer";
 import is_mobile = global.is_mobile;
 import renderer = global.renderer;
 
@@ -27,6 +27,7 @@ export class Main {
 
     constructor() {
         global.canvas = <HTMLCanvasElement>document.getElementById("canvas");
+        global.parent = <HTMLDivElement>document.getElementById("parent");
         this.initGL();
 
         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
@@ -53,7 +54,7 @@ export class Main {
         hq_toggle_element.addEventListener("click",function(){
             global.poor_performance = !global.poor_performance;
         },false);
-        
+
         path_toggle_element.addEventListener("click",
             e => {
                 this.game.show_path = !this.game.show_path;
@@ -193,12 +194,8 @@ export class Main {
         // Start by going fullscreen with the element.  Current implementations
         // require the element to be in fullscreen before requesting pointer
         // lock--something that will likely change in the future.
-        _canvas.requestFullscreen =
-            _canvas.requestFullscreen ||
-            _canvas.mozRequestFullscreen ||
-            _canvas.mozRequestFullScreen || // Older API upper case 'S'.
-            _canvas.webkitRequestFullscreen;
-        _canvas.addEventListener("click", _canvas.requestFullscreen, false);
+
+        global.parent.addEventListener("click", global.parent.requestFullscreen as any, false);
 
         document.addEventListener("fullscreenchange", this.fullscreenChange, false);
         document.addEventListener("mozfullscreenchange", this.fullscreenChange, false);
@@ -211,12 +208,13 @@ export class Main {
 
     private fullscreenChange = e => {
         let document: any = window.document;
+        let _parent: any = global.parent;
         let _canvas: any = global.canvas;
         if (
-            document.webkitFullscreenElement === _canvas ||
-            document.mozFullscreenElement === _canvas ||
-            document.mozFullScreenElement === _canvas ||
-            document.fullscreenElement === _canvas
+            document.webkitFullscreenElement === _parent ||
+            document.mozFullscreenElement === _parent ||
+            document.mozFullScreenElement === _parent ||
+            document.fullscreenElement === _parent
         ) {
             // Older API upper case 'S'.
             // Element is fullscreen, now we can request pointer lock

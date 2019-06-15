@@ -1,13 +1,13 @@
-import { vec2, vec3 } from "gl-matrix";
+import {vec2, vec3} from "gl-matrix";
 
 export namespace MathHelper {
     let empty = vec2.create();
-    let v0 = vec2.create(),v1 = vec2.create(),v2 = vec2.create();
-    
-    export function barycentric(out:vec3, p: vec2, a: vec2, b: vec2, c: vec2): vec3 {
-        vec2.copy(v0,empty);
-        vec2.copy(v1,empty);
-        vec2.copy(v2,empty);
+    let v0 = vec2.create(), v1 = vec2.create(), v2 = vec2.create();
+
+    export function barycentric(out: vec3, p: vec2, a: vec2, b: vec2, c: vec2): vec3 {
+        vec2.copy(v0, empty);
+        vec2.copy(v1, empty);
+        vec2.copy(v2, empty);
         vec2.sub(v0, b, a);
         vec2.sub(v1, c, a);
         vec2.sub(v2, p, a);

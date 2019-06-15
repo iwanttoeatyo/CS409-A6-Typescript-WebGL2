@@ -1,9 +1,9 @@
-import { Disk, Terrain } from "./disk";
-import { MaterialLibrary, Mesh } from "../lib/OBJ/index.js";
-import { vec3 } from "gl-matrix";
-import { Collision } from "../helpers/collision";
-import { Random } from "../helpers/random";
-import { BasicModel } from "./models/basicmodel";
+import {Disk, Terrain} from "./disk";
+import {MaterialLibrary, Mesh} from "../lib/OBJ/index.js";
+import {vec3} from "gl-matrix";
+import {Collision} from "../helpers/collision";
+import {Random} from "../helpers/random";
+import {BasicModel} from "./models/basicmodel";
 
 let OBJ = require("../lib/OBJ/index.js");
 
@@ -149,7 +149,7 @@ export class World {
         return this.disks[i].position;
     }
 
-    public getRandomXZPosition(out:vec3): vec3 {
+    public getRandomXZPosition(out: vec3): vec3 {
         let r = Math.sqrt(Random.randf(0, 1)) * this.world_radius;
         let t = Random.randf(0, Math.PI * 2);
         out[0] = r * Math.cos(t);
@@ -255,7 +255,7 @@ export class World {
     }
 
     private static async loadWorldMat(): Promise<MaterialLibrary> {
-        let mat = new MaterialLibrary(require("../../assets/models/environment/disks/Disks.mtl"));
+        let mat = new MaterialLibrary(require("../../assets/models/environment/disks/Disks.mtl").default);
         await OBJ.downloadMtlTextures(
             mat,
             window.location.href.substr(0, window.location.href.lastIndexOf("/")) + "/assets/models/environment/disks/"

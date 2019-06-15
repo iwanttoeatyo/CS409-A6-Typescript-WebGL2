@@ -1,11 +1,11 @@
-import { BasicModel } from "./entities/models/basicmodel";
-import { Ring } from "./entities/ring";
-import { Rod } from "./entities/rod";
-import { World } from "./entities/world";
-import { vec3 } from "gl-matrix";
-import { Collision } from "./helpers/collision";
-import { Renderer } from "./renderers/renderer";
-import { MovementGraph } from "./movementgraph";
+import {BasicModel} from "./entities/models/basicmodel";
+import {Ring} from "./entities/ring";
+import {Rod} from "./entities/rod";
+import {World} from "./entities/world";
+import {vec3} from "gl-matrix";
+import {Collision} from "./helpers/collision";
+import {Renderer} from "./renderers/renderer";
+import {MovementGraph} from "./movementgraph";
 
 export class PickupManager {
     private readonly rod_model: BasicModel;

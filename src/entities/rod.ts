@@ -1,6 +1,6 @@
-import { Entity, Model_Type } from "./entity";
-import { BasicModel } from "./models/basicmodel";
-import { vec3 } from "gl-matrix";
+import {Entity, Model_Type} from "./entity";
+import {BasicModel} from "./models/basicmodel";
+import {vec3} from "gl-matrix";
 
 export class Rod extends Entity {
     public readonly point_value: number;

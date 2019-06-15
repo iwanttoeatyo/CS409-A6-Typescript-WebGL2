@@ -1,7 +1,7 @@
-import { BasicModel } from "./basicmodel";
-import { Mesh } from "../../lib/OBJ/index.js";
+import {BasicModel} from "./basicmodel";
+import {Mesh} from "../../lib/OBJ/index.js";
 import * as assert from "assert";
-import { Shader } from "../../shader";
+import {Shader} from "../../shader";
 
 let OBJ = require("../../lib/OBJ/index.js");
 

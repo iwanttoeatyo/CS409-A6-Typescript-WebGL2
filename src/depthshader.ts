@@ -1,9 +1,9 @@
-import { Shader } from "./shader";
-import { mat4, vec3 } from "gl-matrix";
+import {Shader} from "./shader";
+import {mat4, vec3} from "gl-matrix";
 
 export class DepthShader extends Shader {
     constructor(gl: WebGL2RenderingContext) {
-        super(gl, require("shaders/depth_RTT.vert"), require("shaders/depth_RTT.frag"));
+        super(gl, require("shaders/depth_RTT.vert").default, require("shaders/depth_RTT.frag").default);
     }
 
     public setMVPMatrices(

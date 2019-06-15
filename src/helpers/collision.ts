@@ -1,6 +1,6 @@
 //Determines if there is an intersetion between a circle of radius r1 at
 //	position x1,y2 and a circle with radius r2 at position x2,r2
-import { vec3 } from "gl-matrix";
+import {vec3} from "gl-matrix";
 
 export namespace Collision {
     export function circleIntersection(

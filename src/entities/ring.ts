@@ -1,10 +1,10 @@
-import { Entity, Model_Type } from "./entity";
-import { World } from "./world";
-import { vec3 } from "gl-matrix";
-import { BasicModel } from "./models/basicmodel";
-import { Collision } from "../helpers/collision";
-import { MovementGraph } from "../movementgraph";
-import { Random } from "../helpers/random";
+import {Entity, Model_Type} from "./entity";
+import {World} from "./world";
+import {vec3} from "gl-matrix";
+import {BasicModel} from "./models/basicmodel";
+import {Collision} from "../helpers/collision";
+import {MovementGraph} from "../movementgraph";
+import {Random} from "../helpers/random";
 
 let direction: vec3 = vec3.create();
 let center: vec3 = vec3.create();
@@ -134,7 +134,7 @@ export class Ring extends Entity {
             }
             //Pop the node off the front and set it as the target
             this.target_node_id = this.path.shift();
-            vec3.copy(this.target_position,node_list[this.target_node_id].pos);
+            vec3.copy(this.target_position, node_list[this.target_node_id].pos);
         }
     }
 }

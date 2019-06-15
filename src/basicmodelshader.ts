@@ -1,6 +1,6 @@
-import { Shader, Uniforms } from "./shader";
-import { Material } from "./lib/OBJ/";
-import { global } from "./globals";
+import {Shader, Uniforms} from "./shader";
+import {Material} from "./lib/OBJ/";
+import {global} from "./globals";
 
 interface Light {
     is_enabled: WebGLUniformLocation;
@@ -45,8 +45,8 @@ export class BasicModelShader extends Shader {
 
     constructor(
         gl: WebGL2RenderingContext,
-        vertexSourceCode: string = require("shaders/basicmodel.vert"),
-        fragmentSourceCode: string = require("shaders/basicmodelmanylights.frag")
+        vertexSourceCode: string = require("shaders/basicmodel.vert").default,
+        fragmentSourceCode: string = require("shaders/basicmodelmanylights.frag").default
     ) {
         super(gl, vertexSourceCode, fragmentSourceCode);
         this.gl.useProgram(this.ID);
@@ -157,7 +157,7 @@ export class BasicModelShaderShadow extends BasicModelShader {
     public uniforms: BasicModelShadowUniforms;
 
     constructor(gl: WebGL2RenderingContext) {
-        super(gl, require("shaders/basicmodelshadow.vert"), require("shaders/basicmodelmanylights1shadow.frag"));
+        super(gl, require("shaders/basicmodelshadow.vert").default, require("shaders/basicmodelmanylights1shadow.frag").default);
 
         this.uniforms.shadow_map = this.getUniformLocation("shadow_map");
         this.uniforms.shadow_distance = this.getUniformLocation("shadow_distance");

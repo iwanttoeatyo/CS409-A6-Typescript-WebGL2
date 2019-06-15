@@ -1,5 +1,5 @@
-import { mat4, vec3, vec4 } from "gl-matrix";
-import { Shader } from "../shader";
+import {mat4, vec3, vec4} from "gl-matrix";
+import {Shader} from "../shader";
 
 export class PointList {
     private data = [];
@@ -84,18 +84,18 @@ interface Point {
 }
 
 export class LineRenderer {
-    private readonly gl:WebGL2RenderingContext;
+    private readonly gl: WebGL2RenderingContext;
     private points: PointList;
     private shader: Shader;
     private readonly mvp_id: WebGLUniformLocation;
     private readonly VAO: WebGLVertexArrayObject;
     private readonly VBO: WebGLBuffer;
 
-    constructor(gl:WebGL2RenderingContext) {
+    constructor(gl: WebGL2RenderingContext) {
         this.gl = gl;
 
         this.points = new PointList();
-        this.shader = new Shader(gl, require("shaders/line.vert"), require("shaders/line.frag"));
+        this.shader = new Shader(gl, require("shaders/line.vert").default, require("shaders/line.frag").default);
         this.mvp_id = this.shader.uniforms.model_view_projection_matrix;
 
         this.VAO = gl.createVertexArray();

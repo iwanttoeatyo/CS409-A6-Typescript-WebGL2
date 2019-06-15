@@ -1,5 +1,5 @@
-import { Shader } from "../shader";
-import { DepthShader } from "../depthshader";
+import {Shader} from "../shader";
+import {DepthShader} from "../depthshader";
 
 export class DepthTexture {
     private readonly gl: WebGL2RenderingContext;
@@ -15,13 +15,13 @@ export class DepthTexture {
 
     // prettier-ignore
     private quad_vertex_buffer_data = [
-		-1.0, -1.0, 0.0,
-		 1.0, -1.0, 0.0,
-		-1.0,  1.0, 0.0,
-		-1.0,  1.0, 0.0,
-		 1.0, -1.0, 0.0,
-		 1.0,  1.0, 0.0
-	];
+        -1.0, -1.0, 0.0,
+        1.0, -1.0, 0.0,
+        -1.0, 1.0, 0.0,
+        -1.0, 1.0, 0.0,
+        1.0, -1.0, 0.0,
+        1.0, 1.0, 0.0
+    ];
 
     constructor(gl: WebGL2RenderingContext, texture_size?: number) {
         this.gl = gl;
@@ -32,7 +32,7 @@ export class DepthTexture {
         this.depth_shader = new DepthShader(gl);
 
         // Quad program is used to render a texture to the screen
-        this.quad_shader = new Shader(gl, require("shaders/quad.vert"), require("shaders/quad.frag"));
+        this.quad_shader = new Shader(gl, require("shaders/quad.vert").default, require("shaders/quad.frag").default);
 
         //Set up a frame buffer and texture for depth texture renduring for shadow mapping
         this.depth_frame_buffer = gl.createFramebuffer();
@@ -48,8 +48,8 @@ export class DepthTexture {
 
         // Give an empty image to OpenGL ( the last "0" )
         // prettier-ignore
-        gl.texImage2D(gl.TEXTURE_2D,0,gl.DEPTH_COMPONENT16, this.texture_size,
-			this.texture_size,0, gl.DEPTH_COMPONENT, gl.UNSIGNED_SHORT, null);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.DEPTH_COMPONENT16, this.texture_size,
+            this.texture_size, 0, gl.DEPTH_COMPONENT, gl.UNSIGNED_SHORT, null);
 
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
         gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);

@@ -108,7 +108,7 @@
 		max-width: 300px;
 		margin-left: auto;
 		margin-right: auto;
-		
+
 		display: inline-block;
 		*display: inline;
 		zoom: 1
@@ -121,11 +121,11 @@
 	#camera-toggle{
 		left: 150px;
 	}
-	
+
 	#hq-toggle{
 		left: 300px;
 	}
-	
+
 	#reset{
 		left: 450px;
 	}
@@ -143,19 +143,24 @@
 		line-height: 0
 	}
 </style>
-<canvas id="canvas" width="800" height="600"></canvas>
-<div id="fpscounter">0 FPS</div>
-<div id="upscounter">0 UPS</div>
-<div id="shadow"></div>
-<div id="score"></div>
-<div id="loading-container"><span id="loading-text"></span></div>
-<div class="button-div">
-	<div class="button" id="hq-toggle">HQ (L)</div>
-	<div class="button" id="camera-toggle">Camera (O)</div>
-	<div class="button" id="path-toggle">Path (P)</div>
-	<div class="button" id="reset">Reset (R)</div>
-	<span class="stretch"></span>
+<div id="parent">
+	<canvas id="canvas" width="800" height="600">
+	</canvas>
+	<div id="fpscounter">0 FPS</div>
+	<div id="upscounter">0 UPS</div>
+	<div id="shadow"></div>
+	<div id="score"></div>
+	<div id="loading-container"><span id="loading-text"></span></div>
+	<div class="button-div">
+		<div class="button" id="hq-toggle">HQ (L)</div>
+		<div class="button" id="camera-toggle">Camera (O)</div>
+		<div class="button" id="path-toggle">Path (P)</div>
+		<div class="button" id="reset">Reset (R)</div>
+		<div class="button" id="next-world">Next World (M)</div>
+		<span class="stretch"></span>
+	</div>
 </div>
+
 
 <script type="text/javascript" src="bundle.js"></script></body>
 </html>

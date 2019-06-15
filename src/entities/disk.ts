@@ -1,10 +1,10 @@
-import { vec2, vec3 } from "gl-matrix";
-import { BasicModel } from "./models/basicmodel";
-import { MeshlessModel } from "./models/meshlessmodel";
-import { Noisefield } from "../noisefield";
-import { Entity, Model_Type } from "./entity";
-import { MathHelper } from "../helpers/mathhelper";
-import { Random } from "../helpers/random";
+import {vec2, vec3} from "gl-matrix";
+import {BasicModel} from "./models/basicmodel";
+import {MeshlessModel} from "./models/meshlessmodel";
+import {Noisefield} from "../noisefield";
+import {Entity, Model_Type} from "./entity";
+import {MathHelper} from "../helpers/mathhelper";
+import {Random} from "../helpers/random";
 
 export enum Terrain {
     RED_ROCK = 0,

@@ -1,8 +1,8 @@
 {
   "compilerOptions": {
-    "target": "es6",
+    "target": "es2017",
     "moduleResolution": "node",
-    "module": "commonjs",
+    "module": "es6",
     "sourceMap": true,
     "baseUrl": ".",
     "paths":{
@@ -15,5 +15,5 @@
   "exclude": [
     "node_modules"
   ]
-  
+
 }
