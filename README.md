@@ -6,5 +6,5 @@ Written in Typescript using WebGL2 and Shaders
 Update/Render loop https://github.com/IceCreamYou/MainLoop.js  
 OBJ Loader https://github.com/frenchtoast747/webgl-obj-loader
 
-# Demo
-https://iwanttoeatyo.github.io/CS409-A5-Typescript-WebGL2/index.html
+# Live Demo
+https://caboyd.github.io/CS409-A5-Typescript-WebGL2/
